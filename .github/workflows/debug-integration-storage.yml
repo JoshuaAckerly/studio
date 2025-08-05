@@ -1,0 +1,81 @@
+name: Debug - Integration Storage (MinIO)
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  debug-storage:
+    name: Debug Storage Integration (manual)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, sqlite, curl
+
+      - name: Install Composer dependencies
+        run: composer install --no-progress --no-suggest --prefer-dist
+
+      - name: MinIO is local-only for CI
+        run: |
+          echo "This workflow previously started MinIO in CI."
+          echo "Per repository policy, MinIO is now local-only and will not be started in CI." 
+          echo "If you need to run MinIO-backed integration tests, run this workflow locally or use 'docker run' to start MinIO and then re-run tests manually."
+          echo "Skipping MinIO-dependent steps in CI." 
+          # No-op exit (success) so the rest of the workflow can continue to collect debug artifacts if present
+          true
+
+      - name: Pre-test debug dump
+        run: |
+          echo "---- docker ps (short) ----"
+          docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}' || true
+          echo "---- minio health check ----"
+          curl -sS -D - http://127.0.0.1:9000/minio/health/live || true
+          echo "---- mc ls local/debug-test-bucket ----"
+          ./mc alias set local http://127.0.0.1:9000 minioadmin minioadmin --api S3v4 || true
+          ./mc ls local/debug-test-bucket || true
+
+      - name: Run integration tests (capture output + junit)
+        run: |
+          mkdir -p artifacts/phpunit || true
+          vendor/bin/phpunit --configuration phpunit.xml --group integration --colors=never --log-junit artifacts/phpunit/phpunit-results.xml 2>&1 | tee artifacts/phpunit/phpunit-console.log
+
+      - name: Collect MinIO debug files
+        run: |
+          mkdir -p minio-debug || true
+          docker logs minio-debug --tail 500 > minio-debug/minio-logs.txt 2>&1 || true
+          docker ps --no-trunc > minio-debug/docker-ps.txt 2>&1 || true
+          ./mc alias set local http://127.0.0.1:9000 minioadmin minioadmin --api S3v4 > minio-debug/mc-alias.txt 2>&1 || true
+          ./mc ls local/debug-test-bucket > minio-debug/mc-ls.txt 2>&1 || true
+          aws --endpoint-url http://127.0.0.1:9000 s3 ls > minio-debug/aws-s3-ls.txt 2>&1 || true
+
+      - name: Print s3-normalize compact summary (if present)
+        run: |
+          # Find the first s3-normalize JSON report produced under artifacts/
+          report=$(ls artifacts/s3-normalize-*.json 2>/dev/null | head -n1 || true)
+          if [ -z "$report" ]; then
+            echo "No s3-normalize report found in artifacts/"
+          else
+            echo "Found s3-normalize report: $report"
+            # Print a compact one-line stats summary
+            jq -r '.stats | "processed=\(.processed) copied=\(.copied) skipped=\(.skipped) deleted=\(.deleted) failed=\(.failed) elapsed_s=\(.elapsed_seconds) rate/s=\(.rate_per_second)"' "$report" || true
+            # Print options line
+            jq -r '.options | "options: delete=\(.delete) overwrite=\(.overwrite) spinner=\(.spinner) progress_only=\(.progress_only)"' "$report" || true
+          fi
+
+      - name: Upload debug artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-integration-${{ github.run_id }}
+          path: |
+            artifacts/phpunit/**
+            minio-debug/**

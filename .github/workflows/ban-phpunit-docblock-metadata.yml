@@ -1,0 +1,17 @@
+name: Ban PHPUnit docblock metadata
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  scan-docblock-metadata:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run scan for deprecated PHPUnit docblock metadata
+        run: |
+          # Run the PowerShell checker in cross-platform pwsh
+          pwsh -NoProfile -NonInteractive -Command "./scripts/check_phpunit_docblock_metadata.ps1"

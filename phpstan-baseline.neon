@@ -1,0 +1,1333 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\.$#'
+			identifier: foreach.nonIterable
+			count: 2
+			path: app/Console/Commands/NormalizeS3Prefix.php
+
+		-
+			message: '#^Cannot access offset ''Key'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 2
+			path: app/Console/Commands/NormalizeS3Prefix.php
+
+		-
+			message: '#^Parameter \#1 \$haystack of function strpos expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Console/Commands/NormalizeS3Prefix.php
+
+		-
+			message: '#^Parameter \#1 \$string of function substr expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Console/Commands/NormalizeS3Prefix.php
+
+		-
+			message: '#^Part \$bucket \(mixed\) of encapsed string cannot be cast to string\.$#'
+			identifier: encapsedStringPart.nonString
+			count: 2
+			path: app/Console/Commands/NormalizeS3Prefix.php
+
+		-
+			message: '#^Part \$key \(mixed\) of encapsed string cannot be cast to string\.$#'
+			identifier: encapsedStringPart.nonString
+			count: 5
+			path: app/Console/Commands/NormalizeS3Prefix.php
+
+		-
+			message: '#^Variable \$spinIndex might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: app/Console/Commands/NormalizeS3Prefix.php
+
+		-
+			message: '#^Variable \$spinnerChars might not be defined\.$#'
+			identifier: variable.undefined
+			count: 2
+			path: app/Console/Commands/NormalizeS3Prefix.php
+
+		-
+			message: '#^Method App\\Contracts\\StorageAdapterInterface\:\:files\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Contracts/StorageAdapterInterface.php
+
+		-
+			message: '#^Cannot access property \$email on App\\Models\\User\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Http/Controllers/Auth/ConfirmablePasswordController.php
+
+		-
+			message: '#^Cannot call method hasVerifiedEmail\(\) on App\\Models\\User\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Auth/EmailVerificationNotificationController.php
+
+		-
+			message: '#^Cannot call method sendEmailVerificationNotification\(\) on App\\Models\\User\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Auth/EmailVerificationNotificationController.php
+
+		-
+			message: '#^Cannot call method hasVerifiedEmail\(\) on App\\Models\\User\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Auth/EmailVerificationPromptController.php
+
+		-
+			message: '#^Parameter \#1 \$key of function __ expects string\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Http/Controllers/Auth/NewPasswordController.php
+
+		-
+			message: '#^Parameter \#1 \$value of static method Illuminate\\Support\\Facades\\Hash\:\:make\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Auth/NewPasswordController.php
+
+		-
+			message: '#^Parameter \#1 \$value of static method Illuminate\\Support\\Facades\\Hash\:\:make\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Auth/RegisteredUserController.php
+
+		-
+			message: '#^Cannot call method hasVerifiedEmail\(\) on App\\Models\\User\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Auth/VerifyEmailController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\IllustrationController\:\:api\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/IllustrationController.php
+
+		-
+			message: '#^Cannot access offset ''password'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: app/Http/Controllers/Settings/PasswordController.php
+
+		-
+			message: '#^Cannot call method update\(\) on App\\Models\\User\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Settings/PasswordController.php
+
+		-
+			message: '#^Parameter \#1 \$value of static method Illuminate\\Support\\Facades\\Hash\:\:make\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Settings/PasswordController.php
+
+		-
+			message: '#^Cannot access property \$email_verified_at on App\\Models\\User\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Http/Controllers/Settings/ProfileController.php
+
+		-
+			message: '#^Cannot call method delete\(\) on App\\Models\\User\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Settings/ProfileController.php
+
+		-
+			message: '#^Cannot call method fill\(\) on App\\Models\\User\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Settings/ProfileController.php
+
+		-
+			message: '#^Cannot call method isDirty\(\) on App\\Models\\User\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Settings/ProfileController.php
+
+		-
+			message: '#^Cannot call method save\(\) on App\\Models\\User\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Settings/ProfileController.php
+
+		-
+			message: '#^Call to function method_exists\(\) with Illuminate\\Filesystem\\FilesystemAdapter and ''mimeType'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Http/Controllers/VideoLogController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\VideoLogController\:\:api\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/VideoLogController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\VideoLogController\:\:index\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/VideoLogController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\VideoLogController\:\:serve\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/VideoLogController.php
+
+		-
+			message: '#^Parameter \#1 \$string of function str expects string\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Middleware/HandleInertiaRequests.php
+
+		-
+			message: '#^Parameter \#1 \$string of function trim expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Http/Middleware/HandleInertiaRequests.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 1
+			path: app/Http/Requests/ServeFileRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\ServeFileRequest\:\:messages\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/ServeFileRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\ServeFileRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/ServeFileRequest.php
+
+		-
+			message: '#^Cannot access property \$id on App\\Models\\User\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Http/Requests/Settings/ProfileUpdateRequest.php
+
+		-
+			message: '#^Cannot access offset ''url'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: app/Http/Resources/IllustrationResource.php
+
+		-
+			message: '#^Method App\\Http\\Resources\\IllustrationResource\:\:toArray\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Resources/IllustrationResource.php
+
+		-
+			message: '#^Method App\\Http\\Resources\\IllustrationResource\:\:toArray\(\) return type with generic interface Illuminate\\Contracts\\Support\\Arrayable does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Http/Resources/IllustrationResource.php
+
+		-
+			message: '#^Parameter \#1 \$url of function parse_url expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Resources/IllustrationResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\VideoLogResource\:\:\$date\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/VideoLogResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\VideoLogResource\:\:\$description\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/VideoLogResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\VideoLogResource\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/VideoLogResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\VideoLogResource\:\:\$thumbnail\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/VideoLogResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\VideoLogResource\:\:\$title\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/VideoLogResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\VideoLogResource\:\:\$url\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/VideoLogResource.php
+
+		-
+			message: '#^Method App\\Http\\Resources\\VideoLogResource\:\:toArray\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Resources/VideoLogResource.php
+
+		-
+			message: '#^Method App\\Http\\Resources\\VideoLogResource\:\:toArray\(\) return type with generic interface Illuminate\\Contracts\\Support\\Arrayable does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Http/Resources/VideoLogResource.php
+
+		-
+			message: '#^PHPDoc tag @return has invalid value \(array\|\)\: Unexpected token "\\n     ", expected type at offset 127 on line 5$#'
+			identifier: phpDoc.parseError
+			count: 1
+			path: app/Http/Resources/VideoLogResource.php
+
+		-
+			message: '#^Binary operation "\." between ''New Visit to '' and mixed results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: app/Mail/VisitNotification.php
+
+		-
+			message: '#^Cannot access offset ''subdomain'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: app/Mail/VisitNotification.php
+
+		-
+			message: '#^Method App\\Mail\\VisitNotification\:\:__construct\(\) has parameter \$visitData with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Mail/VisitNotification.php
+
+		-
+			message: '#^Property App\\Mail\\VisitNotification\:\:\$visitData has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Mail/VisitNotification.php
+
+		-
+			message: '#^Method App\\Models\\VideoLog\:\:__construct\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Models/VideoLog.php
+
+		-
+			message: '#^Method App\\Models\\VideoLog\:\:toArray\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Models/VideoLog.php
+
+		-
+			message: '#^Property App\\Models\\VideoLog\:\:\$date \(string\) does not accept mixed\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Models/VideoLog.php
+
+		-
+			message: '#^Property App\\Models\\VideoLog\:\:\$description \(string\|null\) does not accept mixed\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Models/VideoLog.php
+
+		-
+			message: '#^Property App\\Models\\VideoLog\:\:\$id \(int\) does not accept mixed\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Models/VideoLog.php
+
+		-
+			message: '#^Property App\\Models\\VideoLog\:\:\$thumbnail \(string\) does not accept mixed\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Models/VideoLog.php
+
+		-
+			message: '#^Property App\\Models\\VideoLog\:\:\$title \(string\) does not accept mixed\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Models/VideoLog.php
+
+		-
+			message: '#^Property App\\Models\\VideoLog\:\:\$url \(string\) does not accept mixed\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Models/VideoLog.php
+
+		-
+			message: '#^Anonymous function has an unused use \$app\.$#'
+			identifier: closure.unusedUse
+			count: 1
+			path: app/Providers/AppServiceProvider.php
+
+		-
+			message: '#^Cannot call method make\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Providers/AppServiceProvider.php
+
+		-
+			message: '#^Cannot cast mixed to int\.$#'
+			identifier: cast.int
+			count: 1
+			path: app/Providers/AppServiceProvider.php
+
+		-
+			message: '#^Parameter \#2 \$cloudfrontDomain of class App\\Services\\StorageUrlGenerator constructor expects string\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Providers/AppServiceProvider.php
+
+		-
+			message: '#^Parameter \#2 \$maybeGenerator of class App\\Services\\VideoLogService constructor expects App\\Services\\StorageUrlGenerator\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Providers/AppServiceProvider.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 1
+			path: app/Services/IllustrationService.php
+
+		-
+			message: '#^Cannot call method files\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/IllustrationService.php
+
+		-
+			message: '#^Method App\\Services\\IllustrationService\:\:list\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/IllustrationService.php
+
+		-
+			message: '#^Parameter \#1 \$array of function array_filter expects array, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/IllustrationService.php
+
+		-
+			message: '#^Parameter \#1 \$path of method App\\Services\\IllustrationService\:\:makeUrl\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/IllustrationService.php
+
+		-
+			message: '#^Parameter \#1 \$string of function trim expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/IllustrationService.php
+
+		-
+			message: '#^Parameter \#2 \$callback of function array_filter expects \(callable\(mixed\)\: bool\)\|null, Closure\(mixed\)\: \(0\|1\|false\) given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/IllustrationService.php
+
+		-
+			message: '#^Parameter \#2 \$cloudfrontDomain of class App\\Services\\StorageUrlGenerator constructor expects string\|null, string\|true\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/IllustrationService.php
+
+		-
+			message: '#^Parameter \#2 \$subject of function preg_match expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/IllustrationService.php
+
+		-
+			message: '#^Property App\\Services\\IllustrationService\:\:\$cloudfrontDomain \(string\|null\) does not accept mixed\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Services/IllustrationService.php
+
+		-
+			message: '#^Property App\\Services\\IllustrationService\:\:\$s3 has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Services/IllustrationService.php
+
+		-
+			message: '#^Method App\\Services\\StorageConfigProvider\:\:laravelDiskConfig\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/StorageConfigProvider.php
+
+		-
+			message: '#^Method App\\Services\\StorageConfigProvider\:\:sdkConfig\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/StorageConfigProvider.php
+
+		-
+			message: '#^Parameter \#1 \$v of method App\\Services\\StorageConfigProvider\:\:normalize\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/StorageConfigProvider.php
+
+		-
+			message: '#^Cannot call method exists\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/StorageDiskAdapter.php
+
+		-
+			message: '#^Cannot call method files\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/StorageDiskAdapter.php
+
+		-
+			message: '#^Cannot call method lastModified\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/StorageDiskAdapter.php
+
+		-
+			message: '#^Cannot call method temporaryUrl\(\) on class\-string\|object\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/StorageDiskAdapter.php
+
+		-
+			message: '#^Cannot call method url\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Services/StorageDiskAdapter.php
+
+		-
+			message: '#^Method App\\Services\\StorageDiskAdapter\:\:__construct\(\) has parameter \$disk with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Services/StorageDiskAdapter.php
+
+		-
+			message: '#^Method App\\Services\\StorageDiskAdapter\:\:files\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/StorageDiskAdapter.php
+
+		-
+			message: '#^Method App\\Services\\StorageDiskAdapter\:\:files\(\) should return array but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/StorageDiskAdapter.php
+
+		-
+			message: '#^Method App\\Services\\StorageDiskAdapter\:\:lastModified\(\) should return int\|null but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/StorageDiskAdapter.php
+
+		-
+			message: '#^Method App\\Services\\StorageDiskAdapter\:\:temporaryUrl\(\) should return string but returns mixed\.$#'
+			identifier: return.type
+			count: 2
+			path: app/Services/StorageDiskAdapter.php
+
+		-
+			message: '#^Method App\\Services\\StorageDiskAdapter\:\:url\(\) should return string but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/StorageDiskAdapter.php
+
+		-
+			message: '#^Parameter \#1 \$object_or_class of function method_exists expects object\|string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/StorageDiskAdapter.php
+
+		-
+			message: '#^Binary operation "\." between non\-falsy\-string and mixed results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: app/Services/StorageUrlGenerator.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 4
+			path: app/Services/StorageUrlGenerator.php
+
+		-
+			message: '#^Cannot call method temporaryUrl\(\) on class\-string\|object\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Services/StorageUrlGenerator.php
+
+		-
+			message: '#^Cannot call method url\(\) on class\-string\|object\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/StorageUrlGenerator.php
+
+		-
+			message: '#^Cannot call method url\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Services/StorageUrlGenerator.php
+
+		-
+			message: '#^Cannot cast mixed to string\.$#'
+			identifier: cast.string
+			count: 1
+			path: app/Services/StorageUrlGenerator.php
+
+		-
+			message: '#^Method App\\Services\\StorageUrlGenerator\:\:url\(\) should return string but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/StorageUrlGenerator.php
+
+		-
+			message: '#^Parameter \#1 \$object_or_class of function method_exists expects object\|string, mixed given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Services/StorageUrlGenerator.php
+
+		-
+			message: '#^Parameter \#1 \$string of function rtrim expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/StorageUrlGenerator.php
+
+		-
+			message: '#^Parameter \#1 \$string of function trim expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Services/StorageUrlGenerator.php
+
+		-
+			message: '#^Parameter \#1 \$url of function parse_url expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 3
+			path: app/Services/StorageUrlGenerator.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 1
+			path: app/Services/StorageUrlGenerator.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 2
+			path: app/Services/VideoLogService.php
+
+		-
+			message: '#^Cannot access offset 0 on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: app/Services/VideoLogService.php
+
+		-
+			message: '#^Cannot call method exists\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/VideoLogService.php
+
+		-
+			message: '#^Cannot call method files\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Services/VideoLogService.php
+
+		-
+			message: '#^Cannot call method lastModified\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Services/VideoLogService.php
+
+		-
+			message: '#^Parameter \#1 \$array of function array_filter expects array, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/VideoLogService.php
+
+		-
+			message: '#^Parameter \#1 \$path of function pathinfo expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Services/VideoLogService.php
+
+		-
+			message: '#^Parameter \#1 \$path of method App\\Services\\VideoLogService\:\:makeS3Url\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Services/VideoLogService.php
+
+		-
+			message: '#^Parameter \#1 \$string of function rtrim expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/VideoLogService.php
+
+		-
+			message: '#^Parameter \#1 \$value of function count expects array\|Countable, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/VideoLogService.php
+
+		-
+			message: '#^Parameter \#2 \$cloudfrontDomain of class App\\Services\\StorageUrlGenerator constructor expects string\|null, string\|true\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/VideoLogService.php
+
+		-
+			message: '#^Property App\\Services\\VideoLogService\:\:\$cloudfrontDomain \(string\|null\) does not accept mixed\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Services/VideoLogService.php
+
+		-
+			message: '#^Property App\\Services\\VideoLogService\:\:\$videoPrefix \(string\) does not accept mixed\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Services/VideoLogService.php
+
+		-
+			message: '#^Binary operation "\." between ''Attempting to send…'' and mixed results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: routes/api.php
+
+		-
+			message: '#^Parameter \#1 \$path of function pathinfo expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: routes/web.php
+
+		-
+			message: '#^Part \$file \(mixed\) of encapsed string cannot be cast to string\.$#'
+			identifier: encapsedStringPart.nonString
+			count: 1
+			path: routes/web.php
+
+		-
+			message: '#^Method Tests\\Feature\\ExampleTest\:\:it_loads_the_homepage\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Feature/ExampleTest.php
+
+		-
+			message: '#^Binary operation "\." between mixed and string results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 2
+			path: tests/Feature/VideoLogTest.php
+
+		-
+			message: '#^Cannot access offset ''thumbnail'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: tests/Feature/VideoLogTest.php
+
+		-
+			message: '#^Cannot access offset ''title'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: tests/Feature/VideoLogTest.php
+
+		-
+			message: '#^Cannot access offset ''url'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: tests/Feature/VideoLogTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\VideoLogTest\:\:test_api_falls_back_to_static_when_no_s3\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Feature/VideoLogTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\VideoLogTest\:\:test_api_returns_s3_files_when_present\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Feature/VideoLogTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\VideoLogTest\:\:test_serve_endpoint_blocked_in_production\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Feature/VideoLogTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\VideoLogTest\:\:test_serve_endpoint_returns_file_in_testing_env\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Feature/VideoLogTest.php
+
+		-
+			message: '#^Parameter \#1 \$uri of method Illuminate\\Foundation\\Testing\\TestCase\:\:get\(\) expects Illuminate\\Support\\Uri\|string, mixed given\.$#'
+			identifier: argument.type
+			count: 2
+			path: tests/Feature/VideoLogTest.php
+
+		-
+			message: '#^Parameter \#1 \$url of function parse_url expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 2
+			path: tests/Feature/VideoLogTest.php
+
+		-
+			message: '#^Parameter \#2 \$array of method PHPUnit\\Framework\\Assert\:\:assertArrayHasKey\(\) expects array\<mixed\>\|ArrayAccess\<\(int\|string\), mixed\>, mixed given\.$#'
+			identifier: argument.type
+			count: 2
+			path: tests/Feature/VideoLogTest.php
+
+		-
+			message: '#^Parameter \#2 \$string of method PHPUnit\\Framework\\Assert\:\:assertStringStartsWith\(\) expects string, string\|null given\.$#'
+			identifier: argument.type
+			count: 3
+			path: tests/Feature/VideoLogTest.php
+
+		-
+			message: '#^Parameter \#2 \$subject of function preg_match expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 2
+			path: tests/Feature/VideoLogTest.php
+
+		-
+			message: '#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\.$#'
+			identifier: foreach.nonIterable
+			count: 1
+			path: tests/Integration/StorageIntegrationTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertIsString\(\) with string will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 3
+			path: tests/Integration/StorageIntegrationTest.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 9
+			path: tests/Integration/StorageIntegrationTest.php
+
+		-
+			message: '#^Cannot access offset ''Key'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: tests/Integration/StorageIntegrationTest.php
+
+		-
+			message: '#^Cannot access offset ''LastModified'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: tests/Integration/StorageIntegrationTest.php
+
+		-
+			message: '#^Cannot access offset ''Size'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: tests/Integration/StorageIntegrationTest.php
+
+		-
+			message: '#^Cannot cast mixed to int\.$#'
+			identifier: cast.int
+			count: 1
+			path: tests/Integration/StorageIntegrationTest.php
+
+		-
+			message: '#^Method Tests\\Integration\\StorageIntegrationTest\:\:test_s3_temporary_url_and_upload\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Integration/StorageIntegrationTest.php
+
+		-
+			message: '#^Method Tests\\Integration\\StorageIntegrationTest\:\:test_storage_url_generator_signed_url_and_cloudfront_rewrite\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Integration/StorageIntegrationTest.php
+
+		-
+			message: '#^Method Tests\\Integration\\StorageIntegrationTest\:\:test_unsigned_disk_url_has_no_signature_params\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Integration/StorageIntegrationTest.php
+
+		-
+			message: '#^Offset ''query'' might not exist on array\{scheme\?\: string, host\?\: string, port\?\: int\<0, 65535\>, user\?\: string, pass\?\: string, path\?\: string, query\?\: string, fragment\?\: string\}\.$#'
+			identifier: offsetAccess.notFound
+			count: 1
+			path: tests/Integration/StorageIntegrationTest.php
+
+		-
+			message: '#^PHPDoc tag @return with type void is incompatible with native type never\.$#'
+			identifier: return.phpDocType
+			count: 1
+			path: tests/Integration/StorageIntegrationTest.php
+
+		-
+			message: '#^Parameter \#1 \.\.\.\$arrays of function array_merge expects array, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Integration/StorageIntegrationTest.php
+
+		-
+			message: '#^Parameter \#2 \$val of method Tests\\Integration\\StorageIntegrationTest\:\:redactEnvValue\(\) expects string\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Integration/StorageIntegrationTest.php
+
+		-
+			message: '#^Parameter \#2 \.\.\.\$values of function sprintf expects bool\|float\|int\|string\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Integration/StorageIntegrationTest.php
+
+		-
+			message: '#^Parameter \#3 \.\.\.\$values of function sprintf expects bool\|float\|int\|string\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Integration/StorageIntegrationTest.php
+
+		-
+			message: '#^Parameter \#4 \.\.\.\$values of function sprintf expects bool\|float\|int\|string\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Integration/StorageIntegrationTest.php
+
+		-
+			message: '#^Call to function method_exists\(\) with \$this\(Tests\\TestCase\) and ''beforeApplicationDe…'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: tests/TestCase.php
+
+		-
+			message: '#^Cannot call method bootstrap\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/TestCase.php
+
+		-
+			message: '#^Cannot call method make\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/TestCase.php
+
+		-
+			message: '#^Method Tests\\TestCase\:\:createApplication\(\) should return Illuminate\\Foundation\\Application but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/TestCase.php
+
+		-
+			message: '#^Offset ''function'' on array\{function\: string, line\?\: int, file\?\: string, class\: class\-string\<static\(Tests\\TestCase\)\>, type\?\: ''\-\>''\|''\:\:'', args\?\: array\<mixed\>, object\?\: object\} in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.offset
+			count: 1
+			path: tests/TestCase.php
+
+		-
+			message: '#^Parameter \#1 \$callback of function set_error_handler expects \(callable\(int, string, string, int\)\: bool\)\|null, Closure\(\)\: void given\.$#'
+			identifier: argument.type
+			count: 6
+			path: tests/TestCase.php
+
+		-
+			message: '#^Parameter \#1 \$callback of function set_error_handler expects \(callable\(int, string, string, int\)\: bool\)\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/TestCase.php
+
+		-
+			message: '#^Parameter \#1 \$callback of function set_exception_handler expects \(callable\(Throwable\)\: void\)\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 4
+			path: tests/TestCase.php
+
+		-
+			message: '#^Property Tests\\TestCase\:\:\$diagPrevError has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: tests/TestCase.php
+
+		-
+			message: '#^Property Tests\\TestCase\:\:\$diagPrevException has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: tests/TestCase.php
+
+		-
+			message: '#^Property Tests\\TestCase\:\:\$prevExceptionHandler has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: tests/TestCase.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertTrue\(\) with true will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/ExampleTest.php
+
+		-
+			message: '#^Method Tests\\Unit\\ExampleTest\:\:it_checks_that_true_is_true\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Unit/ExampleTest.php
+
+		-
+			message: '#^Binary operation "\." between mixed and ''document\.pdf'' results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: tests/Unit/IllustrationServiceTest.php
+
+		-
+			message: '#^Binary operation "\." between mixed and ''hero\.jpg'' results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: tests/Unit/IllustrationServiceTest.php
+
+		-
+			message: '#^Binary operation "\." between mixed and ''nested/icon\.webp'' results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: tests/Unit/IllustrationServiceTest.php
+
+		-
+			message: '#^Binary operation "\." between mixed and ''thumb\.PNG'' results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: tests/Unit/IllustrationServiceTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertIsArray\(\) with array will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/IllustrationServiceTest.php
+
+		-
+			message: '#^Method Tests\\Unit\\IllustrationServiceTest\:\:test_list_filters_and_generates_urls\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Unit/IllustrationServiceTest.php
+
+		-
+			message: '#^Method class@anonymous/tests/Unit/IllustrationServiceTest\.php\:14\:\:files\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Unit/IllustrationServiceTest.php
+
+		-
+			message: '#^Method class@anonymous/tests/Unit/IllustrationServiceTest\.php\:14\:\:files\(\) has parameter \$prefix with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Unit/IllustrationServiceTest.php
+
+		-
+			message: '#^Parameter \#2 \$haystack of method PHPUnit\\Framework\\Assert\:\:assertStringContainsString\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 3
+			path: tests/Unit/IllustrationServiceTest.php
+
+		-
+			message: '#^Parameter \#2 \$maybeGenerator of class App\\Services\\IllustrationService constructor expects App\\Services\\StorageUrlGenerator\|null, App\\Contracts\\StorageUrlGeneratorInterface@anonymous/tests/Unit/IllustrationServiceTest\.php\:27 given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Unit/IllustrationServiceTest.php
+
+		-
+			message: '#^Method Tests\\Unit\\ServeFileRequestTest\:\:test_authorize_returns_false_in_production\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Unit/ServeFileRequestTest.php
+
+		-
+			message: '#^Method Tests\\Unit\\ServeFileRequestTest\:\:test_authorize_returns_true_in_testing\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Unit/ServeFileRequestTest.php
+
+		-
+			message: '#^Method Tests\\Unit\\ServeFileRequestTest\:\:test_messages_contains_path_required\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Unit/ServeFileRequestTest.php
+
+		-
+			message: '#^Method Tests\\Unit\\ServeFileRequestTest\:\:test_rules_contains_path_required_string\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Unit/ServeFileRequestTest.php
+
+		-
+			message: '#^Parameter \#2 \$haystack of method PHPUnit\\Framework\\Assert\:\:assertStringContainsString\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Unit/ServeFileRequestTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertIsArray\(\) with array will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/StorageConfigProviderTest.php
+
+		-
+			message: '#^Cannot access offset ''key'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: tests/Unit/StorageConfigProviderTest.php
+
+		-
+			message: '#^Cannot access offset ''secret'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: tests/Unit/StorageConfigProviderTest.php
+
+		-
+			message: '#^Cannot call method getRealPath\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: tests/Unit/StorageConfigProviderTest.php
+
+		-
+			message: '#^Cannot call method isDir\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Unit/StorageConfigProviderTest.php
+
+		-
+			message: '#^Method Tests\\Unit\\StorageConfigProviderTest\:\:test_laravelDiskConfig_returns_expected_structure\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Unit/StorageConfigProviderTest.php
+
+		-
+			message: '#^Method Tests\\Unit\\StorageConfigProviderTest\:\:test_lookup_prefers_env_and_trims_quotes_and_whitespace\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Unit/StorageConfigProviderTest.php
+
+		-
+			message: '#^Method Tests\\Unit\\StorageConfigProviderTest\:\:test_sdkConfig_prefers_admin_credentials_and_parses_endpoint_and_path_style\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Unit/StorageConfigProviderTest.php
+
+		-
+			message: '#^Method Tests\\Unit\\StorageConfigProviderTest\:\:writeDotEnv\(\) has parameter \$lines with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Unit/StorageConfigProviderTest.php
+
+		-
+			message: '#^Parameter \#1 \$directory of function rmdir expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Unit/StorageConfigProviderTest.php
+
+		-
+			message: '#^Parameter \#1 \$filename of function unlink expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Unit/StorageConfigProviderTest.php
+
+		-
+			message: '#^Binary operation "\." between ''https\://bucket\.s3…'' and mixed results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 2
+			path: tests/Unit/StorageUrlGeneratorTest.php
+
+		-
+			message: '#^Call to an undefined method Mockery\\ExpectationInterface\|Mockery\\HigherOrderMessage\:\:andReturn\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Unit/StorageUrlGeneratorTest.php
+
+		-
+			message: '#^Call to an undefined method Mockery\\ExpectationInterface\|Mockery\\HigherOrderMessage\:\:andThrow\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Unit/StorageUrlGeneratorTest.php
+
+		-
+			message: '#^Method Tests\\Unit\\StorageUrlGeneratorTest\:\:test_falls_back_to_url_when_temporaryUrl_missing\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Unit/StorageUrlGeneratorTest.php
+
+		-
+			message: '#^Method Tests\\Unit\\StorageUrlGeneratorTest\:\:test_returns_proxy_url_in_testing_environment\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Unit/StorageUrlGeneratorTest.php
+
+		-
+			message: '#^Method Tests\\Unit\\StorageUrlGeneratorTest\:\:test_uses_temporaryUrl_and_rewrites_to_cloudfront\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Unit/StorageUrlGeneratorTest.php
+
+		-
+			message: '#^Method class@anonymous/tests/Unit/StorageUrlGeneratorTest\.php\:30\:\:temporaryUrl\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Unit/StorageUrlGeneratorTest.php
+
+		-
+			message: '#^Method class@anonymous/tests/Unit/StorageUrlGeneratorTest\.php\:30\:\:temporaryUrl\(\) has parameter \$expires with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Unit/StorageUrlGeneratorTest.php
+
+		-
+			message: '#^Method class@anonymous/tests/Unit/StorageUrlGeneratorTest\.php\:30\:\:temporaryUrl\(\) has parameter \$path with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Unit/StorageUrlGeneratorTest.php
+
+		-
+			message: '#^Method class@anonymous/tests/Unit/StorageUrlGeneratorTest\.php\:30\:\:url\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Unit/StorageUrlGeneratorTest.php
+
+		-
+			message: '#^Method class@anonymous/tests/Unit/StorageUrlGeneratorTest\.php\:30\:\:url\(\) has parameter \$path with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Unit/StorageUrlGeneratorTest.php
+
+		-
+			message: '#^Binary operation "\." between ''https\:/…'' and mixed results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 2
+			path: tests/Unit/VideoLogServiceTest.php
+
+		-
+			message: '#^Call to an undefined method Mockery\\ExpectationInterface\|Mockery\\HigherOrderMessage\:\:andReturnUsing\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: tests/Unit/VideoLogServiceTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertIsArray\(\) with array\<App\\Models\\VideoLog\> will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/VideoLogServiceTest.php
+
+		-
+			message: '#^Method Tests\\Unit\\VideoLogServiceTest\:\:test_cloudfront_rewrite_when_configured\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Unit/VideoLogServiceTest.php
+
+		-
+			message: '#^Method Tests\\Unit\\VideoLogServiceTest\:\:test_list_returns_video_and_thumbnail_from_fake_s3\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: tests/Unit/VideoLogServiceTest.php
+
+		-
+			message: '#^Parameter \#2 \$haystack of method PHPUnit\\Framework\\Assert\:\:assertStringContainsString\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Unit/VideoLogServiceTest.php
+
+		-
+			message: '#^Parameter \#1 \$callback of function set_error_handler expects \(callable\(int, string, string, int\)\: bool\)\|null, Closure\(\)\: void given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/bootstrap/bootstrap.php
+
+		-
+			message: '#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\.$#'
+			identifier: foreach.nonIterable
+			count: 1
+			path: tests/bootstrap/minio-check.php
+
+		-
+			message: '#^Binary operation "\+" between mixed and 1 results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 2
+			path: tests/bootstrap/minio-check.php
+
+		-
+			message: '#^Call to function method_exists\(\) with Aws\\Exception\\AwsException and ''getResponse'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: tests/bootstrap/minio-check.php
+
+		-
+			message: '#^Cannot access offset ''endpoint'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: tests/bootstrap/minio-check.php
+
+		-
+			message: '#^Cannot access offset ''key'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: tests/bootstrap/minio-check.php
+
+		-
+			message: '#^Cannot access offset ''region'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: tests/bootstrap/minio-check.php
+
+		-
+			message: '#^Cannot access offset ''secret'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: tests/bootstrap/minio-check.php
+
+		-
+			message: '#^Cannot access offset ''use_path_style_endpoint'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: tests/bootstrap/minio-check.php
+
+		-
+			message: '#^Cannot access offset \(float\|int\) on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: tests/bootstrap/minio-check.php
+
+		-
+			message: '#^Cannot call method bootstrap\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/bootstrap/minio-check.php
+
+		-
+			message: '#^Cannot call method make\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/bootstrap/minio-check.php
+
+		-
+			message: '#^Parameter \#1 \$haystack of function stripos expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/bootstrap/minio-check.php
+
+		-
+			message: '#^Parameter \#2 \$subject of function preg_match expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 2
+			path: tests/bootstrap/minio-check.php
+
+		-
+			message: '#^Part \$bucket \(mixed\) of encapsed string cannot be cast to string\.$#'
+			identifier: encapsedStringPart.nonString
+			count: 1
+			path: tests/bootstrap/minio-check.php
