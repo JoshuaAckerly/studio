@@ -5,7 +5,7 @@ const Welcome: React.FC = () => (
     <MainLayout>
         <div style={{ textAlign: 'center', marginTop: '4rem' }}>
             <h1>Welcome to the Studio!</h1>
-            <p>TComing Soon!</p>
+            <p>Coming Soon!</p>
         </div>
     </MainLayout>
 );
