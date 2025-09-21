@@ -9,10 +9,11 @@ Route::get('/', function () {
 
 Route::redirect('/login', '/', 301);
 Route::redirect('/register', '/', 301);
-Route::redirect('/dashboard', '/', 301);
-Route::redirect('/forgot-password', '/', 301);
 Route::redirect('/reset-password', '/', 301);
-Route::redirect('/reset-password/*', '/', 301);
+Route::redirect('/forgot-password', '/', 301);
+Route::redirect('/reset-password/{token}', '/', 301);
+Route::redirect('/verify-email', '/', 301);
+Route::redirect('/confirm-password', '/', 301);
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
