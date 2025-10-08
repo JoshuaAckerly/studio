@@ -5,7 +5,12 @@ use Inertia\Inertia;
 
 Route::get('/', function () {
     return Inertia::render('welcome');
-})->name('home');
+})->name('welcome');
+
+// Games Routes
+Route::get('/games/noteleks', function () {
+    return view('games.noteleks');
+})->name('games.noteleks');
 
 Route::redirect('/login', '/', 301);
 Route::redirect('/register', '/', 301);
