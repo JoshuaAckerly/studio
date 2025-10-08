@@ -12,6 +12,10 @@ Route::get('/games/noteleks', function () {
     return view('games.noteleks');
 })->name('games.noteleks');
 
+Route::get('/games/noteleks-debug', function () {
+    return view('games.noteleks-debug');
+})->name('games.noteleks-debug');
+
 Route::redirect('/login', '/', 301);
 Route::redirect('/register', '/', 301);
 Route::redirect('/reset-password', '/', 301);
