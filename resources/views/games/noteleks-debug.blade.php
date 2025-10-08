@@ -85,6 +85,8 @@
                 this.health = 100;
                 this.gameState = 'playing';
                 this.playerFacing = 'right'; // Track which way player is facing
+                this.useSpineAnimations = false; // Toggle for Spine vs placeholder sprites
+                console.log('🏗️ GameScene constructor - useSpineAnimations:', this.useSpineAnimations);
             }
 
             preload() {
@@ -92,24 +94,40 @@
                 
                 // Load Spine animations if available
                 if (this.useSpineAnimations) {
-                    // Load player character animations
-                    this.load.spine('skeleton', 
-                        'games/noteleks/spine/characters/skeleton.json', 
-                        'games/noteleks/spine/characters/skeleton.atlas'
-                    );
+                    console.log('🦴 Starting Spine animation loading...');
+                    console.log('🔍 Available loader methods:', {
+                        spine: !!this.load.spine,
+                        spineAtlas: !!this.load.spineAtlas,
+                        spineJson: !!this.load.spineJson,
+                        spineBinary: !!this.load.spineBinary
+                    });
                     
-                    // Load enemy animations
-                    this.load.spine('zombie', 
-                        'games/noteleks/spine/enemies/zombie.json', 
-                        'games/noteleks/spine/enemies/zombie.atlas'
-                    );
+                    // Use the correct method for modern Spine plugin
+                    try {
+                        if (this.load.spineAtlas && this.load.spineJson) {
+                            console.log('📁 Using separate spineAtlas + spineJson loading');
+                            this.load.spineAtlas('noteleks-atlas', '/games/noteleks/spine/characters/Noteleks.atlas');
+                            this.load.spineJson('noteleks-data', '/games/noteleks/spine/characters/Noteleks.json');
+                        } else {
+                            console.log('📁 Fallback: using manual JSON + text loading');
+                            this.load.json('noteleks-json', '/games/noteleks/spine/characters/Noteleks.json');
+                            this.load.text('noteleks-atlas', '/games/noteleks/spine/characters/Noteleks.atlas');
+                            this.load.image('noteleks-texture', '/games/noteleks/spine/characters/Noteleks.png');
+                        }
+                    } catch (error) {
+                        console.error('❌ Error setting up Spine loading:', error);
+                    }
                     
-                    this.load.spine('ghoul', 
-                        'games/noteleks/spine/enemies/ghoul.json', 
-                        'games/noteleks/spine/enemies/ghoul.atlas'
-                    );
+                    console.log('📁 Loading Noteleks from: /games/noteleks/spine/characters/');
                     
-                    console.log('Loading Spine animations...');
+                    // Add loading event listeners
+                    this.load.on('filecomplete', function(key, type, data) {
+                        console.log('✅ File loaded:', key, '(' + type + ')');
+                    });
+                    
+                    this.load.on('loaderror', function(file) {
+                        console.error('❌ File failed to load:', file.src);
+                    });
                 }
                 
                 console.log('Preload complete - ready to create game objects');
@@ -163,19 +181,66 @@
                 this.platforms.create(750, 220, 'ground');
 
                 // Create player
-                if (this.useSpineAnimations && this.add.spine) {
+                if (this.useSpineAnimations) {
+                    console.log('🎭 Attempting to create Spine player...');
+                    console.log('🔍 JSON cache keys:', Object.keys(this.cache.json.entries.entries));
+                    console.log('🔍 Text cache keys:', Object.keys(this.cache.text.entries.entries));
+                    console.log('🔍 Custom cache keys:', this.cache.custom);
+                    console.log('🔍 Spine add methods:', !!this.add.spine);
+                    
                     try {
-                        // Create Spine skeleton for player
-                        this.player = this.add.spine(100, 450, 'skeleton', 'idle', true);
+                        if (this.add.spine) {
+                            console.log('🦴 Creating spine with separate data keys');
+                            
+                            // Check what's actually available in the caches
+                            try {
+                                const spineData = this.spine ? this.spine.cache.get('noteleks-data') : 'spine not available';
+                                const atlasData = this.spine ? this.spine.getAtlas('noteleks-atlas') : 'spine not available';
+                                console.log('🔍 Spine data available:', !!spineData);
+                                console.log('🔍 Atlas data available:', !!atlasData);
+                            } catch (e) {
+                                console.log('🔍 Cache inspection failed:', e.message);
+                            }
+                            
+                            // Use the correct parameter order for separate loading
+                            this.player = this.add.spine(100, 450, 'noteleks-data', 'noteleks-atlas');
+                            
+                            // Set scale and initial animation after creation
+                            this.player.setScale(0.05);
+                        } else {
+                            console.log('🦴 add.spine method not available');
+                            throw new Error('Spine add method not available');
+                        }
+                        
                         this.physics.add.existing(this.player);
                         this.player.body.setBounce(0.2);
                         this.player.body.setCollideWorldBounds(true);
                         
-                        // Set up Spine animations
-                        this.player.setAnimation(0, 'idle', true);
-                        console.log('Spine player created successfully');
+                        // Scale Spine character to match game size
+                        this.player.setScale(0.05); // Made smaller
+                        
+                        // Set up initial Spine animation
+                        this.playPlayerAnimation('idle', true);
+                        console.log('✅ Spine player created successfully!');
+                        if (this.player.skeleton && this.player.skeleton.data && this.player.skeleton.data.animations) {
+                            const availableAnimations = this.player.skeleton.data.animations.map(a => a.name);
+                            console.log('🎬 Available animations:', availableAnimations);
+                            console.log('🔍 Animation details:', this.player.skeleton.data.animations.map(a => ({name: a.name, duration: a.duration})));
+                            
+                            // Store available animations for easy access
+                            this.availableAnimations = availableAnimations;
+                            
+                            // Set a default animation from available ones
+                            if (availableAnimations.length > 0) {
+                                const defaultAnim = availableAnimations[0]; // Use first available animation
+                                console.log(`🎯 Setting default animation: ${defaultAnim}`);
+                                this.player.animationState.setAnimation(0, defaultAnim, true);
+                                this.currentAnimation = defaultAnim; // Track current animation
+                            }
+                        }
                     } catch (error) {
-                        console.error('Failed to create Spine player:', error);
+                        console.error('❌ Failed to create Spine player:', error);
+                        console.log('🔄 Falling back to placeholder sprite...');
                         // Fallback to placeholder sprite
                         this.useSpineAnimations = false;
                         this.player = this.physics.add.sprite(100, 450, 'skeleton');
@@ -183,6 +248,7 @@
                         this.player.setCollideWorldBounds(true);
                     }
                 } else {
+                    console.log('📦 Creating placeholder sprite player...');
                     // Create placeholder sprite for player
                     this.player = this.physics.add.sprite(100, 450, 'skeleton');
                     this.player.setBounce(0.2);
@@ -223,38 +289,86 @@
             update() {
                 if (this.gameState !== 'playing') return;
 
-                // Player movement and facing direction
+                // Player movement and facing direction (only if not attacking)
                 if (this.cursors.left.isDown || this.wasd.A.isDown) {
-                    this.player.setVelocityX(-160);
+                    this.player.body.setVelocityX(-160);
                     this.playerFacing = 'left';
                     if (this.useSpineAnimations) {
-                        this.player.setScaleX(-1); // Flip Spine skeleton
-                        this.playPlayerAnimation('run');
+                        this.player.setScale(-0.05, 0.05); // Flip Spine skeleton (negative X to flip)
+                        if (!this.isAttacking) {
+                            this.playPlayerAnimation('run');
+                        }
                     } else {
                         this.player.setFlipX(true); // Flip sprite
                     }
                 } else if (this.cursors.right.isDown || this.wasd.D.isDown) {
-                    this.player.setVelocityX(160);
+                    this.player.body.setVelocityX(160);
                     this.playerFacing = 'right';
                     if (this.useSpineAnimations) {
-                        this.player.setScaleX(1); // Normal Spine skeleton
-                        this.playPlayerAnimation('run');
+                        this.player.setScale(0.05, 0.05); // Normal Spine skeleton
+                        if (!this.isAttacking) {
+                            this.playPlayerAnimation('run');
+                        }
                     } else {
                         this.player.setFlipX(false); // Normal sprite
                     }
                 } else {
-                    this.player.setVelocityX(0);
-                    this.playPlayerAnimation('idle');
+                    this.player.body.setVelocityX(0);
+                    if (!this.isAttacking) {
+                        this.playPlayerAnimation('idle');
+                    }
                 }
 
-                // Jumping
-                if ((this.cursors.up.isDown || this.wasd.W.isDown) && this.player.body.touching.down) {
-                    this.player.setVelocityY(-330);
+                // Jumping (only if not attacking)
+                if ((this.cursors.up.isDown || this.wasd.W.isDown) && this.player.body.touching.down && !this.isAttacking) {
+                    this.player.body.setVelocityY(-330);
+                    this.playPlayerAnimation('jump', false); // Play jump animation once
                 }
 
-                // Throw weapon
-                if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
+                // Check if player is in air (for jump animation)
+                if (!this.player.body.touching.down && this.player.body.velocity.y !== 0 && !this.isAttacking) {
+                    // Player is jumping or falling
+                    if (this.currentAnimation !== 'jump' && this.currentAnimation !== 'Jump') {
+                        this.playPlayerAnimation('jump', false);
+                    }
+                } else if (this.player.body.touching.down && (this.currentAnimation === 'jump' || this.currentAnimation === 'Jump') && !this.isAttacking) {
+                    // Player just landed, return to appropriate ground animation
+                    if (Math.abs(this.player.body.velocity.x) > 0) {
+                        this.playPlayerAnimation('run');
+                    } else {
+                        this.playPlayerAnimation('idle');
+                    }
+                }
+
+                // Throw weapon / Attack
+                if (Phaser.Input.Keyboard.JustDown(this.spaceKey) && !this.isAttacking) {
+                    console.log('🗡️ Attack key pressed! Starting attack...');
+                    
+                    this.isAttacking = true; // Block other animations during attack
+                    this.playPlayerAnimation('attack', false); // Play attack animation once
                     this.throwWeapon();
+                    
+                    // Get attack animation duration for proper timing
+                    const attackAnim = this.findAnimation(['attack', 'Attack', 'ATTACK', 'throw', 'Throw']);
+                    let attackDuration = 800; // Default duration
+                    
+                    if (this.player.skeleton && this.player.skeleton.data) {
+                        const animData = this.player.skeleton.data.animations.find(a => a.name === attackAnim);
+                        if (animData) {
+                            attackDuration = Math.max(animData.duration * 1000, 600); // Convert to ms, minimum 600ms
+                            console.log(`⏱️ Attack duration: ${attackDuration}ms`);
+                        }
+                    }
+                    
+                    // Return to appropriate animation after attack completes
+                    this.time.delayedCall(attackDuration, () => {
+                        this.isAttacking = false;
+                        if (Math.abs(this.player.body.velocity.x) > 0) {
+                            this.playPlayerAnimation('run');
+                        } else {
+                            this.playPlayerAnimation('idle');
+                        }
+                    });
                 }
 
                 // Clean up off-screen weapons
@@ -278,36 +392,62 @@
 
             // Helper method to play player animations
             playPlayerAnimation(animationName, loop = true) {
-                if (this.useSpineAnimations && this.player.setAnimation) {
-                    this.player.setAnimation(0, animationName, loop);
-                }
-                // For placeholder sprites, you could add sprite sheet animations here later
-            }
-
-            // Helper method to create enemies with Spine support
-            createEnemy(x, y) {
-                let enemy;
-                if (this.useSpineAnimations && this.add.spine) {
-                    try {
-                        enemy = this.add.spine(x, y, 'enemy', 'walk', true);
-                        this.physics.add.existing(enemy);
-                        enemy.body.setBounce(0.2);
-                        enemy.body.setCollideWorldBounds(true);
-                        enemy.setAnimation(0, 'walk', true);
-                    } catch (error) {
-                        console.error('Failed to create Spine enemy:', error);
-                        // Fallback to placeholder sprite
-                        enemy = this.enemies.create(x, y, 'enemy');
-                        enemy.setBounce(0.2);
-                        enemy.setCollideWorldBounds(true);
-                        enemy.setTint(0x00ff00);
+                if (this.useSpineAnimations && this.player) {
+                    // Create animation mapping for common names
+                    const animationMap = {
+                        'idle': this.findAnimation(['idle', 'Idle', 'IDLE', 'stand', 'Stand']),
+                        'run': this.findAnimation(['run', 'Run', 'RUN', 'walk', 'Walk']),
+                        'jump': this.findAnimation(['jump', 'Jump', 'JUMP']),
+                        'attack': this.findAnimation(['attack', 'Attack', 'ATTACK'])
+                    };
+                    
+                    const actualAnimationName = animationMap[animationName] || animationName;
+                    
+                    if (!actualAnimationName) {
+                        console.log(`⚠️ Animation "${animationName}" not found, available:`, this.availableAnimations);
+                        return;
+                    }
+                    
+                    // Only set animation if it's different from current one
+                    if (this.currentAnimation !== actualAnimationName) {
+                        this.currentAnimation = actualAnimationName;
+                        console.log(`🎬 Changing animation to: ${actualAnimationName} (from ${animationName})`);
+                        
+                        try {
+                            if (this.player.animationState) {
+                                this.player.animationState.setAnimation(0, actualAnimationName, loop);
+                                console.log(`✅ Animation ${actualAnimationName} set successfully`);
+                            } else {
+                                console.error(`❌ animationState not found on player object`);
+                            }
+                        } catch (error) {
+                            console.error(`❌ Failed to set animation ${actualAnimationName}:`, error);
+                            console.log(`🎬 Available animations:`, this.availableAnimations);
+                        }
                     }
                 } else {
-                    enemy = this.enemies.create(x, y, 'enemy');
-                    enemy.setBounce(0.2);
-                    enemy.setCollideWorldBounds(true);
-                    enemy.setTint(0x00ff00);
+                    console.log(`🚫 Animation not set - useSpine: ${this.useSpineAnimations}, player exists: ${!!this.player}`);
                 }
+            }
+            
+            // Helper method to find animation by trying multiple name variations
+            findAnimation(nameVariations) {
+                if (!this.availableAnimations) return null;
+                
+                for (const variation of nameVariations) {
+                    if (this.availableAnimations.includes(variation)) {
+                        return variation;
+                    }
+                }
+                return null;
+            }
+
+            // Helper method to create enemies (placeholder sprites only)
+            createEnemy(x, y) {
+                const enemy = this.enemies.create(x, y, 'enemy');
+                enemy.setBounce(0.2);
+                enemy.setCollideWorldBounds(true);
+                enemy.setTint(0x00ff00);
                 enemy.health = 2;
                 return enemy;
             }
@@ -366,10 +506,20 @@
                 this.health -= 20;
                 this.updateUI();
 
-                player.setTint(0xff0000);
-                this.time.delayedCall(200, () => {
-                    player.setTint(0xffffff);
-                });
+                // Handle tinting for both Spine and regular sprites
+                if (this.useSpineAnimations && player.skeleton) {
+                    // For Spine objects, we can use alpha or scale effects instead
+                    player.setAlpha(0.5);
+                    this.time.delayedCall(200, () => {
+                        player.setAlpha(1.0);
+                    });
+                } else {
+                    // For regular sprites
+                    player.setTint(0xff0000);
+                    this.time.delayedCall(200, () => {
+                        player.setTint(0xffffff);
+                    });
+                }
 
                 if (this.health <= 0) {
                     this.gameOver();
@@ -414,6 +564,10 @@
         class NoteleksGame {
             constructor() {
                 console.log('Initializing game...');
+                console.log('🔍 Spine availability check:');
+                console.log('  - window.spine:', !!window.spine);
+                console.log('  - window.spine.SpinePlugin:', !!(window.spine && window.spine.SpinePlugin));
+                console.log('  - Plugin will be loaded:', typeof window.spine !== 'undefined' && window.spine.SpinePlugin);
                 this.config = {
                     type: Phaser.AUTO,
                     width: 800,
@@ -429,8 +583,13 @@
                     },
                     scene: GameScene,
                     plugins: {
-                        scene: typeof window.spine !== 'undefined' ? [
-                            { key: 'spine.SpinePlugin', plugin: window.spine.SpinePlugin, mapping: 'spine' }
+                        scene: typeof window.spine !== 'undefined' && window.spine.SpinePlugin ? [
+                            { 
+                                key: 'spine.SpinePlugin', 
+                                plugin: window.spine.SpinePlugin, 
+                                mapping: 'spine',
+                                start: true
+                            }
                         ] : []
                     }
                 };
@@ -461,29 +620,25 @@
                 document.getElementById('spine-toggle-btn').addEventListener('click', () => {
                     const scene = game.game.scene.getScene('GameScene');
                     if (scene) {
+                        console.log('🎯 Toggle button clicked!');
+                        console.log('🔍 Current useSpineAnimations:', scene.useSpineAnimations);
+                        
                         // Check if Spine plugin is available
                         if (!scene.add.spine || !window.spine) {
                             alert('Spine plugin not available. Please ensure the Spine plugin loaded correctly.');
                             return;
                         }
                         
+                        // Toggle the setting
                         scene.useSpineAnimations = !scene.useSpineAnimations;
+                        console.log('🔄 New useSpineAnimations:', scene.useSpineAnimations);
+                        
+                        // Update button text
                         const btn = document.getElementById('spine-toggle-btn');
                         btn.textContent = scene.useSpineAnimations ? 'Disable Spine Animations' : 'Enable Spine Animations';
                         
                         // Restart game to apply changes
-                        scene.restartGame();
-                    }
-                });
-
-                document.getElementById('spine-toggle-btn').addEventListener('click', () => {
-                    const scene = game.game.scene.getScene('GameScene');
-                    if (scene) {
-                        scene.useSpineAnimations = !scene.useSpineAnimations;
-                        const btn = document.getElementById('spine-toggle-btn');
-                        btn.textContent = scene.useSpineAnimations ? 'Disable Spine Animations' : 'Enable Spine Animations';
-                        
-                        // Restart game to apply changes
+                        console.log('🔄 Restarting game...');
                         scene.restartGame();
                     }
                 });

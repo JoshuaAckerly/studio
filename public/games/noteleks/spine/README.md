@@ -4,9 +4,9 @@
 
 ### Characters Folder (`/characters/`)
 Put your player character Spine files here:
-- `skeleton.json` - Animation data exported from Spine
-- `skeleton.atlas` - Texture atlas file
-- `skeleton.png` - Sprite sheet image
+- `noteleks.json` - Animation data exported from Spine
+- `noteleks.atlas` - Texture atlas file
+- `noteleks.png` - Sprite sheet image
 
 ### Enemies Folder (`/enemies/`)
 Put your enemy character Spine files here:
@@ -18,7 +18,7 @@ Put your enemy character Spine files here:
 
 The game code expects these animation names in your Spine files:
 
-### Player Character (skeleton):
+### Player Character (noteleks):
 - `idle` - Standing still animation
 - `run` - Running/walking animation
 - `jump` - Jumping animation (optional)
