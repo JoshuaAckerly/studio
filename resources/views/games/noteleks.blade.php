@@ -91,7 +91,7 @@
                 this.health = 100;
                 this.gameState = 'playing';
                 this.playerFacing = 'right';
-                this.useSpineAnimations = true; // Enable Spine animations by default
+                this.useSpineAnimations = false; // Temporarily disable Spine for debugging
             }
 
             preload() {

@@ -16,6 +16,15 @@ Route::get('/games/noteleks-debug', function () {
     return view('games.noteleks-debug');
 })->name('games.noteleks-debug');
 
+// Test route for debugging
+Route::get('/test', function () {
+    return response()->json([
+        'status' => 'working',
+        'laravel' => app()->version(),
+        'time' => now()
+    ]);
+});
+
 Route::redirect('/login', '/', 301);
 Route::redirect('/register', '/', 301);
 Route::redirect('/reset-password', '/', 301);
