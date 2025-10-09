@@ -7,9 +7,9 @@ Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('welcome');
 
-// Games Routes
+// Games Routes - temporarily using basic response
 Route::get('/games/noteleks', function () {
-    return view('games.noteleks');
+    return response('<h1>Noteleks Game</h1><p>Basic HTML test - no Blade view</p>');
 })->name('games.noteleks');
 
 Route::get('/games/noteleks-debug', function () {
@@ -49,6 +49,11 @@ Route::get('/debug-noteleks', function () {
             'trace' => $e->getTraceAsString()
         ]);
     }
+});
+
+// Test with minimal noteleks
+Route::get('/noteleks-minimal', function () {
+    return view('games.noteleks-minimal');
 });
 
 Route::redirect('/login', '/', 301);
