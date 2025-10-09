@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Noteleks Heroes Beyond Light - {{ config('app.name') }}</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
-    <!-- Spine script temporarily disabled: <script src="https://unpkg.com/@esotericsoftware/spine-phaser-v3@4.2.*/dist/iife/spine-phaser-v3.js"></script> -->
+    <script src="https://unpkg.com/@esotericsoftware/spine-phaser-v3@4.2.*/dist/iife/spine-phaser-v3.js"></script>
     <style>
         body {
             margin: 0;
@@ -91,7 +91,7 @@
                 this.health = 100;
                 this.gameState = 'playing';
                 this.playerFacing = 'right';
-                this.useSpineAnimations = false; // Disabled until assets are deployed
+                this.useSpineAnimations = true; // Re-enabled after fixing permissions
             }
 
             preload() {

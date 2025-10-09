@@ -7,54 +7,14 @@ Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('welcome');
 
-// Games Routes - temporarily using basic response
+// Games Routes
 Route::get('/games/noteleks', function () {
-    return response('<h1>Noteleks Game</h1><p>Basic HTML test - no Blade view</p>');
+    return view('games.noteleks');
 })->name('games.noteleks');
 
 Route::get('/games/noteleks-debug', function () {
     return view('games.noteleks-debug');
 })->name('games.noteleks-debug');
-
-// Test route for debugging
-Route::get('/test', function () {
-    return response()->json([
-        'status' => 'working',
-        'laravel' => app()->version(),
-        'time' => now()
-    ]);
-});
-
-// Simple blade test
-Route::get('/simple-test', function () {
-    return view('games.simple-test');
-});
-
-// Debug the noteleks route
-Route::get('/debug-noteleks', function () {
-    try {
-        $viewExists = view()->exists('games.noteleks');
-        $viewPath = resource_path('views/games/noteleks.blade.php');
-        $fileExists = file_exists($viewPath);
-        
-        return response()->json([
-            'view_exists' => $viewExists,
-            'file_exists' => $fileExists,
-            'view_path' => $viewPath,
-            'app_debug' => config('app.debug'),
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
-        ]);
-    }
-});
-
-// Test with minimal noteleks
-Route::get('/noteleks-minimal', function () {
-    return view('games.noteleks-minimal');
-});
 
 Route::redirect('/login', '/', 301);
 Route::redirect('/register', '/', 301);
