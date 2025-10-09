@@ -7,6 +7,7 @@ import GameUI from './GameUI.js';
 // Import Spine assets as static files
 import noteleksAtlas from '../../../static/games/noteleks/spine/characters/Noteleks.atlas?url';
 import noteleksJson from '../../../static/games/noteleks/spine/characters/Noteleks.json?url';
+import noteleksPng from '../../../static/games/noteleks/spine/characters/Noteleks.png';
 
 /**
  * Main game scene for Noteleks Heroes Beyond Light
@@ -55,14 +56,18 @@ class GameScene extends Phaser.Scene {
         // Use Vite-imported asset URLs
         console.log('Attempting to load assets from:', { 
             atlasPath: noteleksAtlas, 
-            jsonPath: noteleksJson 
+            jsonPath: noteleksJson,
+            pngPath: noteleksPng
         });
         
         // Test if we can fetch the files first
         this.testAssetAvailability(noteleksAtlas, noteleksJson);
         
+        // Load the PNG texture first
+        this.load.image('noteleks-texture', noteleksPng);
+        
         // Load Spine assets using Vite asset URLs
-        this.load.spineAtlas('noteleks-atlas', noteleksAtlas);
+        this.load.spineAtlas('noteleks-atlas', noteleksAtlas, 'noteleks-texture');
         this.load.spineJson('noteleks-data', noteleksJson);
 
         // Create placeholder sprites as textures
