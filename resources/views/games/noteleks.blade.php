@@ -184,7 +184,7 @@
                         this.physics.add.existing(this.player);
                         this.player.body.setBounce(0.2);
                         this.player.body.setCollideWorldBounds(true);
-                        this.player.setScale(0.05);
+                        this.player.setScale(0.1);
                         
                         // Store available animations
                         if (this.player.skeleton && this.player.skeleton.data && this.player.skeleton.data.animations) {
@@ -221,7 +221,7 @@
                     this.player.body.setVelocityX(-160);
                     this.playerFacing = 'left';
                     if (this.useSpineAnimations) {
-                        this.player.setScale(-0.05, 0.05);
+                        this.player.setScale(-0.1, 0.1);
                         if (!this.isAttacking) {
                             this.playPlayerAnimation('run');
                         }
@@ -232,7 +232,7 @@
                     this.player.body.setVelocityX(160);
                     this.playerFacing = 'right';
                     if (this.useSpineAnimations) {
-                        this.player.setScale(0.05, 0.05);
+                        this.player.setScale(0.1, 0.1);
                         if (!this.isAttacking) {
                             this.playPlayerAnimation('run');
                         }
