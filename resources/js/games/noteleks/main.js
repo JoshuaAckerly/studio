@@ -206,14 +206,36 @@ class GameMain {
     }
 }
 
-// Auto-initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
+// Wait for dependencies and DOM to be ready
+function initializeWhenReady() {
+    if (typeof Phaser === 'undefined') {
+        console.log('Waiting for Phaser to load...');
+        setTimeout(initializeWhenReady, 100);
+        return;
+    }
+    
+    if (typeof window.spine === 'undefined') {
+        console.log('Waiting for Spine plugin to load...');
+        setTimeout(initializeWhenReady, 100);
+        return;
+    }
+    
+    if (document.readyState !== 'complete' && document.readyState !== 'interactive') {
+        console.log('Waiting for DOM to be ready...');
+        setTimeout(initializeWhenReady, 100);
+        return;
+    }
+    
+    console.log('All dependencies ready, initializing game...');
     const gameMain = new GameMain();
     gameMain.initialize();
     
     // Store reference for potential cleanup
     window.gameMain = gameMain;
-});
+}
+
+// Start the initialization check
+initializeWhenReady();
 
 // Handle page unload cleanup
 window.addEventListener('beforeunload', () => {

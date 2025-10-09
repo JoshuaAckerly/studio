@@ -6,10 +6,14 @@ import GameScene from './GameScene.js';
  */
 class NoteleksGame {
     constructor() {
+        // Calculate game dimensions to fit screen
+        const gameWidth = window.innerWidth;
+        const gameHeight = window.innerHeight;
+        
         this.config = {
             type: Phaser.AUTO,
-            width: 800,
-            height: 600,
+            width: gameWidth,
+            height: gameHeight,
             parent: 'phaser-game',
             backgroundColor: '#1a1a2e',
             physics: {
@@ -22,16 +26,34 @@ class NoteleksGame {
             scene: GameScene,
             plugins: {
                 scene: this.getSpinePlugin()
+            },
+            scale: {
+                mode: Phaser.Scale.RESIZE,
+                autoCenter: Phaser.Scale.CENTER_BOTH
             }
         };
 
         this.game = null;
         this.initialize();
+        this.setupResizeHandler();
+    }
+
+    setupResizeHandler() {
+        window.addEventListener('resize', () => {
+            if (this.game) {
+                this.game.scale.resize(window.innerWidth, window.innerHeight);
+            }
+        });
     }
 
     getSpinePlugin() {
         // Check if Spine plugin is available
+        console.log('Checking Spine plugin availability...');
+        console.log('window.spine:', typeof window.spine);
+        console.log('window.spine object:', window.spine);
+        
         if (typeof window.spine !== 'undefined' && window.spine.SpinePlugin) {
+            console.log('Spine plugin found, configuring...');
             return [{
                 key: 'spine.SpinePlugin',
                 plugin: window.spine.SpinePlugin,
@@ -39,6 +61,8 @@ class NoteleksGame {
                 start: true
             }];
         }
+        
+        console.warn('Spine plugin not available - animations will use placeholder sprites');
         return [];
     }
 

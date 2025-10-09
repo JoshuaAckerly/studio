@@ -28,8 +28,8 @@ class GameScene extends Phaser.Scene {
         }).setOrigin(0.5);
 
         // Load Spine animations
-        this.load.spineAtlas('noteleks-atlas', '/games/noteleks-assets/spine/characters/Noteleks.atlas');
-        this.load.spineJson('noteleks-data', '/games/noteleks-assets/spine/characters/Noteleks.json');
+        this.load.spineAtlas('noteleks-atlas', '/games/noteleks/spine/characters/Noteleks.atlas');
+        this.load.spineJson('noteleks-data', '/games/noteleks/spine/characters/Noteleks.json');
 
         // Create placeholder sprites as textures
         this.createPlaceholderTextures();
@@ -95,8 +95,9 @@ class GameScene extends Phaser.Scene {
         this.weaponManager = new WeaponManager(this);
         this.gameUI = new GameUI(this);
 
-        // Create player
-        this.player = new Player(this, 100, 450);
+        // Create player - position relative to screen
+        const screenHeight = this.cameras.main.height;
+        this.player = new Player(this, 100, screenHeight - 150);
 
         // Create enemies group
         this.enemies = this.physics.add.group();
@@ -116,18 +117,33 @@ class GameScene extends Phaser.Scene {
     createPlatforms() {
         this.platforms = this.physics.add.staticGroup();
         
-        // Ground
-        this.platforms.create(400, 568, 'ground').setScale(12.5, 1).refreshBody();
+        // Get screen dimensions
+        const screenWidth = this.cameras.main.width;
+        const screenHeight = this.cameras.main.height;
         
-        // Floating platforms
-        this.platforms.create(600, 400, 'ground');
-        this.platforms.create(50, 250, 'ground');
-        this.platforms.create(750, 220, 'ground');
+        // Ground - scale to full width
+        const groundScale = screenWidth / 64; // ground texture is 64px wide
+        this.platforms.create(screenWidth / 2, screenHeight - 16, 'ground')
+            .setScale(groundScale, 1).refreshBody();
+        
+        // Floating platforms - positioned relative to screen size
+        this.platforms.create(screenWidth * 0.75, screenHeight * 0.6, 'ground');
+        this.platforms.create(screenWidth * 0.1, screenHeight * 0.4, 'ground');
+        this.platforms.create(screenWidth * 0.9, screenHeight * 0.35, 'ground');
+        
+        // Additional platforms for wider screens
+        if (screenWidth > 1200) {
+            this.platforms.create(screenWidth * 0.5, screenHeight * 0.3, 'ground');
+            this.platforms.create(screenWidth * 0.3, screenHeight * 0.7, 'ground');
+        }
     }
 
     setupCollisions() {
         // Player vs enemies
         this.physics.add.overlap(this.player.getSprite(), this.enemies, this.playerHitEnemy, null, this);
+        
+        // Weapons vs enemies
+        this.weaponManager.setupEnemyCollisions(this.enemies);
     }
 
     setupControls() {
@@ -136,15 +152,10 @@ class GameScene extends Phaser.Scene {
         this.wasd = this.input.keyboard.addKeys('W,S,A,D,P,R,ESC');
         this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
-        // Mouse/touch controls for weapon throwing
+        // Mouse/touch controls for attacking
         this.input.on('pointerdown', (pointer) => {
-            if (this.gameState === 'playing') {
-                this.weaponManager.createWeapon(
-                    this.player.getPosition().x,
-                    this.player.getPosition().y - 10,
-                    this.player.facing,
-                    pointer
-                );
+            if (this.gameState === 'playing' && !this.player.isAttacking) {
+                this.player.attack(pointer);
             }
         });
     }
@@ -164,8 +175,9 @@ class GameScene extends Phaser.Scene {
     spawnEnemy() {
         if (this.gameState !== 'playing') return;
 
-        // Random spawn position
-        const x = Phaser.Math.Between(600, 750);
+        // Random spawn position - relative to screen width
+        const screenWidth = this.cameras.main.width;
+        const x = Phaser.Math.Between(screenWidth * 0.7, screenWidth * 0.95);
         
         // Choose enemy type based on score
         let enemyType = 'zombie';
@@ -227,7 +239,7 @@ class GameScene extends Phaser.Scene {
             this.restartGame();
         } else if (Phaser.Input.Keyboard.JustDown(this.wasd.ESC)) {
             // Could add functionality to return to main menu
-            console.log('ESC pressed - could return to menu');
+            window.location.href = '/';
         }
     }
 
@@ -298,9 +310,9 @@ class GameScene extends Phaser.Scene {
         // Reset UI
         this.gameUI.reset();
         
-        // Reset player position
-        this.player.getSprite().setPosition(100, 450);
-        this.player.getSprite().setVelocity(0, 0);
+        // Reset player - position relative to screen
+        const screenHeight = this.cameras.main.height;
+        this.player.reset(100, screenHeight - 150);
         
         // Resume physics
         this.physics.resume();

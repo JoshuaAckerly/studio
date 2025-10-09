@@ -20,13 +20,18 @@ class Player {
     }
 
     createPlayer() {
+        console.log('Creating player...');
+        console.log('useSpineAnimations:', this.useSpineAnimations);
+        console.log('scene.add.spine:', typeof this.scene.add.spine);
+        
         if (this.useSpineAnimations && this.scene.add.spine) {
             try {
+                console.log('Attempting to create Spine player...');
                 this.sprite = this.scene.add.spine(this.x, this.y, 'noteleks-data', 'noteleks-atlas');
                 this.scene.physics.add.existing(this.sprite);
                 this.sprite.body.setBounce(0.2);
                 this.sprite.body.setCollideWorldBounds(true);
-                this.sprite.setScale(0.1);
+                this.sprite.setScale(0.15);
                 
                 // Store available animations
                 if (this.sprite.skeleton && this.sprite.skeleton.data && this.sprite.skeleton.data.animations) {
@@ -46,6 +51,7 @@ class Player {
                 this.createPlaceholderPlayer();
             }
         } else {
+            console.log('Using placeholder player (Spine not available)');
             this.createPlaceholderPlayer();
         }
     }
@@ -79,7 +85,7 @@ class Player {
             this.sprite.body.setVelocityX(-160);
             this.facing = 'left';
             if (this.useSpineAnimations) {
-                this.sprite.setScale(-0.1, 0.1);
+                this.sprite.setScale(-0.15, 0.15);
                 if (!this.isAttacking) {
                     this.playAnimation('run');
                 }
@@ -90,7 +96,7 @@ class Player {
             this.sprite.body.setVelocityX(160);
             this.facing = 'right';
             if (this.useSpineAnimations) {
-                this.sprite.setScale(0.1, 0.1);
+                this.sprite.setScale(0.15, 0.15);
                 if (!this.isAttacking) {
                     this.playAnimation('run');
                 }
@@ -118,12 +124,12 @@ class Player {
         }
     }
 
-    attack() {
+    attack(pointer = null) {
         this.isAttacking = true;
         this.playAnimation('attack');
         
         // Create weapon/projectile
-        this.scene.weaponManager.createWeapon(this.sprite.x, this.sprite.y - 10, this.facing);
+        this.scene.weaponManager.createWeapon(this.sprite.x, this.sprite.y - 10, this.facing, pointer);
         
         // Reset attack state after animation
         this.scene.time.delayedCall(500, () => {
@@ -160,6 +166,34 @@ class Player {
         }
         
         return amount;
+    }
+
+    reset(x = 100, y = 450) {
+        // Reset position
+        this.sprite.setPosition(x, y);
+        
+        // Reset velocity
+        if (this.sprite.body) {
+            this.sprite.body.setVelocity(0, 0);
+        }
+        
+        // Reset state
+        this.facing = 'right';
+        this.isAttacking = false;
+        
+        // Reset scale to default
+        if (this.useSpineAnimations) {
+            this.sprite.setScale(0.15, 0.15);
+            this.playAnimation('idle');
+        } else {
+            this.sprite.setFlipX(false);
+        }
+        
+        // Reset any visual effects
+        this.sprite.setAlpha(1.0);
+        if (!this.useSpineAnimations) {
+            this.sprite.setTint(0xffffff);
+        }
     }
 
     getPosition() {

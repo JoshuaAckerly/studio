@@ -21,8 +21,13 @@ class WeaponManager {
     createWeaponGroup() {
         this.weapons = this.scene.physics.add.group();
         
-        // Setup collision with enemies
-        this.scene.physics.add.overlap(this.weapons, this.scene.enemies, this.hitEnemy, null, this.scene);
+        // Note: Collision setup moved to setupCollisions() method in GameScene
+        // to ensure enemies group exists first
+    }
+
+    setupEnemyCollisions(enemiesGroup) {
+        // Setup collision with enemies - bind context to WeaponManager
+        this.scene.physics.add.overlap(this.weapons, enemiesGroup, this.hitEnemy, null, this);
     }
 
     createWeapon(x, y, direction = 'right', pointer = null) {
@@ -69,18 +74,20 @@ class WeaponManager {
     hitEnemy(weapon, enemySprite) {
         // Get enemy reference from sprite
         const enemy = enemySprite.enemyRef;
-        if (!enemy) return;
+        if (!enemy) {
+            console.warn('Enemy reference not found on sprite');
+            return;
+        }
         
         // Deal damage to enemy
-        const destroyed = enemy.takeDamage(weapon.damage);
+        const scoreEarned = enemy.takeDamage(weapon.damage);
         
         // Destroy weapon
         weapon.destroy();
         
-        // Add score if enemy was destroyed
-        if (destroyed) {
-            const score = enemy.destroy();
-            this.scene.addScore(score);
+        // Add score if enemy was destroyed (takeDamage returns score when destroyed)
+        if (scoreEarned) {
+            this.scene.addScore(scoreEarned);
         }
         
         // Create hit effect
