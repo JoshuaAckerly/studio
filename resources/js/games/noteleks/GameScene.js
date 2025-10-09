@@ -71,6 +71,10 @@ class GameScene extends Phaser.Scene {
 
     async testAssetAvailability(atlasPath, jsonPath) {
         try {
+            // Test a simple text file first
+            const testResponse = await fetch('/games/noteleks/spine/characters/test.txt');
+            console.log('Test file availability:', testResponse.status, testResponse.statusText);
+            
             const atlasResponse = await fetch(atlasPath);
             console.log('Atlas availability:', atlasResponse.status, atlasResponse.statusText);
             

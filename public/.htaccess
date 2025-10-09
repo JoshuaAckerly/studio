@@ -5,6 +5,16 @@
 
     RewriteEngine On
 
+    # Allow serving of .atlas files as plain text
+    <FilesMatch "\.atlas$">
+        Header set Content-Type "text/plain"
+    </FilesMatch>
+
+    # Ensure JSON files are served with correct MIME type
+    <FilesMatch "\.json$">
+        Header set Content-Type "application/json"
+    </FilesMatch>
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
