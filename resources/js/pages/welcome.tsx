@@ -96,10 +96,6 @@ const footerNavigation = {
     ],
 };
 
-function classNames(...classes: string[]) {
-    return classes.filter(Boolean).join(' ');
-}
-
 export default function Welcome() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const cdn = import.meta.env.VITE_ASSET_URL as string;

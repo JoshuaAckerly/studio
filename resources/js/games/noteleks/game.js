@@ -1,4 +1,5 @@
 // Noteleks Heroes Beyond Light - Phaser Game
+/* global Phaser */
 class NoteleksGame {
     constructor() {
         this.config = {
