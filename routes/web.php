@@ -12,6 +12,29 @@ Route::get('/noteleks', function () {
     return view('games.noteleks');
 })->name('games.noteleks');
 
+// Serve Spine assets explicitly
+Route::get('/games/noteleks/spine/characters/{file}', function ($file) {
+    $path = public_path("games/noteleks/spine/characters/{$file}");
+    
+    if (!file_exists($path)) {
+        abort(404);
+    }
+    
+    $extension = pathinfo($file, PATHINFO_EXTENSION);
+    $mimeTypes = [
+        'atlas' => 'text/plain',
+        'json' => 'application/json',
+        'png' => 'image/png'
+    ];
+    
+    $mimeType = $mimeTypes[$extension] ?? 'application/octet-stream';
+    
+    return response()->file($path, [
+        'Content-Type' => $mimeType,
+        'Cache-Control' => 'public, max-age=3600'
+    ]);
+})->where('file', '.*');
+
 // Redirect old route to new working route
 Route::redirect('/games/noteleks', '/noteleks', 301);
 
