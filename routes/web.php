@@ -7,10 +7,13 @@ Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('welcome');
 
-// Games Routes - using different path to bypass nginx /games/ blocking
+// Games Routes - Main working route
 Route::get('/noteleks', function () {
     return view('games.noteleks');
 })->name('games.noteleks');
+
+// Redirect old route to new working route
+Route::redirect('/games/noteleks', '/noteleks', 301);
 
 Route::get('/noteleks-debug', function () {
     return view('games.noteleks-debug');
