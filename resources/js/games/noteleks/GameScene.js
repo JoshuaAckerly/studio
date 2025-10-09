@@ -27,12 +27,54 @@ class GameScene extends Phaser.Scene {
             fontFamily: 'Arial'
         }).setOrigin(0.5);
 
-        // Load Spine animations
-        this.load.spineAtlas('noteleks-atlas', '/games/noteleks/spine/characters/Noteleks.atlas');
-        this.load.spineJson('noteleks-data', '/games/noteleks/spine/characters/Noteleks.json');
+        // Load Spine animations with error handling
+        console.log('Loading Spine assets...');
+        
+        // Add comprehensive error handling for file loading
+        this.load.on('loaderror', (file) => {
+            console.error('Failed to load file:', {
+                key: file.key,
+                url: file.url,
+                src: file.src,
+                type: file.type
+            });
+        });
+        
+        this.load.on('filecomplete', (key, type, data) => {
+            console.log('Successfully loaded:', key, type);
+        });
+        
+        this.load.on('complete', () => {
+            console.log('All assets loaded');
+        });
+        
+        // Try multiple asset loading strategies
+        const atlasPath = '/games/noteleks/spine/characters/Noteleks.atlas';
+        const jsonPath = '/games/noteleks/spine/characters/Noteleks.json';
+        
+        console.log('Attempting to load assets from:', { atlasPath, jsonPath });
+        
+        // Test if we can fetch the files first
+        this.testAssetAvailability(atlasPath, jsonPath);
+        
+        // Load Spine assets
+        this.load.spineAtlas('noteleks-atlas', atlasPath);
+        this.load.spineJson('noteleks-data', jsonPath);
 
         // Create placeholder sprites as textures
         this.createPlaceholderTextures();
+    }
+
+    async testAssetAvailability(atlasPath, jsonPath) {
+        try {
+            const atlasResponse = await fetch(atlasPath);
+            console.log('Atlas availability:', atlasResponse.status, atlasResponse.statusText);
+            
+            const jsonResponse = await fetch(jsonPath);
+            console.log('JSON availability:', jsonResponse.status, jsonResponse.statusText);
+        } catch (error) {
+            console.error('Asset availability test failed:', error);
+        }
     }
 
     createPlaceholderTextures() {

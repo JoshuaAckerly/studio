@@ -11,7 +11,7 @@ class Player {
         this.y = y;
         this.facing = 'right';
         this.isAttacking = false;
-        this.useSpineAnimations = true;
+        this.useSpineAnimations = true; // Re-enabled for testing
         this.availableAnimations = [];
         this.currentAnimation = null;
         
