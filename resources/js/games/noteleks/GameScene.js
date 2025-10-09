@@ -66,9 +66,14 @@ class GameScene extends Phaser.Scene {
         // Load the PNG texture first
         this.load.image('noteleks-texture', noteleksPng);
         
-        // Load Spine assets using Vite asset URLs
-        this.load.spineAtlas('noteleks-atlas', noteleksAtlas, 'noteleks-texture');
-        this.load.spineJson('noteleks-data', noteleksJson);
+        // Load atlas as text and JSON separately, then create custom spine data
+        this.load.text('noteleks-atlas-text', noteleksAtlas);
+        this.load.json('noteleks-skeleton-data', noteleksJson);
+        
+        // Handle the spine loading after all assets are loaded
+        this.load.on('complete', () => {
+            this.setupSpineData();
+        });
 
         // Create placeholder sprites as textures
         this.createPlaceholderTextures();
@@ -87,6 +92,35 @@ class GameScene extends Phaser.Scene {
             console.log('JSON availability:', jsonResponse.status, jsonResponse.statusText);
         } catch (error) {
             console.error('Asset availability test failed:', error);
+        }
+    }
+
+    setupSpineData() {
+        try {
+            console.log('Setting up custom Spine data...');
+            
+            // Get the loaded data
+            const atlasText = this.cache.text.get('noteleks-atlas-text');
+            const skeletonData = this.cache.json.get('noteleks-skeleton-data');
+            const texture = this.textures.get('noteleks-texture');
+            
+            if (!atlasText || !skeletonData || !texture) {
+                console.error('Missing required Spine assets');
+                return;
+            }
+            
+            // Create a custom atlas that references our loaded texture
+            const modifiedAtlasText = atlasText.replace('Noteleks.png', 'noteleks-texture');
+            
+            // Create the spine atlas and skeleton data manually
+            if (this.spine && this.spine.plugin) {
+                this.spine.plugin.createAtlas('noteleks-atlas', modifiedAtlasText, texture);
+                this.spine.plugin.addSkeleton('noteleks-data', skeletonData);
+                
+                console.log('Custom Spine data setup complete');
+            }
+        } catch (error) {
+            console.error('Failed to setup custom Spine data:', error);
         }
     }
 
