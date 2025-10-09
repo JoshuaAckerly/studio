@@ -97,8 +97,8 @@
             preload() {
                 // Load Spine animations
                 if (this.useSpineAnimations) {
-                    this.load.spineAtlas('noteleks-atlas', '/games/noteleks/spine/characters/Noteleks.atlas');
-                    this.load.spineJson('noteleks-data', '/games/noteleks/spine/characters/Noteleks.json');
+                    this.load.spineAtlas('noteleks-atlas', '/games/noteleks-assets/spine/characters/Noteleks.atlas');
+                    this.load.spineJson('noteleks-data', '/games/noteleks-assets/spine/characters/Noteleks.json');
                 }
             }
 

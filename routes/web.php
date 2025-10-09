@@ -7,12 +7,12 @@ Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('welcome');
 
-// Games Routes
-Route::get('/games/noteleks', function () {
+// Games Routes - using different path to bypass nginx /games/ blocking
+Route::get('/noteleks', function () {
     return view('games.noteleks');
 })->name('games.noteleks');
 
-Route::get('/games/noteleks-debug', function () {
+Route::get('/noteleks-debug', function () {
     return view('games.noteleks-debug');
 })->name('games.noteleks-debug');
 
