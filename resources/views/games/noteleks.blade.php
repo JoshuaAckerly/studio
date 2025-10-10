@@ -300,7 +300,7 @@
     </div>
 
     <script>
-        // Google Analytics helper
+        // Import tracking functions (if needed)
         function trackGameEvent(action, label) {
             if (typeof gtag !== 'undefined') {
                 gtag('event', action, {
@@ -309,6 +309,7 @@
                     'custom_parameter_game': 'noteleks',
                     'custom_parameter_subdomain': window.location.hostname
                 });
+                console.log('🎮 Game event:', action, label);
             }
         }
 

@@ -1,38 +1,16 @@
 import React from 'react';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
-import { trackSubdomainVisit } from '@/lib/analytics';
+import { useVisitorTracking } from '@/hooks/useTracking';
 
-const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    React.useEffect(() => {
-        const trackVisit = async () => {
-            try {
-                const visitData = {
-                    referrer: window.location.href,
-                    subdomain: window.location.hostname,
-                    page_title: document.title,
-                    user_agent: navigator.userAgent,
-                    timestamp: new Date().toISOString()
-                };
+interface MainLayoutProps {
+    children: React.ReactNode;
+    enableTracking?: boolean;
+}
 
-                // Custom server tracking (for email notifications)
-                await fetch('/api/track-visit', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify(visitData)
-                });
-
-                // Google Analytics tracking
-                trackSubdomainVisit(visitData);
-            } catch (error) {
-                console.error('Failed to track visit:', error);
-            }
-        };
-        trackVisit();
-    }, []);
+const MainLayout: React.FC<MainLayoutProps> = ({ children, enableTracking = true }) => {
+    // Automatically track visitors when layout is used
+    useVisitorTracking(enableTracking);
 
     return (
         <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>

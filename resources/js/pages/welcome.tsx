@@ -3,6 +3,7 @@
 import { Dialog, DialogPanel } from '@headlessui/react';
 import { ArrowPathIcon, Bars3Icon, CubeIcon, FingerPrintIcon, MusicalNoteIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
+import { useVisitorTracking } from '@/hooks/useTracking';
 
 const navigation = [
     { name: '3D Art', href: '#3d' },
@@ -99,6 +100,9 @@ const footerNavigation = {
 export default function Welcome() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const cdn = import.meta.env.VITE_ASSET_URL as string;
+
+    // Track visitor automatically
+    useVisitorTracking();
     return (
         <div className="bg-[var(--foreground)] dark:bg-[var(--background)]">
             {/* Header */}
