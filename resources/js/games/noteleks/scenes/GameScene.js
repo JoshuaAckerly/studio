@@ -176,9 +176,16 @@ class GameScene extends Phaser.Scene {
 
         // Update player
         if (this.player && this.inputManager) {
-            const controls = this.inputManager.getControls();
-            if (controls && controls.cursors && controls.wasd && controls.space) {
-                this.player.update(controls.cursors, controls.wasd, controls.space);
+            if (this.inputManager.isMobileDevice()) {
+                // Mobile: use touch input state
+                const touchState = this.inputManager.getMovementInput();
+                this.player.updateWithInputState(touchState);
+            } else {
+                // Desktop: use keyboard controls
+                const controls = this.inputManager.getControls();
+                if (controls && controls.cursors && controls.wasd && controls.space) {
+                    this.player.update(controls.cursors, controls.wasd, controls.space);
+                }
             }
         }
 

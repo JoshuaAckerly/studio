@@ -109,23 +109,40 @@ class Player extends GameObject {
                 attack: false // Mouse input handled separately
             };
 
-            // Debug logging removed - movement working correctly!
+            this.processInputState(inputState, inputComponent, movementComponent);
+        }
+    }
 
-            // Process movement input
-            inputComponent.processInput(inputState);
+    updateWithInputState(inputState) {
+        if (this.scene.gameState !== 'playing') return;
 
-            // Apply movement based on input state directly
-            if (inputState.left) {
-                movementComponent.moveLeft();
-            } else if (inputState.right) {
-                movementComponent.moveRight();
-            } else {
-                movementComponent.stopHorizontal();
-            }
+        // Update all components first
+        super.update(16); // 16ms for 60fps
 
-            if (inputState.up && movementComponent.isOnGround()) {
-                movementComponent.jump();
-            }
+        // Handle input
+        const inputComponent = this.getComponent('input');
+        const movementComponent = this.getComponent('movement');
+
+        if (inputComponent && movementComponent && inputState) {
+            this.processInputState(inputState, inputComponent, movementComponent);
+        }
+    }
+
+    processInputState(inputState, inputComponent, movementComponent) {
+        // Process movement input
+        inputComponent.processInput(inputState);
+
+        // Apply movement based on input state directly
+        if (inputState.left) {
+            movementComponent.moveLeft();
+        } else if (inputState.right) {
+            movementComponent.moveRight();
+        } else {
+            movementComponent.stopHorizontal();
+        }
+
+        if (inputState.up && movementComponent.isOnGround()) {
+            movementComponent.jump();
         }
     }
 

@@ -20,6 +20,9 @@ export class InputManager {
             this.touchInput = new TouchInputComponent(this.scene);
             this.isMobile = this.touchInput.isMobileDevice();
             
+            console.log('InputManager: Mobile device detected:', this.isMobile);
+            console.log('InputManager: User agent:', navigator.userAgent);
+            
             // Create control scheme (always create for desktop fallback)
             this.controls = {
                 cursors: this.scene.input.keyboard.createCursorKeys(),
@@ -35,7 +38,10 @@ export class InputManager {
 
             // Initialize touch controls if on mobile
             if (this.isMobile) {
+                console.log('InputManager: Initializing touch controls');
                 this.touchInput.initialize();
+            } else {
+                console.log('InputManager: Using desktop controls');
             }
 
             // Setup pointer input (for both mouse and touch)
@@ -140,7 +146,12 @@ export class InputManager {
     // Create input state object
     getMovementInput() {
         if (this.isMobile && this.touchInput) {
-            return this.touchInput.getTouchState();
+            const touchState = this.touchInput.getTouchState();
+            // Debug: Log touch state only when something is active
+            if (touchState.left || touchState.right || touchState.up || touchState.attack) {
+                console.log('InputManager: Touch state:', touchState);
+            }
+            return touchState;
         }
         
         return {

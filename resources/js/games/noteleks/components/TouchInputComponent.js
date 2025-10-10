@@ -207,6 +207,7 @@ class TouchInputComponent extends Component {
             this.activeTouches.set(pointer.id, { type: 'jump', pointer });
             this.touchState.up = true;
             this.highlightButton(this.virtualControls.jumpButton, 0x6ade80);
+            console.log('TouchInput: JUMP button pressed');
             return;
         }
         
@@ -216,6 +217,7 @@ class TouchInputComponent extends Component {
             this.touchState.attack = true;
             this.highlightButton(this.virtualControls.attackButton, 0xff6666);
             this.triggerAttack(pointer);
+            console.log('TouchInput: ATTACK button pressed');
             return;
         }
         
@@ -309,6 +311,7 @@ class TouchInputComponent extends Component {
         if (Math.abs(deltaX) > this.joystickDeadZone) {
             this.touchState.left = deltaX < 0;
             this.touchState.right = deltaX > 0;
+            console.log('TouchInput: Movement -', this.touchState.left ? 'LEFT' : 'RIGHT');
         } else {
             this.touchState.left = false;
             this.touchState.right = false;
