@@ -188,10 +188,10 @@ class Player extends GameObject {
         // Reset position
         this.setPosition(x, y);
         
-        // Reset health
+        // Reset health properly using the reset method instead of heal
         const healthComponent = this.getComponent('health');
         if (healthComponent) {
-            healthComponent.heal(healthComponent.getMaxHealth());
+            healthComponent.reset(); // This resets isDead to false and restores full health
         }
 
         // Reset movement

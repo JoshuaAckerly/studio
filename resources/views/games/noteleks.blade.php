@@ -138,21 +138,14 @@
             if (window.noteleksGame) {
                 const scene = window.noteleksGame.getScene('GameScene');
                 if (scene) {
-                    console.log('Current game state:', scene.gameState);
                     if (scene.gameState === 'playing') {
                         scene.pauseGame();
                         this.textContent = 'Resume';
-                        console.log('Game paused');
                     } else if (scene.gameState === 'paused') {
                         scene.resumeGame();
                         this.textContent = 'Pause';
-                        console.log('Game resumed');
                     }
-                } else {
-                    console.error('GameScene not found');
                 }
-            } else {
-                console.error('noteleksGame not found on window');
             }
         });
 
@@ -163,12 +156,7 @@
                     scene.restartGame();
                     // Reset pause button text
                     document.getElementById('pause-btn').textContent = 'Pause';
-                    console.log('Game restarted');
-                } else {
-                    console.error('GameScene not found');
                 }
-            } else {
-                console.error('noteleksGame not found on window');
             }
         });
     </script>
