@@ -65,6 +65,26 @@ class TouchInputComponent extends Component {
      * Create virtual control UI elements
      */
     createVirtualControls() {
+        // Create HTML-based controls in the mobile controls area instead of in the game scene
+        const mobileControlsArea = document.getElementById('mobile-controls-area');
+        if (!mobileControlsArea) {
+            console.warn('TouchInputComponent: mobile-controls-area not found, falling back to Phaser controls');
+            this.createPhaserControls();
+            return;
+        }
+
+        // Clear any existing controls
+        mobileControlsArea.innerHTML = '';
+        
+        // Create HTML-based controls
+        this.createHTMLJoystick(mobileControlsArea);
+        this.createHTMLButtons(mobileControlsArea);
+    }
+
+    /**
+     * Fallback to Phaser-based controls (old method)
+     */
+    createPhaserControls() {
         // Check if we're on mobile and adjust positioning
         this.calculateMobileLayout();
         
@@ -107,7 +127,123 @@ class TouchInputComponent extends Component {
     }
 
     /**
-     * Create virtual joystick
+     * Create HTML-based joystick in the mobile controls area
+     */
+    createHTMLJoystick(container) {
+        // Create joystick container
+        const joystickContainer = document.createElement('div');
+        joystickContainer.id = 'virtual-joystick';
+        joystickContainer.style.cssText = `
+            position: absolute;
+            left: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 120px;
+            height: 120px;
+            background: radial-gradient(circle, rgba(51,51,51,0.8) 0%, rgba(26,26,26,0.8) 100%);
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            cursor: pointer;
+            user-select: none;
+            z-index: 10;
+        `;
+
+        // Create joystick knob
+        const joystickKnob = document.createElement('div');
+        joystickKnob.id = 'virtual-joystick-knob';
+        joystickKnob.style.cssText = `
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50px;
+            height: 50px;
+            background: radial-gradient(circle, #4ade80 0%, #22c55e 100%);
+            border: 2px solid rgba(255,255,255,0.8);
+            border-radius: 50%;
+            transition: all 0.1s ease;
+        `;
+
+        joystickContainer.appendChild(joystickKnob);
+        container.appendChild(joystickContainer);
+
+        // Store references
+        this.virtualControls.joystick = joystickContainer;
+        this.virtualControls.joystickKnob = joystickKnob;
+
+        // Setup joystick interaction
+        this.setupJoystickEvents(joystickContainer, joystickKnob);
+    }
+
+    /**
+     * Create HTML-based action buttons
+     */
+    createHTMLButtons(container) {
+        // Create buttons container
+        const buttonsContainer = document.createElement('div');
+        buttonsContainer.style.cssText = `
+            position: absolute;
+            right: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            z-index: 10;
+        `;
+
+        // Jump button
+        const jumpButton = document.createElement('button');
+        jumpButton.id = 'virtual-jump-btn';
+        jumpButton.textContent = 'JUMP';
+        jumpButton.style.cssText = `
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(145deg, #ef4444, #dc2626);
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+            cursor: pointer;
+            user-select: none;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            transition: all 0.1s ease;
+        `;
+
+        // Attack button
+        const attackButton = document.createElement('button');
+        attackButton.id = 'virtual-attack-btn';
+        attackButton.textContent = 'ATTACK';
+        attackButton.style.cssText = `
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(145deg, #3b82f6, #2563eb);
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+            cursor: pointer;
+            user-select: none;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            transition: all 0.1s ease;
+        `;
+
+        buttonsContainer.appendChild(jumpButton);
+        buttonsContainer.appendChild(attackButton);
+        container.appendChild(buttonsContainer);
+
+        // Store references
+        this.virtualControls.jumpButton = jumpButton;
+        this.virtualControls.attackButton = attackButton;
+
+        // Setup button events
+        this.setupButtonEvents(jumpButton, attackButton);
+    }
+
+    /**
+     * Create virtual joystick (legacy Phaser method)
      */
     createVirtualJoystick() {
         // Position joystick in the mobile controls area (below game screen)
@@ -205,7 +341,121 @@ class TouchInputComponent extends Component {
     }
 
     /**
-     * Setup touch event listeners
+     * Setup joystick events for HTML element
+     */
+    setupJoystickEvents(joystickContainer, joystickKnob) {
+        let isDragging = false;
+        let centerX = 60; // Half of container width
+        let centerY = 60; // Half of container height
+        const maxDistance = 35; // Maximum distance from center
+
+        const handleStart = (e) => {
+            e.preventDefault();
+            isDragging = true;
+            joystickContainer.style.opacity = '1';
+        };
+
+        const handleMove = (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+
+            const rect = joystickContainer.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            let deltaX = clientX - rect.left - centerX;
+            let deltaY = clientY - rect.top - centerY;
+            
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            
+            if (distance > maxDistance) {
+                deltaX = (deltaX / distance) * maxDistance;
+                deltaY = (deltaY / distance) * maxDistance;
+            }
+            
+            joystickKnob.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+            
+            // Update touch state
+            const normalizedX = deltaX / maxDistance;
+            const normalizedY = deltaY / maxDistance;
+            
+            this.touchState.left = normalizedX < -0.3;
+            this.touchState.right = normalizedX > 0.3;
+            this.touchState.up = normalizedY < -0.3;
+            this.touchState.down = normalizedY > 0.3;
+        };
+
+        const handleEnd = (e) => {
+            e.preventDefault();
+            isDragging = false;
+            joystickKnob.style.transform = 'translate(0px, 0px)';
+            joystickContainer.style.opacity = '0.8';
+            
+            // Reset movement state
+            this.touchState.left = false;
+            this.touchState.right = false;
+            this.touchState.up = false;
+            this.touchState.down = false;
+        };
+
+        // Touch events
+        joystickContainer.addEventListener('touchstart', handleStart, { passive: false });
+        document.addEventListener('touchmove', handleMove, { passive: false });
+        document.addEventListener('touchend', handleEnd, { passive: false });
+        
+        // Mouse events for testing
+        joystickContainer.addEventListener('mousedown', handleStart);
+        document.addEventListener('mousemove', handleMove);
+        document.addEventListener('mouseup', handleEnd);
+    }
+
+    /**
+     * Setup button events for HTML elements
+     */
+    setupButtonEvents(jumpButton, attackButton) {
+        // Jump button events
+        const handleJumpStart = (e) => {
+            e.preventDefault();
+            this.touchState.up = true;
+            jumpButton.style.transform = 'scale(0.95)';
+            jumpButton.style.boxShadow = '0 2px 4px rgba(0,0,0,0.4)';
+        };
+
+        const handleJumpEnd = (e) => {
+            e.preventDefault();
+            this.touchState.up = false;
+            jumpButton.style.transform = 'scale(1)';
+            jumpButton.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
+        };
+
+        jumpButton.addEventListener('touchstart', handleJumpStart, { passive: false });
+        jumpButton.addEventListener('touchend', handleJumpEnd, { passive: false });
+        jumpButton.addEventListener('mousedown', handleJumpStart);
+        jumpButton.addEventListener('mouseup', handleJumpEnd);
+
+        // Attack button events
+        const handleAttackStart = (e) => {
+            e.preventDefault();
+            this.touchState.attack = true;
+            attackButton.style.transform = 'scale(0.95)';
+            attackButton.style.boxShadow = '0 2px 4px rgba(0,0,0,0.4)';
+        };
+
+        const handleAttackEnd = (e) => {
+            e.preventDefault();
+            this.touchState.attack = false;
+            attackButton.style.transform = 'scale(1)';
+            attackButton.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
+        };
+
+        attackButton.addEventListener('touchstart', handleAttackStart, { passive: false });
+        attackButton.addEventListener('touchend', handleAttackEnd, { passive: false });
+        attackButton.addEventListener('mousedown', handleAttackStart);
+        attackButton.addEventListener('mouseup', handleAttackEnd);
+    }
+
+    /**
+     * Setup touch event handlers (legacy Phaser method)
      */
     setupTouchEvents() {
         this.scene.input.on('pointerdown', this.handleTouchStart.bind(this));
