@@ -55,7 +55,6 @@ class TouchInputComponent extends Component {
         }
 
         this.createVirtualControls();
-        this.setupTouchEvents();
         this.isEnabled = true;
         console.log('TouchInputComponent: Touch controls initialized');
         return true;
@@ -87,6 +86,7 @@ class TouchInputComponent extends Component {
      */
     createPhaserControls() {
         console.error('TouchInputComponent: mobile-controls-area not found! Mobile controls will not work.');
+        // Don't set up Phaser touch events since we can't create controls anyway
         this.isEnabled = false;
     }
 
@@ -596,6 +596,11 @@ class TouchInputComponent extends Component {
      */
     handleTouchStart(pointer) {
         if (!this.isEnabled) return;
+        
+        // If using HTML controls, don't process Phaser touch events
+        if (!this.virtualControls.jumpButtonBounds) {
+            return;
+        }
 
         const touchX = pointer.x;
         const touchY = pointer.y;
@@ -757,6 +762,9 @@ class TouchInputComponent extends Component {
      * Check if point is within bounds
      */
     isPointInBounds(x, y, bounds) {
+        if (!bounds || typeof bounds.x === 'undefined') {
+            return false;
+        }
         return x >= bounds.x && x <= bounds.x + bounds.width &&
                y >= bounds.y && y <= bounds.y + bounds.height;
     }
