@@ -64,10 +64,15 @@
 
         /* Mobile Game Boy Style Layout */
         @media (max-width: 768px) and (orientation: portrait) {
+            body {
+                height: 120vh; /* Extend viewport to be 20% taller for Game Boy layout */
+                overflow-y: auto;
+            }
+
             #game-container {
                 padding: 10px;
                 background: #2a2a2a;
-                height: 100vh;
+                min-height: 120vh; /* Extended height for Game Boy layout */
                 display: flex;
                 flex-direction: column;
                 justify-content: flex-start;
@@ -75,7 +80,7 @@
 
             #phaser-game {
                 width: 100%;
-                height: 60vh; /* Game takes up 60% of viewport height */
+                height: 50vh; /* Keep game scene size unchanged */
                 max-height: 400px;
                 border: 4px solid #1a1a1a;
                 border-radius: 12px;
@@ -83,7 +88,8 @@
                 box-shadow: 
                     inset 0 0 10px rgba(0,0,0,0.5),
                     0 4px 15px rgba(0,0,0,0.3);
-                margin-bottom: 20px;
+                margin-bottom: 10px;
+                flex-shrink: 0; /* Prevent game from shrinking */
             }
 
             #phaser-game canvas {
@@ -99,56 +105,78 @@
                 width: calc(100% - 20px);
                 background: rgba(0, 0, 0, 0.9);
                 border: 2px solid #333;
+                flex-shrink: 0;
             }
 
-            /* Dedicated control area below game */
+            /* Game Boy-style control area positioned above mobile controls */
             #game-controls-area {
                 background: linear-gradient(145deg, #333, #1a1a1a);
-                border: 2px solid #444;
+                border: 3px solid #1a1a1a;
                 border-radius: 12px;
-                padding: 12px;
-                margin: 15px 0;
-                box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+                padding: 15px;
+                margin: 10px 0;
+                box-shadow: 
+                    inset 0 0 10px rgba(0,0,0,0.3),
+                    0 4px 8px rgba(0,0,0,0.3);
+                flex-shrink: 0;
             }
 
             #game-controls {
                 display: flex;
                 justify-content: center;
-                gap: 12px;
+                gap: 15px;
                 position: relative;
             }
 
             #game-controls button {
-                padding: 8px 16px;
+                padding: 10px 18px;
                 font-size: 11px;
-                min-width: 70px;
-                height: 36px;
+                min-width: 75px;
+                height: 40px;
                 background: linear-gradient(145deg, #4a4a4a, #2a2a2a);
-                border: 2px solid #555;
-                border-radius: 8px;
+                border: 3px solid #555;
+                border-radius: 10px;
                 color: #fff;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                box-shadow: 
+                    0 3px 6px rgba(0,0,0,0.4),
+                    inset 0 1px 0 rgba(255,255,255,0.1);
                 transition: all 0.2s ease;
+                font-weight: bold;
+                text-shadow: 0 1px 2px rgba(0,0,0,0.5);
             }
 
             #game-controls button:hover {
                 background: linear-gradient(145deg, #5a5a5a, #3a3a3a);
                 transform: translateY(-1px);
-                box-shadow: 0 3px 6px rgba(0,0,0,0.4);
+                box-shadow: 
+                    0 4px 8px rgba(0,0,0,0.5),
+                    inset 0 1px 0 rgba(255,255,255,0.1);
             }
 
             #game-controls button:active {
-                transform: translateY(0);
-                box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+                transform: translateY(1px);
+                box-shadow: 
+                    0 1px 3px rgba(0,0,0,0.3),
+                    inset 0 1px 0 rgba(255,255,255,0.1);
             }
 
-            /* Reserve space for mobile controls */
+            /* Game Boy-style mobile controls underneath the game */
             #mobile-controls-area {
                 flex: 1;
-                min-height: 180px;
-                background: #2a2a2a;
+                min-height: 250px;
+                background: linear-gradient(145deg, #333, #1a1a1a);
+                border: 4px solid #1a1a1a;
                 border-radius: 12px;
+                margin-top: 10px;
                 position: relative;
+                box-shadow: 
+                    inset 0 0 10px rgba(0,0,0,0.5),
+                    0 4px 15px rgba(0,0,0,0.3);
+                /* Game Boy controller styling */
+                background-image: 
+                    radial-gradient(circle at 25% 25%, rgba(255,255,255,0.1) 1px, transparent 1px),
+                    radial-gradient(circle at 75% 75%, rgba(255,255,255,0.1) 1px, transparent 1px);
+                background-size: 20px 20px;
             }
         }
 
