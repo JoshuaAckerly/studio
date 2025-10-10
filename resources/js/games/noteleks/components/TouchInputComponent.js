@@ -83,20 +83,11 @@ class TouchInputComponent extends Component {
     }
 
     /**
-     * Fallback to Phaser-based controls (old method)
+     * Fallback - log error if mobile controls area not found
      */
     createPhaserControls() {
-        // Check if we're on mobile and adjust positioning
-        this.calculateMobileLayout();
-        
-        // Virtual joystick for movement
-        this.createVirtualJoystick();
-        
-        // Jump button
-        this.createJumpButton();
-        
-        // Attack button
-        this.createAttackButton();
+        console.error('TouchInputComponent: mobile-controls-area not found! Mobile controls will not work.');
+        this.isEnabled = false;
     }
 
     /**

@@ -144,6 +144,11 @@ class Player extends GameObject {
         if (inputState.up && movementComponent.isOnGround()) {
             movementComponent.jump();
         }
+
+        // Process attack input for mobile
+        if (inputState.attack) {
+            this.attack();
+        }
     }
 
     attack(pointer) {
