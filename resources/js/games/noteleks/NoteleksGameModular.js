@@ -37,7 +37,8 @@ class NoteleksGame {
                     width: 1600,
                     height: 1200
                 }
-            }
+            },
+            parent: containerId
         };
     }
 

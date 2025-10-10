@@ -65,6 +65,9 @@ class TouchInputComponent extends Component {
      * Create virtual control UI elements
      */
     createVirtualControls() {
+        // Check if we're on mobile and adjust positioning
+        this.calculateMobileLayout();
+        
         // Virtual joystick for movement
         this.createVirtualJoystick();
         
@@ -76,11 +79,40 @@ class TouchInputComponent extends Component {
     }
 
     /**
+     * Calculate mobile layout positions
+     */
+    calculateMobileLayout() {
+        // Detect mobile viewport and adjust control positions
+        const isMobileViewport = window.innerWidth <= 768;
+        
+        if (isMobileViewport) {
+            // On mobile, position controls in the lower area
+            this.controlsAreaTop = this.scene.scale.height * 0.65;
+            this.joystickY = this.controlsAreaTop + 80;
+            this.jumpButtonY = this.controlsAreaTop + 60;
+            this.attackButtonY = this.controlsAreaTop + 120;
+        } else {
+            // Desktop positioning (unchanged)
+            this.controlsAreaTop = this.scene.scale.height * 0.7;
+            this.joystickY = this.scene.scale.height - 100;
+            this.jumpButtonY = this.scene.scale.height - 120;
+            this.attackButtonY = this.scene.scale.height - 60;
+        }
+        
+        console.log('TouchInput: Mobile layout calculated', {
+            isMobileViewport,
+            screenHeight: this.scene.scale.height,
+            controlsAreaTop: this.controlsAreaTop
+        });
+    }
+
+    /**
      * Create virtual joystick
      */
     createVirtualJoystick() {
+        // Position joystick in the mobile controls area (below game screen)
         const joystickX = 100;
-        const joystickY = this.scene.scale.height - 100;
+        const joystickY = this.joystickY || this.scene.scale.height * 0.75;
         
         // Joystick base
         this.virtualControls.joystickBase = this.scene.add.graphics();
@@ -109,7 +141,7 @@ class TouchInputComponent extends Component {
      */
     createJumpButton() {
         const buttonX = this.scene.scale.width - 120;
-        const buttonY = this.scene.scale.height - 120;
+        const buttonY = this.jumpButtonY || this.scene.scale.height * 0.70;
         
         this.virtualControls.jumpButton = this.scene.add.graphics();
         this.virtualControls.jumpButton.fillStyle(0x4ade80, 0.7);
@@ -143,7 +175,7 @@ class TouchInputComponent extends Component {
      */
     createAttackButton() {
         const buttonX = this.scene.scale.width - 120;
-        const buttonY = this.scene.scale.height - 60;
+        const buttonY = this.attackButtonY || this.scene.scale.height * 0.80;
         
         this.virtualControls.attackButton = this.scene.add.graphics();
         this.virtualControls.attackButton.fillStyle(0xff4444, 0.7);

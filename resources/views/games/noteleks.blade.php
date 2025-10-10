@@ -61,6 +61,88 @@
             height: 100vh;
             display: block;
         }
+
+        /* Mobile Game Boy Style Layout */
+        @media (max-width: 768px) and (orientation: portrait) {
+            #game-container {
+                padding: 10px;
+                background: #2a2a2a;
+                height: 100vh;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-start;
+            }
+
+            #phaser-game {
+                width: 100%;
+                height: 60vh; /* Game takes up 60% of viewport height */
+                max-height: 400px;
+                border: 4px solid #1a1a1a;
+                border-radius: 12px;
+                background: #000;
+                box-shadow: 
+                    inset 0 0 10px rgba(0,0,0,0.5),
+                    0 4px 15px rgba(0,0,0,0.3);
+                margin-bottom: 20px;
+            }
+
+            #phaser-game canvas {
+                border-radius: 8px;
+            }
+
+            #game-ui {
+                position: relative;
+                top: auto;
+                left: auto;
+                right: auto;
+                margin-bottom: 10px;
+                width: calc(100% - 20px);
+                background: rgba(0, 0, 0, 0.9);
+                border: 2px solid #333;
+            }
+
+            /* Reserve space for mobile controls */
+            #mobile-controls-area {
+                flex: 1;
+                min-height: 200px;
+                background: #2a2a2a;
+                border-radius: 12px;
+                position: relative;
+            }
+        }
+
+        @media (max-width: 768px) and (orientation: landscape) {
+            #game-container {
+                flex-direction: row;
+                padding: 5px;
+                background: #2a2a2a;
+            }
+
+            #phaser-game {
+                width: 65%;
+                height: 90vh;
+                border: 3px solid #1a1a1a;
+                border-radius: 8px;
+                margin-right: 10px;
+            }
+
+            #game-ui {
+                position: absolute;
+                top: 5px;
+                left: 5px;
+                width: 60%;
+                background: rgba(0, 0, 0, 0.9);
+                border: 2px solid #333;
+                border-radius: 8px;
+            }
+
+            #mobile-controls-area {
+                width: 35%;
+                height: 90vh;
+                background: #2a2a2a;
+                border-radius: 8px;
+            }
+        }
         
         #phaser-game canvas {
             display: block;
@@ -103,16 +185,62 @@
             display: none; /* Hide info panel in fullscreen mode */
         }
         
-        /* Responsive adjustments */
+        /* Mobile Game Boy Styling */
         @media (max-width: 768px) {
+            body {
+                background: #2a2a2a;
+            }
+
             #game-ui {
                 font-size: 14px;
                 padding: 8px 15px;
+                background: linear-gradient(145deg, #333, #1a1a1a);
+                border: 2px solid #444;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.3);
             }
             
+            #game-controls {
+                position: fixed;
+                bottom: 10px;
+                left: 50%;
+                transform: translateX(-50%);
+                gap: 10px;
+                z-index: 1000;
+            }
+
             #game-controls button {
                 padding: 8px 16px;
-                font-size: 14px;
+                font-size: 12px;
+                background: linear-gradient(145deg, #4a4a4a, #2a2a2a);
+                border: 2px solid #555;
+                border-radius: 6px;
+                color: #fff;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            }
+
+            #game-controls button:active {
+                transform: translateY(1px);
+                box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            }
+
+            /* Game Boy Screen Effect */
+            #phaser-game::after {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: 
+                    repeating-linear-gradient(
+                        0deg,
+                        transparent,
+                        transparent 2px,
+                        rgba(0,0,0,0.03) 2px,
+                        rgba(0,0,0,0.03) 4px
+                    );
+                pointer-events: none;
+                border-radius: 8px;
             }
         }
     </style>
@@ -123,6 +251,7 @@
             <div id="score">Score: <span id="score-value">0</span></div>
         </div>
         <div id="phaser-game"></div>
+        <div id="mobile-controls-area"></div>
         <div id="game-controls">
             <button id="pause-btn">Pause</button>
             <button id="restart-btn">Restart</button>
