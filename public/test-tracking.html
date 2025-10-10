@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Tracking</title>
+</head>
+<body>
+    <h1>Test Tracking Page</h1>
+    <button onclick="testTracking()">Test Email Tracking</button>
+    <div id="result"></div>
+
+    <script>
+        async function testTracking() {
+            const result = document.getElementById('result');
+            result.innerHTML = 'Sending tracking request...';
+            
+            try {
+                const response = await fetch('/api/track-visit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        referrer: window.location.href,
+                        subdomain: window.location.hostname,
+                        page_title: document.title,
+                        user_agent: navigator.userAgent,
+                        timestamp: new Date().toISOString()
+                    })
+                });
+                
+                const data = await response.json();
+                result.innerHTML = `<pre>Success: ${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                result.innerHTML = `<pre>Error: ${error.message}</pre>`;
+            }
+        }
+    </script>
+</body>
+</html>

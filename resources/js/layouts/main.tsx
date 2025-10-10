@@ -16,11 +16,11 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 };
 
                 // Custom server tracking (for email notifications)
-                await fetch('/track-visit', {
+                await fetch('/api/track-visit', {
                     method: 'POST',
-                    credentials: 'include',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
                     },
                     body: JSON.stringify(visitData)
                 });
