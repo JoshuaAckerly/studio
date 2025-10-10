@@ -62,7 +62,7 @@
         
         #game-controls {
             position: absolute;
-            bottom: 10px;
+            top: 60px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 100;
@@ -129,9 +129,47 @@
     </div>
 
     <script>
-        // Handle back button click
+        // Handle button clicks
         document.getElementById('back-btn').addEventListener('click', function() {
             window.location.href = '{{ route("welcome") }}';
+        });
+
+        document.getElementById('pause-btn').addEventListener('click', function() {
+            if (window.noteleksGame) {
+                const scene = window.noteleksGame.getScene('GameScene');
+                if (scene) {
+                    console.log('Current game state:', scene.gameState);
+                    if (scene.gameState === 'playing') {
+                        scene.pauseGame();
+                        this.textContent = 'Resume';
+                        console.log('Game paused');
+                    } else if (scene.gameState === 'paused') {
+                        scene.resumeGame();
+                        this.textContent = 'Pause';
+                        console.log('Game resumed');
+                    }
+                } else {
+                    console.error('GameScene not found');
+                }
+            } else {
+                console.error('noteleksGame not found on window');
+            }
+        });
+
+        document.getElementById('restart-btn').addEventListener('click', function() {
+            if (window.noteleksGame) {
+                const scene = window.noteleksGame.getScene('GameScene');
+                if (scene) {
+                    scene.restartGame();
+                    // Reset pause button text
+                    document.getElementById('pause-btn').textContent = 'Pause';
+                    console.log('Game restarted');
+                } else {
+                    console.error('GameScene not found');
+                }
+            } else {
+                console.error('noteleksGame not found on window');
+            }
         });
     </script>
 </body>
