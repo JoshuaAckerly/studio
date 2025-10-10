@@ -20,6 +20,38 @@
             'event_label': 'noteleks',
             'custom_parameter_subdomain': window.location.hostname
         });
+
+        // Track visitor for email notifications
+        async function trackGameVisit() {
+            try {
+                const visitData = {
+                    referrer: window.location.href,
+                    subdomain: window.location.hostname,
+                    page_title: document.title,
+                    user_agent: navigator.userAgent,
+                    timestamp: new Date().toISOString()
+                };
+
+                console.log('🎮 Tracking game visit:', visitData);
+
+                const response = await fetch('/api/track-visit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(visitData)
+                });
+
+                const result = await response.json();
+                console.log('✅ Game visit tracked:', result.status);
+            } catch (error) {
+                console.error('❌ Game tracking failed:', error);
+            }
+        }
+
+        // Track the visit when page loads
+        trackGameVisit();
     </script>
     @endif
     
