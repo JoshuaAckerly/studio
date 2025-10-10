@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # Laravel Forge Deployment Hook
-# This script handles the git divergent branches issue
+# FORCE RESET VERSION - Handles git divergent branches issue
 
 cd $FORGE_SITE_PATH
 
-echo "🚀 Starting deployment..."
+echo "🚀 Starting deployment with FORCE RESET..."
 echo "📍 Current directory: $(pwd)"
 echo "📍 Current branch: $(git branch --show-current)"
 
@@ -18,20 +18,16 @@ git config --global pull.rebase false
 echo "📥 Fetching latest changes..."
 git fetch origin main
 
-# Check if we have divergent branches
-if git merge-base --is-ancestor HEAD origin/main; then
-    echo "✅ Local branch is behind remote. Fast-forward merge."
-    git merge --ff-only origin/main
-elif git merge-base --is-ancestor origin/main HEAD; then
-    echo "✅ Local branch is ahead of remote. No action needed."
-else
-    echo "⚠️  Divergent branches detected. Using merge strategy."
-    git merge --no-rebase origin/main
-fi
+# FORCE RESET - This will override any local changes and divergent branches
+echo "🔄 FORCE RESETTING to match remote exactly..."
+echo "⚠️  This will discard any local changes on the server."
+git reset --hard origin/main
 
-# Alternative: Force reset to remote (use if above doesn't work)
-# echo "🔄 Force resetting to remote..."
-# git reset --hard origin/main
+# Verify the reset worked
+echo "✅ Reset complete! Current HEAD:"
+git log --oneline -1
+echo "� Working directory status:"
+git status --porcelain
 
 echo "📊 Current status:"
 git log --oneline -3
