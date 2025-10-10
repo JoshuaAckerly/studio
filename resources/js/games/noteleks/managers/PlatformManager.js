@@ -20,19 +20,30 @@ export class PlatformManager {
         const screenWidth = this.scene.cameras.main.width;
         const screenHeight = this.scene.cameras.main.height;
         
+        console.log('🟩 CREATING PLATFORMS:');
+        console.log('  Screen dimensions:', screenWidth, 'x', screenHeight);
+        console.log('  Ground texture exists:', this.scene.textures.exists('ground'));
+        
         // Ground platform - create multiple tiles to ensure full coverage
         const groundTileWidth = GameConfig.assets.textures.ground.width; // 64px
         const groundTileHeight = GameConfig.assets.textures.ground.height; // 32px
-        const tilesNeeded = Math.ceil(screenWidth / groundTileWidth);
+        const tilesNeeded = Math.ceil(screenWidth / groundTileWidth) + 2; // Add extra tiles for safety
         
-        console.log('Creating ground tiles:', tilesNeeded, 'tiles of', groundTileWidth, 'px each');
+        console.log('  Creating', tilesNeeded, 'ground tiles of', groundTileWidth, 'px each');
         
         for (let i = 0; i < tilesNeeded; i++) {
             const tileX = (i * groundTileWidth) + (groundTileWidth / 2);
-            const tileY = screenHeight - 16;
+            const tileY = screenHeight - (groundTileHeight / 2); // Position at bottom of screen
             
-            const groundTile = this.platforms.create(tileX, tileY, 'ground');
-            console.log('Ground tile', i, 'at x=', tileX, 'body:', groundTile.body ? 'yes' : 'no');
+            try {
+                const groundTile = this.platforms.create(tileX, tileY, 'ground');
+                groundTile.setVisible(true);
+                groundTile.setActive(true);
+                
+                console.log('  ✅ Ground tile', i, 'created at (', tileX, ',', tileY, ') - visible:', groundTile.visible);
+            } catch (error) {
+                console.error('  ❌ Failed to create ground tile', i, ':', error);
+            }
         }
             
         // Debug ground platform setup with delay to ensure body is ready

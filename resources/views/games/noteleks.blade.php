@@ -114,7 +114,7 @@
         <div id="game-controls">
             <button id="pause-btn">Pause</button>
             <button id="restart-btn">Restart</button>
-            <button onclick="window.location.href='{{ route('welcome') }}'">Back to Studio</button>
+            <button id="back-btn">Back to Studio</button>
         </div>
     </div>
 
@@ -127,5 +127,12 @@
         <p><strong>Controls:</strong> WASD/Arrows to move, Space/Click to attack, Up/W to jump, P to pause, R to restart</p>
         <p><strong>New Features:</strong> Modular codebase with separate classes for Player, Enemies, Weapons, and UI management!</p>
     </div>
+
+    <script>
+        // Handle back button click
+        document.getElementById('back-btn').addEventListener('click', function() {
+            window.location.href = '{{ route("welcome") }}';
+        });
+    </script>
 </body>
 </html>

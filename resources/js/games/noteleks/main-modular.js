@@ -14,7 +14,7 @@
 import NoteleksGame from './NoteleksGameModular.js';
 
 // Initialize the game
-const game = NoteleksGame.create('game-container');
+const game = NoteleksGame.create('phaser-game');
 
 if (game) {
     console.log('✅ Noteleks Heroes Beyond Light initialized successfully!');

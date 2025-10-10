@@ -55,19 +55,19 @@ class GameScene extends Phaser.Scene {
     create() {
         this.gameState = GameStateUtils.STATES.PLAYING;
         
-        // Initialize core systems
-        this.initializeManagers();
-        this.createGameWorld();
-        this.setupGameObjects();
-        this.setupCollisions();
-        this.registerInputHandlers();
+        // Initialize core systems in the correct order
+        this.initializeManagers();     // Creates managers, initializes input only
+        this.createGameWorld();        // Creates textures, then initializes platform & enemy managers
+        this.setupGameObjects();       // Creates player and other game objects
+        this.setupCollisions();        // Sets up physics collisions
+        this.registerInputHandlers();  // Registers input event handlers
         
         // Start game systems
         this.startGame();
     }
 
     initializeManagers() {
-        // Initialize all managers
+        // Initialize all managers (but don't initialize them yet)
         this.enemyManager = new EnemyManager(this);
         this.inputManager = new InputManager(this);
         this.platformManager = new PlatformManager(this);
@@ -76,10 +76,11 @@ class GameScene extends Phaser.Scene {
         this.weaponManager = new WeaponManager(this);
         this.gameUI = new GameUI(this);
         
-        // Initialize managers
+        // Initialize only input manager first (doesn't need textures)
         this.inputManager.initialize();
-        this.platformManager.initialize();
-        this.enemyManager.initialize();
+        
+        // NOTE: PlatformManager will be initialized AFTER textures are created
+        // NOTE: EnemyManager will be initialized AFTER textures are created
         
         // Initialize legacy systems
         this.systemManager.registerSystem('weaponManager', this.weaponManager);
@@ -90,25 +91,45 @@ class GameScene extends Phaser.Scene {
     createGameWorld() {
         // Set physics world bounds
         this.physics.world.setBounds(0, 0, GameConfig.screen.width, GameConfig.screen.height);
-        console.log('World bounds set to:', {
+        console.log('🌍 World bounds set to:', {
             x: this.physics.world.bounds.x,
             y: this.physics.world.bounds.y, 
             width: this.physics.world.bounds.width,
             height: this.physics.world.bounds.height
         });
         
-        // Create background
-        this.add.image(
-            GameConfig.screen.width / 2, 
-            GameConfig.screen.height / 2, 
-            'background'
-        );
-        
-        // Create placeholder textures
+        // Create placeholder textures FIRST
+        console.log('🎨 Creating placeholder textures...');
         AssetManager.createPlaceholderTextures(this, GameConfig);
         
-        // Platforms are created by PlatformManager
+        // Verify ground texture was created
+        if (this.textures.exists('ground')) {
+            console.log('✅ Ground texture created successfully');
+        } else {
+            console.error('❌ Ground texture was not created!');
+        }
+        
+        // Create background
+        try {
+            const bg = this.add.image(
+                GameConfig.screen.width / 2, 
+                GameConfig.screen.height / 2, 
+                'background'
+            );
+            console.log('✅ Background created:', bg.visible);
+        } catch (error) {
+            console.error('❌ Failed to create background:', error);
+        }
+        
+        // NOW initialize platform manager (after textures exist)
+        console.log('🏗️ Initializing PlatformManager after textures are ready...');
+        this.platformManager.initialize();
         this.platforms = this.platformManager.getPlatforms();
+        console.log('🏗️ Platform group retrieved:', !!this.platforms, 'children:', this.platforms ? this.platforms.children.entries.length : 0);
+        
+        // Initialize enemy manager after textures exist
+        console.log('👹 Initializing EnemyManager after textures are ready...');
+        this.enemyManager.initialize();
     }
 
     setupGameObjects() {

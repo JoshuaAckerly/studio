@@ -41,13 +41,15 @@ class NoteleksGame {
         };
     }
 
-    initialize(containerId = 'game-container') {
+    initialize(containerId = 'phaser-game') {
         // Check if container exists
         const container = document.getElementById(containerId);
         if (!container) {
-            console.error(`Game container '${containerId}' not found`);
+            console.error(`❌ Game container '${containerId}' not found`);
             return false;
         }
+
+        console.log(`✅ Game container '${containerId}' found:`, container);
 
         // Create the game
         this.game = new Phaser.Game({

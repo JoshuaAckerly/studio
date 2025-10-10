@@ -7,10 +7,22 @@ export class AssetManager {
         
         Object.entries(textures).forEach(([key, textureConfig]) => {
             if (textureConfig.color !== undefined) {
-                scene.add.graphics()
-                    .fillStyle(textureConfig.color)
-                    .fillRect(0, 0, textureConfig.width, textureConfig.height)
-                    .generateTexture(key, textureConfig.width, textureConfig.height);
+                // Check if texture already exists
+                if (scene.textures.exists(key)) {
+                    console.log(`Texture '${key}' already exists, skipping creation`);
+                    return;
+                }
+                
+                // Create graphics object
+                const graphics = scene.add.graphics();
+                graphics.fillStyle(textureConfig.color);
+                graphics.fillRect(0, 0, textureConfig.width, textureConfig.height);
+                
+                // Generate texture and destroy graphics object
+                graphics.generateTexture(key, textureConfig.width, textureConfig.height);
+                graphics.destroy();
+                
+                console.log(`Created placeholder texture '${key}': ${textureConfig.width}x${textureConfig.height}, color: 0x${textureConfig.color.toString(16)}`);
             }
         });
     }
