@@ -101,6 +101,24 @@
                 border: 2px solid #333;
             }
 
+            /* Position game controls below the game in portrait */
+            #game-controls {
+                position: relative;
+                bottom: auto;
+                left: auto;
+                transform: none;
+                justify-content: center;
+                margin: 10px 0;
+                gap: 8px;
+            }
+
+            #game-controls button {
+                padding: 6px 12px;
+                font-size: 10px;
+                min-width: 60px;
+                height: 32px;
+            }
+
             /* Reserve space for mobile controls */
             #mobile-controls-area {
                 flex: 1;
@@ -108,14 +126,6 @@
                 background: #2a2a2a;
                 border-radius: 12px;
                 position: relative;
-            }
-
-            /* Make buttons even smaller in portrait */
-            #game-controls button {
-                padding: 3px 6px;
-                font-size: 9px;
-                min-width: 45px;
-                height: 24px;
             }
         }
 
@@ -151,9 +161,12 @@
                 border-radius: 8px;
             }
 
-            /* Adjust button size for landscape */
+            /* Keep buttons at bottom for landscape (more screen real estate) */
             #game-controls {
+                position: fixed;
                 bottom: 5px;
+                left: 50%;
+                transform: translateX(-50%);
                 gap: 3px;
             }
 
