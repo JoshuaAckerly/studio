@@ -1,5 +1,4 @@
 import Component from '../core/Component.js';
-import { IDamageable } from '../core/Interfaces.js';
 
 /**
  * Health component - manages health and damage for game objects
@@ -16,7 +15,7 @@ class HealthComponent extends Component {
         this.onDamageCallbacks = [];
     }
 
-    update(deltaTime) {
+    update(_deltaTime) {
         if (!this.enabled) return;
         
         // Update invulnerability

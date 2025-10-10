@@ -25,7 +25,7 @@ class Component {
      * Update component - called every frame
      * @param {number} deltaTime - Time since last frame in milliseconds
      */
-    update(deltaTime) {
+    update(_deltaTime) {
         // Override in subclasses if needed
     }
 

@@ -1,6 +1,6 @@
 import Enemy from '../entities/Enemy.js';
 import GameConfig from '../config/GameConfig.js';
-import { MathUtils } from '../utils/GameUtils.js';
+// import { MathUtils } from '../utils/GameUtils.js';
 
 /**
  * Enemy Manager

@@ -16,7 +16,7 @@ class AIComponent extends Component {
         this.detectionRange = this.config.detectionRange;
     }
 
-    update(deltaTime) {
+    update(_deltaTime) {
         if (!this.enabled || !this.target) return;
 
         // Simple AI: just move toward the player

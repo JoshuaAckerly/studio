@@ -55,7 +55,7 @@ class GameObjectFactory {
      * @param {string} type - Pickup type
      * @returns {GameObject}
      */
-    createPickup(x, y, type) {
+    createPickup(_x, _y, _type) {
         // Future implementation for pickups/powerups
         // Would create objects with pickup components
         return null;

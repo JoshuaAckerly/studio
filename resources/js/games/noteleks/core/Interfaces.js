@@ -13,7 +13,7 @@ export class IMovable {
      * @param {number} velocityX - X velocity
      * @param {number} velocityY - Y velocity
      */
-    move(velocityX, velocityY) {
+    move(_velocityX, _velocityY) {
         throw new Error('IMovable.move() must be implemented');
     }
 
@@ -35,7 +35,7 @@ export class IDamageable {
      * @param {number} amount - Damage amount
      * @returns {boolean} - True if object was destroyed
      */
-    takeDamage(amount) {
+    takeDamage(_amount) {
         throw new Error('IDamageable.takeDamage() must be implemented');
     }
 
@@ -65,7 +65,7 @@ export class ICollidable {
      * Handle collision with another object
      * @param {GameObject} other - Other object
      */
-    onCollision(other) {
+    onCollision(_other) {
         throw new Error('ICollidable.onCollision() must be implemented');
     }
 
@@ -87,7 +87,7 @@ export class IAttackable {
      * Perform attack
      * @param {Object} target - Target position or object
      */
-    attack(target) {
+    attack(_target) {
         throw new Error('IAttackable.attack() must be implemented');
     }
 

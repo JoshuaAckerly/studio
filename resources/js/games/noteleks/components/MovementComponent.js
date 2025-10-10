@@ -1,5 +1,4 @@
 import Component from '../core/Component.js';
-import { IMovable } from '../core/Interfaces.js';
 
 /**
  * Movement component - handles object movement and physics
@@ -22,7 +21,7 @@ class MovementComponent extends Component {
         }
     }
 
-    update(deltaTime) {
+    update(_deltaTime) {
         if (!this.enabled || !this.body) return;
 
         // Update facing direction based on movement

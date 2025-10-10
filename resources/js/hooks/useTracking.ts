@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 
 // Declare gtag for TypeScript
 declare global {
-    function gtag(...args: any[]): void;
+    function gtag(...args: unknown[]): void;
 }
 
 interface VisitData {

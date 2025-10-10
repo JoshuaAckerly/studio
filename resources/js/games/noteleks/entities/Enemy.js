@@ -1,4 +1,3 @@
-/* global Phaser */
 import GameObject from '../core/GameObject.js';
 import MovementComponent from '../components/MovementComponent.js';
 import HealthComponent from '../components/HealthComponent.js';

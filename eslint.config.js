@@ -15,12 +15,15 @@ export default [
         languageOptions: {
             globals: {
                 ...globals.browser,
+                Phaser: 'readonly',
             },
         },
         rules: {
             'react/react-in-jsx-scope': 'off',
             'react/prop-types': 'off',
             'react/no-unescaped-entities': 'off',
+            '@typescript-eslint/no-unused-vars': ['error', { 'argsIgnorePattern': '^_' }],
+            'no-redeclare': ['error', { 'builtinGlobals': false }],
         },
         settings: {
             react: {

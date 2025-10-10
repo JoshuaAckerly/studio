@@ -13,7 +13,7 @@ class AttackComponent extends Component {
         this.onAttackCallbacks = [];
     }
 
-    update(deltaTime) {
+    update(_deltaTime) {
         if (!this.enabled) return;
 
         // Update attack state

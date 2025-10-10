@@ -36,7 +36,7 @@ export class AssetManager {
                 scene.load.text('noteleks-atlas-text', atlas);
                 scene.load.json('noteleks-skeleton-data', json);
             }
-        } catch (error) {
+        } catch {
             // Silently handle error
         }
     }
@@ -54,7 +54,7 @@ export class AssetManager {
             const modifiedAtlasText = atlasText.replace('Noteleks.png', 'noteleks-texture');
             
             if (window.spine) {
-                const textureAtlas = new window.spine.TextureAtlas(modifiedAtlasText, (path) => {
+                const textureAtlas = new window.spine.TextureAtlas(modifiedAtlasText, (_path) => {
                     return texture.getSourceImage();
                 });
                 
@@ -70,7 +70,7 @@ export class AssetManager {
             }
             
             return false;
-        } catch (error) {
+        } catch {
             return false;
         }
     }

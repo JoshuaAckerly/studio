@@ -1,4 +1,3 @@
-/* global Phaser */
 import GameObject from '../core/GameObject.js';
 import MovementComponent from '../components/MovementComponent.js';
 import HealthComponent from '../components/HealthComponent.js';
@@ -63,7 +62,7 @@ class Player extends GameObject {
 
         // Attack component callbacks
         const attackComponent = this.getComponent('attack');
-        attackComponent.onAttack((target, facing, damage) => {
+        attackComponent.onAttack((target, facing, _damage) => {
             // Handle attack logic
             if (this.scene.weaponManager) {
                 const direction = facing || this.getComponent('movement').getFacing();
@@ -98,7 +97,6 @@ class Player extends GameObject {
         // Handle input
         const inputComponent = this.getComponent('input');
         const movementComponent = this.getComponent('movement');
-        const attackComponent = this.getComponent('attack');
 
         if (inputComponent && movementComponent) {
             // Create input state object

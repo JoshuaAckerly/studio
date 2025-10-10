@@ -1,4 +1,4 @@
-import GameConfig from '../config/GameConfig.js';
+// import GameConfig from '../config/GameConfig.js';
 import TouchInputComponent from '../components/TouchInputComponent.js';
 
 /**
