@@ -63,15 +63,15 @@ class Player extends GameObject {
 
         // Attack component callbacks
         const attackComponent = this.getComponent('attack');
-        attackComponent.onAttack((attackData) => {
+        attackComponent.onAttack((target, facing, damage) => {
             // Handle attack logic
             if (this.scene.weaponManager) {
-                const direction = this.getComponent('movement').getFacing();
+                const direction = facing || this.getComponent('movement').getFacing();
                 this.scene.weaponManager.createWeapon(
                     this.sprite.x, 
                     this.sprite.y, 
                     direction, 
-                    attackData.target
+                    target
                 );
             }
         });
