@@ -101,28 +101,51 @@
                 border: 2px solid #333;
             }
 
-            /* Position game controls below the game in portrait */
+            /* Dedicated control area below game */
+            #game-controls-area {
+                background: linear-gradient(145deg, #333, #1a1a1a);
+                border: 2px solid #444;
+                border-radius: 12px;
+                padding: 12px;
+                margin: 15px 0;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            }
+
             #game-controls {
-                position: relative;
-                bottom: auto;
-                left: auto;
-                transform: none;
+                display: flex;
                 justify-content: center;
-                margin: 10px 0;
-                gap: 8px;
+                gap: 12px;
+                position: relative;
             }
 
             #game-controls button {
-                padding: 6px 12px;
-                font-size: 10px;
-                min-width: 60px;
-                height: 32px;
+                padding: 8px 16px;
+                font-size: 11px;
+                min-width: 70px;
+                height: 36px;
+                background: linear-gradient(145deg, #4a4a4a, #2a2a2a);
+                border: 2px solid #555;
+                border-radius: 8px;
+                color: #fff;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                transition: all 0.2s ease;
+            }
+
+            #game-controls button:hover {
+                background: linear-gradient(145deg, #5a5a5a, #3a3a3a);
+                transform: translateY(-1px);
+                box-shadow: 0 3px 6px rgba(0,0,0,0.4);
+            }
+
+            #game-controls button:active {
+                transform: translateY(0);
+                box-shadow: 0 1px 2px rgba(0,0,0,0.3);
             }
 
             /* Reserve space for mobile controls */
             #mobile-controls-area {
                 flex: 1;
-                min-height: 200px;
+                min-height: 180px;
                 background: #2a2a2a;
                 border-radius: 12px;
                 position: relative;
@@ -161,20 +184,29 @@
                 border-radius: 8px;
             }
 
-            /* Keep buttons at bottom for landscape (more screen real estate) */
+            /* Control area positioned in the mobile controls section for landscape */
+            #game-controls-area {
+                position: absolute;
+                top: 10px;
+                left: 10px;
+                right: 10px;
+                background: linear-gradient(145deg, #333, #1a1a1a);
+                border: 2px solid #444;
+                border-radius: 8px;
+                padding: 8px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                z-index: 10;
+            }
+
             #game-controls {
-                position: fixed;
-                bottom: 5px;
-                left: 50%;
-                transform: translateX(-50%);
-                gap: 3px;
+                gap: 6px;
             }
 
             #game-controls button {
-                padding: 2px 5px;
-                font-size: 8px;
-                min-width: 40px;
-                height: 22px;
+                padding: 4px 8px;
+                font-size: 9px;
+                min-width: 50px;
+                height: 26px;
             }
         }
         
@@ -233,26 +265,31 @@
                 box-shadow: 0 2px 8px rgba(0,0,0,0.3);
             }
             
+            /* Default mobile control area styling */
+            #game-controls-area {
+                background: linear-gradient(145deg, #333, #1a1a1a);
+                border: 2px solid #444;
+                border-radius: 8px;
+                padding: 10px;
+                margin: 10px 0;
+            }
+
             #game-controls {
-                position: fixed;
-                bottom: 10px;
-                left: 50%;
-                transform: translateX(-50%);
                 display: flex;
-                gap: 5px;
-                z-index: 1000;
+                justify-content: center;
+                gap: 8px;
             }
 
             #game-controls button {
-                padding: 4px 8px;
+                padding: 6px 12px;
                 font-size: 10px;
                 background: linear-gradient(145deg, #4a4a4a, #2a2a2a);
-                border: 1px solid #555;
-                border-radius: 4px;
+                border: 2px solid #555;
+                border-radius: 6px;
                 color: #fff;
-                box-shadow: 0 1px 2px rgba(0,0,0,0.3);
-                min-width: 50px;
-                height: 28px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                min-width: 55px;
+                height: 30px;
                 white-space: nowrap;
                 text-overflow: ellipsis;
                 overflow: hidden;
@@ -291,12 +328,14 @@
             <div id="score">Score: <span id="score-value">0</span></div>
         </div>
         <div id="phaser-game"></div>
-        <div id="mobile-controls-area"></div>
-        <div id="game-controls">
-            <button id="pause-btn">Pause</button>
-            <button id="restart-btn">Restart</button>
-            <button id="back-btn">Back to Studio</button>
+        <div id="game-controls-area">
+            <div id="game-controls">
+                <button id="pause-btn">Pause</button>
+                <button id="restart-btn">Restart</button>
+                <button id="back-btn">Back to Studio</button>
+            </div>
         </div>
+        <div id="mobile-controls-area"></div>
     </div>
 
     <div id="game-info">
