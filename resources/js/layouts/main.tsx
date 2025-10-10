@@ -6,7 +6,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     React.useEffect(() => {
         const trackVisit = async () => {
             try {
-                await fetch('https://graveyardjokes.com/track-visit', {
+                await fetch('/track-visit', {
                     method: 'POST',
                     credentials: 'include',
                     headers: {
@@ -14,7 +14,10 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     },
                     body: JSON.stringify({
                         referrer: window.location.href,
-                        subdomain: window.location.hostname
+                        subdomain: window.location.hostname,
+                        page_title: document.title,
+                        user_agent: navigator.userAgent,
+                        timestamp: new Date().toISOString()
                     })
                 });
             } catch (error) {
