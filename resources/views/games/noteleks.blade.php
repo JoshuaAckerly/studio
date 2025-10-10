@@ -4,6 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Noteleks Heroes Beyond Light - {{ config('app.name') }}</title>
+    
+    <!-- Google Analytics -->
+    @if(config('services.google_analytics.tracking_id'))
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ config('services.google_analytics.tracking_id') }}"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', '{{ config('services.google_analytics.tracking_id') }}');
+        
+        // Track game access
+        gtag('event', 'game_access', {
+            'event_category': 'games',
+            'event_label': 'noteleks',
+            'custom_parameter_subdomain': window.location.hostname
+        });
+    </script>
+    @endif
+    
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
     <script src="https://unpkg.com/@esotericsoftware/spine-phaser-v3@4.2.*/dist/iife/spine-phaser-v3.js"></script>
     
@@ -281,8 +300,21 @@
     </div>
 
     <script>
+        // Google Analytics helper
+        function trackGameEvent(action, label) {
+            if (typeof gtag !== 'undefined') {
+                gtag('event', action, {
+                    'event_category': 'game_interaction',
+                    'event_label': label,
+                    'custom_parameter_game': 'noteleks',
+                    'custom_parameter_subdomain': window.location.hostname
+                });
+            }
+        }
+
         // Handle button clicks
         document.getElementById('back-btn').addEventListener('click', function() {
+            trackGameEvent('game_exit', 'back_to_studio');
             window.location.href = '{{ route("welcome") }}';
         });
 
@@ -293,9 +325,11 @@
                     if (scene.gameState === 'playing') {
                         scene.pauseGame();
                         this.textContent = 'Resume';
+                        trackGameEvent('game_pause', 'pause');
                     } else if (scene.gameState === 'paused') {
                         scene.resumeGame();
                         this.textContent = 'Pause';
+                        trackGameEvent('game_resume', 'resume');
                     }
                 }
             }
@@ -308,6 +342,7 @@
                     scene.restartGame();
                     // Reset pause button text
                     document.getElementById('pause-btn').textContent = 'Pause';
+                    trackGameEvent('game_restart', 'restart');
                 }
             }
         });

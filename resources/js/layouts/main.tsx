@@ -1,25 +1,32 @@
 import React from 'react';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
+import { trackSubdomainVisit } from '@/lib/analytics';
 
 const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     React.useEffect(() => {
         const trackVisit = async () => {
             try {
+                const visitData = {
+                    referrer: window.location.href,
+                    subdomain: window.location.hostname,
+                    page_title: document.title,
+                    user_agent: navigator.userAgent,
+                    timestamp: new Date().toISOString()
+                };
+
+                // Custom server tracking (for email notifications)
                 await fetch('/track-visit', {
                     method: 'POST',
                     credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        referrer: window.location.href,
-                        subdomain: window.location.hostname,
-                        page_title: document.title,
-                        user_agent: navigator.userAgent,
-                        timestamp: new Date().toISOString()
-                    })
+                    body: JSON.stringify(visitData)
                 });
+
+                // Google Analytics tracking
+                trackSubdomainVisit(visitData);
             } catch (error) {
                 console.error('Failed to track visit:', error);
             }
