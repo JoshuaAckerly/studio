@@ -100,7 +100,92 @@ resources/js/games/noteleks/
 The game now loads via ES6 modules through Vite:
 
 ```html
-@vite('resources/js/games/noteleks/main.js')
+# Noteleks Game - Modular Architecture
+
+## Overview
+The Noteleks game has been completely refactored from a monolithic structure to a modular, component-based architecture using the Entity Component System (ECS) pattern with manager classes.
+
+## Architecture
+
+### Core Structure
+```
+resources/js/games/noteleks/
+├── main-modular.js          # Entry point
+├── NoteleksGameModular.js   # Main game class
+├── config/
+│   └── GameConfig.js        # Centralized configuration
+├── entities/
+│   ├── GameObject.js        # Base entity class
+│   ├── Player.js           # Player entity with components
+│   └── Enemy.js            # Enemy entity with components
+├── components/
+│   ├── HealthComponent.js   # Health management
+│   ├── MovementComponent.js # Movement and physics
+│   ├── InputComponent.js    # Input handling
+│   ├── AttackComponent.js   # Attack system
+│   └── AIComponent.js       # AI behavior
+├── managers/
+│   ├── AssetManager.js      # Asset loading and management
+│   ├── InputManager.js      # Global input handling
+│   ├── EnemyManager.js      # Enemy spawning and lifecycle
+│   └── PlatformManager.js   # Platform generation
+├── scenes/
+│   └── GameScene.js         # Main game scene
+├── utils/
+│   └── MathUtils.js         # Mathematical utilities
+└── factories/
+    └── GameObjectFactory.js # Object creation factory
+```
+
+## Key Features
+
+### 1. Component-Based Entities
+- **GameObject**: Base class with component management
+- **Player**: Composed of health, movement, input, and attack components
+- **Enemy**: Composed of health, movement, and AI components
+
+### 2. Manager Pattern
+- **AssetManager**: Centralized asset loading and caching
+- **InputManager**: Global input state management
+- **EnemyManager**: Enemy spawning, AI coordination, and collision handling
+- **PlatformManager**: Dynamic platform generation
+
+### 3. Configuration-Driven Design
+- **GameConfig.js**: Single source of truth for all game settings
+- Easily tweakable gameplay parameters
+- Organized by system (player, enemies, weapons, UI, assets)
+
+### 4. Modular Components
+- **HealthComponent**: Damage handling and health management
+- **MovementComponent**: Physics-based movement with platformer mechanics
+- **InputComponent**: Keyboard input processing
+- **AttackComponent**: Weapon firing and combat mechanics
+- **AIComponent**: Enemy behavior and pathfinding
+
+## Benefits of the New Architecture
+
+1. **Maintainability**: Clear separation of concerns
+2. **Extensibility**: Easy to add new entities, components, or managers
+3. **Testability**: Isolated components can be tested independently
+4. **Performance**: Efficient component-based updates
+5. **Configuration**: Centralized settings for easy tweaking
+
+## Usage
+
+The game is now initialized through `main-modular.js` which creates a Phaser game instance with the modular architecture. All legacy files have been removed and the build system updated accordingly.
+
+## Development
+
+To add new features:
+1. Create new components in the `components/` folder
+2. Add new entities in the `entities/` folder using the GameObject base class
+3. Create managers for complex systems in the `managers/` folder
+4. Update GameConfig.js with new configuration options
+5. Use the GameObjectFactory for consistent object creation
+
+## Build System
+
+The game is built using Vite and imported in the Laravel Blade template. The entry point is `main-modular.js` which initializes the entire modular system.
 ```
 
 All game logic is automatically initialized when the DOM loads, with proper cleanup on page unload.

@@ -75,7 +75,6 @@ class WeaponManager {
         // Get enemy reference from sprite
         const enemy = enemySprite.enemyRef;
         if (!enemy) {
-            console.warn('Enemy reference not found on sprite');
             return;
         }
         

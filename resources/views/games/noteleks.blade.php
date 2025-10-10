@@ -7,16 +7,9 @@
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
     <script src="https://unpkg.com/@esotericsoftware/spine-phaser-v3@4.2.*/dist/iife/spine-phaser-v3.js"></script>
     
-    <script>
-        // Add a small delay to ensure CDN scripts are fully loaded
-        setTimeout(() => {
-            console.log('Checking dependencies...');
-            console.log('Phaser:', typeof Phaser);
-            console.log('Spine:', typeof window.spine);
-        }, 500);
-    </script>
+
     
-    @vite('resources/js/games/noteleks/main.js')
+    @vite('resources/js/games/noteleks/main-modular.js')
     <style>
         * {
             margin: 0;

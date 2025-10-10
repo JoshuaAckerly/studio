@@ -11,11 +11,7 @@ export default defineConfig({
                 'resources/css/app.css', 
                 'resources/js/app.tsx',
                 'resources/css/games/noteleks.css',
-                'resources/js/games/noteleks/main.js',
-                'resources/js/games/noteleks/NoteleksGame.js',
-                'resources/js/games/noteleks/GameScene.js',
-                'resources/js/games/noteleks/Player.js',
-                'resources/js/games/noteleks/Enemy.js',
+                'resources/js/games/noteleks/main-modular.js',
                 'resources/js/games/noteleks/WeaponManager.js',
                 'resources/js/games/noteleks/GameUI.js'
             ],
@@ -25,6 +21,14 @@ export default defineConfig({
         react(),
         tailwindcss(),
     ],
+
+    server: {
+        host: '0.0.0.0',
+        port: 5173,
+        hmr: {
+            host: 'localhost',
+        },
+    },
 
     esbuild: {
         jsx: 'automatic',

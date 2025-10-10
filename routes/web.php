@@ -7,12 +7,12 @@ Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('welcome');
 
-// Games Routes - Main working route
+// Noteleks Game
 Route::get('/noteleks', function () {
     return view('games.noteleks');
 })->name('games.noteleks');
 
-// Serve Spine assets explicitly
+// Serve Spine assets
 Route::get('/games/noteleks/spine/characters/{file}', function ($file) {
     $path = public_path("games/noteleks/spine/characters/{$file}");
     
@@ -34,13 +34,6 @@ Route::get('/games/noteleks/spine/characters/{file}', function ($file) {
         'Cache-Control' => 'public, max-age=3600'
     ]);
 })->where('file', '.*');
-
-// Redirect old route to new working route
-Route::redirect('/games/noteleks', '/noteleks', 301);
-
-Route::get('/noteleks-debug', function () {
-    return view('games.noteleks-debug');
-})->name('games.noteleks-debug');
 
 Route::redirect('/login', '/', 301);
 Route::redirect('/register', '/', 301);

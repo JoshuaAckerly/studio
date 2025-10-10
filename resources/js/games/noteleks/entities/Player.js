@@ -1,0 +1,211 @@
+/* global Phaser */
+import GameObject from '../core/GameObject.js';
+import MovementComponent from '../components/MovementComponent.js';
+import HealthComponent from '../components/HealthComponent.js';
+import PhysicsComponent from '../components/PhysicsComponent.js';
+import InputComponent from '../components/InputComponent.js';
+import AttackComponent from '../components/AttackComponent.js';
+import GameConfig from '../config/GameConfig.js';
+
+/**
+ * Player Entity
+ * Represents the player character with all necessary components
+ */
+class Player extends GameObject {
+    constructor(scene, x, y) {
+        super(scene, x, y);
+        this.createPlayer();
+        this.setupComponents();
+    }
+
+    createPlayer() {
+        // Create player sprite with physics
+        this.sprite = this.scene.physics.add.sprite(this.x, this.y, 'skeleton');
+        
+        // Store reference to this player class in the sprite
+        this.sprite.playerRef = this;
+    }
+
+    setupComponents() {
+        const config = GameConfig.player;
+
+        // Add physics component
+        this.addComponent('physics', new PhysicsComponent({
+            bounce: 0.2,
+            collideWorldBounds: true,
+            bodyWidth: 32,
+            bodyHeight: 48
+        }));
+        
+        // Debug player physics setup
+        setTimeout(() => {
+            console.log('👤 PLAYER PHYSICS DEBUG:');
+            console.log('  Position: x=' + this.sprite.x + ', y=' + this.sprite.y);
+            if (this.sprite.body) {
+                console.log('  Body: x=' + this.sprite.body.x + ', y=' + this.sprite.body.y + ', w=' + this.sprite.body.width + ', h=' + this.sprite.body.height);
+                console.log('  Velocity: x=' + this.sprite.body.velocity.x + ', y=' + this.sprite.body.velocity.y);
+                console.log('  CollideWorldBounds: ' + this.sprite.body.collideWorldBounds);
+            } else {
+                console.log('  Body: MISSING!');
+            }
+        }, 100);
+
+        // Add movement component
+        this.addComponent('movement', new MovementComponent(config.speed, config.jumpPower));
+
+        // Add health component
+        this.addComponent('health', new HealthComponent(config.health, config.maxHealth));
+
+        // Add input component
+        this.addComponent('input', new InputComponent());
+
+        // Add attack component
+        this.addComponent('attack', new AttackComponent());
+
+        // Setup component callbacks
+        this.setupComponentCallbacks();
+    }
+
+    setupComponentCallbacks() {
+        // Health component callbacks
+        const healthComponent = this.getComponent('health');
+        healthComponent.onDeath(() => {
+            // Player death logic
+            this.scene.gameOver();
+        });
+
+        // Attack component callbacks
+        const attackComponent = this.getComponent('attack');
+        attackComponent.onAttack((attackData) => {
+            // Handle attack logic
+            if (this.scene.weaponManager) {
+                const direction = this.getComponent('movement').getFacing();
+                this.scene.weaponManager.createWeapon(
+                    this.sprite.x, 
+                    this.sprite.y, 
+                    direction, 
+                    attackData.target
+                );
+            }
+        });
+    }
+
+    update(cursors, wasd, spaceKey) {
+        if (this.scene.gameState !== 'playing') return;
+
+        // Check if this is being called from SystemManager with deltaTime only
+        if (typeof cursors === 'number' && wasd === undefined && spaceKey === undefined) {
+            // This is a deltaTime call from SystemManager - just update base components
+            super.update(cursors);
+            return;
+        }
+
+        // Defensive check for input objects
+        if (!cursors || !wasd || !spaceKey) {
+            console.warn('Player.update: Missing input objects', { cursors, wasd, spaceKey });
+            return;
+        }
+
+        // Update all components first
+        super.update(16); // 16ms for 60fps
+
+        // Handle input
+        const inputComponent = this.getComponent('input');
+        const movementComponent = this.getComponent('movement');
+        const attackComponent = this.getComponent('attack');
+
+        if (inputComponent && movementComponent) {
+            // Create input state object
+            const inputState = {
+                left: (cursors.left?.isDown || false) || (wasd.A?.isDown || false),
+                right: (cursors.right?.isDown || false) || (wasd.D?.isDown || false),
+                up: (cursors.up?.isDown || false) || (wasd.W?.isDown || false) || (spaceKey.isDown || false),
+                attack: false // Mouse input handled separately
+            };
+
+            // Debug logging removed - movement working correctly!
+
+            // Process movement input
+            inputComponent.processInput(inputState);
+
+            // Apply movement based on input state directly
+            if (inputState.left) {
+                movementComponent.moveLeft();
+            } else if (inputState.right) {
+                movementComponent.moveRight();
+            } else {
+                movementComponent.stopHorizontal();
+            }
+
+            if (inputState.up && movementComponent.isOnGround()) {
+                const jumped = movementComponent.jump();
+                if (jumped) {
+                    console.log('Player jumped from position:', this.sprite.x, this.sprite.y);
+                }
+            }
+        }
+    }
+
+    attack(pointer) {
+        const attackComponent = this.getComponent('attack');
+        if (attackComponent && attackComponent.canAttack()) {
+            const target = pointer ? { x: pointer.x, y: pointer.y } : null;
+            attackComponent.attack(target);
+        }
+    }
+
+    takeDamage(amount) {
+        const healthComponent = this.getComponent('health');
+        if (healthComponent) {
+            return healthComponent.takeDamage(amount);
+        }
+        return { died: false, currentHealth: 0 };
+    }
+
+    heal(amount) {
+        const healthComponent = this.getComponent('health');
+        if (healthComponent) {
+            healthComponent.heal(amount);
+        }
+    }
+
+    getHealth() {
+        const healthComponent = this.getComponent('health');
+        return healthComponent ? healthComponent.getHealth() : 0;
+    }
+
+    getMaxHealth() {
+        const healthComponent = this.getComponent('health');
+        return healthComponent ? healthComponent.getMaxHealth() : 0;
+    }
+
+    isAlive() {
+        const healthComponent = this.getComponent('health');
+        return healthComponent ? healthComponent.isAlive() : false;
+    }
+
+    reset(x, y) {
+        // Reset position
+        this.setPosition(x, y);
+        
+        // Reset health
+        const healthComponent = this.getComponent('health');
+        if (healthComponent) {
+            healthComponent.heal(healthComponent.getMaxHealth());
+        }
+
+        // Reset movement
+        const movementComponent = this.getComponent('movement');
+        if (movementComponent) {
+            movementComponent.stopHorizontal();
+        }
+
+        // Reset sprite
+        if (this.sprite) {
+            this.sprite.setPosition(x, y);
+            this.sprite.setVelocity(0, 0);
+        }
+    }
+}
+
+export default Player;
