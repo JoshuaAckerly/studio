@@ -23,17 +23,14 @@ export class InputManager {
 
             // Verify controls were created successfully
             if (!this.controls.cursors || !this.controls.wasd || !this.controls.space) {
-                console.error('InputManager: Failed to create input controls', this.controls);
                 return false;
             }
 
             // Setup mouse/touch input
             this.scene.input.on('pointerdown', this.handlePointerDown.bind(this));
             
-            console.log('InputManager: Controls initialized successfully');
             return true;
         } catch (error) {
-            console.error('InputManager: Failed to initialize controls', error);
             return false;
         }
     }
@@ -85,7 +82,6 @@ export class InputManager {
     // Get raw controls for components that need direct access
     getControls() {
         if (!this.controls) {
-            console.warn('InputManager: getControls() called before initialization');
             return null;
         }
         return this.controls;

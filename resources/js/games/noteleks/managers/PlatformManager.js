@@ -12,7 +12,6 @@ export class PlatformManager {
 
     initialize() {
         this.platforms = this.scene.physics.add.staticGroup();
-        console.log('Platform static group created:', !!this.platforms);
         this.createPlatforms();
     }
 
@@ -20,48 +19,20 @@ export class PlatformManager {
         const screenWidth = this.scene.cameras.main.width;
         const screenHeight = this.scene.cameras.main.height;
         
-        console.log('🟩 CREATING PLATFORMS:');
-        console.log('  Screen dimensions:', screenWidth, 'x', screenHeight);
-        console.log('  Ground texture exists:', this.scene.textures.exists('ground'));
-        
         // Ground platform - create multiple tiles to ensure full coverage
         const groundTileWidth = GameConfig.assets.textures.ground.width; // 64px
         const groundTileHeight = GameConfig.assets.textures.ground.height; // 32px
         const tilesNeeded = Math.ceil(screenWidth / groundTileWidth) + 2; // Add extra tiles for safety
         
-        console.log('  Creating', tilesNeeded, 'ground tiles of', groundTileWidth, 'px each');
-        
         for (let i = 0; i < tilesNeeded; i++) {
             const tileX = (i * groundTileWidth) + (groundTileWidth / 2);
             const tileY = screenHeight - (groundTileHeight / 2); // Position at bottom of screen
             
-            try {
-                const groundTile = this.platforms.create(tileX, tileY, 'ground');
-                groundTile.setVisible(true);
-                groundTile.setActive(true);
-                
-                console.log('  ✅ Ground tile', i, 'created at (', tileX, ',', tileY, ') - visible:', groundTile.visible);
-            } catch (error) {
-                console.error('  ❌ Failed to create ground tile', i, ':', error);
-            }
+            const groundTile = this.platforms.create(tileX, tileY, 'ground');
+            groundTile.setVisible(true);
+            groundTile.setActive(true);
         }
-            
-        // Debug ground platform setup with delay to ensure body is ready
-        setTimeout(() => {
-            console.log('🟩 GROUND PLATFORM DEBUG:');
-            console.log('  Total platforms:', this.platforms.children.entries.length);
-            console.log('  Screen: ' + screenWidth + 'x' + screenHeight);
-            console.log('  Ground coverage: 0 to', tilesNeeded * groundTileWidth);
-            
-            // Show first and last tile details
-            const tiles = this.platforms.children.entries;
-            if (tiles.length > 0) {
-                const firstTile = tiles[0];
-                const lastTile = tiles[tiles.length > 1 ? tiles.length - 1 : 0];
-                console.log('  First tile: x=' + firstTile.x + ', body=' + (firstTile.body ? firstTile.body.x + '-' + (firstTile.body.x + firstTile.body.width) : 'none'));
-                console.log('  Last tile: x=' + lastTile.x + ', body=' + (lastTile.body ? lastTile.body.x + '-' + (lastTile.body.x + lastTile.body.width) : 'none'));
-            }
-        }, 50);
+
         
         // Floating platforms - positioned relative to screen size
         this.createFloatingPlatform(screenWidth * 0.75, screenHeight * 0.6);

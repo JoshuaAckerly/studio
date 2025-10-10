@@ -91,44 +91,22 @@ class GameScene extends Phaser.Scene {
     createGameWorld() {
         // Set physics world bounds
         this.physics.world.setBounds(0, 0, GameConfig.screen.width, GameConfig.screen.height);
-        console.log('🌍 World bounds set to:', {
-            x: this.physics.world.bounds.x,
-            y: this.physics.world.bounds.y, 
-            width: this.physics.world.bounds.width,
-            height: this.physics.world.bounds.height
-        });
         
         // Create placeholder textures FIRST
-        console.log('🎨 Creating placeholder textures...');
         AssetManager.createPlaceholderTextures(this, GameConfig);
         
-        // Verify ground texture was created
-        if (this.textures.exists('ground')) {
-            console.log('✅ Ground texture created successfully');
-        } else {
-            console.error('❌ Ground texture was not created!');
-        }
-        
         // Create background
-        try {
-            const bg = this.add.image(
-                GameConfig.screen.width / 2, 
-                GameConfig.screen.height / 2, 
-                'background'
-            );
-            console.log('✅ Background created:', bg.visible);
-        } catch (error) {
-            console.error('❌ Failed to create background:', error);
-        }
+        this.add.image(
+            GameConfig.screen.width / 2, 
+            GameConfig.screen.height / 2, 
+            'background'
+        );
         
         // NOW initialize platform manager (after textures exist)
-        console.log('🏗️ Initializing PlatformManager after textures are ready...');
         this.platformManager.initialize();
         this.platforms = this.platformManager.getPlatforms();
-        console.log('🏗️ Platform group retrieved:', !!this.platforms, 'children:', this.platforms ? this.platforms.children.entries.length : 0);
         
         // Initialize enemy manager after textures exist
-        console.log('👹 Initializing EnemyManager after textures are ready...');
         this.enemyManager.initialize();
     }
 
@@ -147,14 +125,6 @@ class GameScene extends Phaser.Scene {
         // Setup player-platform collisions
         if (this.player && this.platforms) {
             this.physics.add.collider(this.player.sprite, this.platforms);
-            console.log('Player-platform collision set up:', {
-                playerSprite: !!this.player.sprite,
-                playerBody: !!this.player.sprite.body,
-                platforms: !!this.platforms,
-                platformCount: this.platforms.children ? this.platforms.children.entries.length : 0
-            });
-        } else {
-            console.warn('Failed to set up collisions:', { player: !!this.player, platforms: !!this.platforms });
         }
         
         // Setup collisions through managers
@@ -204,13 +174,6 @@ class GameScene extends Phaser.Scene {
             const controls = this.inputManager.getControls();
             if (controls && controls.cursors && controls.wasd && controls.space) {
                 this.player.update(controls.cursors, controls.wasd, controls.space);
-            } else {
-                console.warn('GameScene.update: Controls not properly initialized', { 
-                    controls,
-                    inputManager: !!this.inputManager,
-                    scene: !!this.scene,
-                    inputKeyboard: !!this.input?.keyboard
-                });
             }
         }
 

@@ -17,15 +17,10 @@ import NoteleksGame from './NoteleksGameModular.js';
 const game = NoteleksGame.create('phaser-game');
 
 if (game) {
-    console.log('✅ Noteleks Heroes Beyond Light initialized successfully!');
-    console.log('🏗️  Using modular architecture');
-    
-    // Expose game instance globally for debugging (optional)
+    // Expose game instance globally (optional)
     if (typeof window !== 'undefined') {
         window.noteleksGame = game;
     }
-} else {
-    console.error('❌ Failed to initialize Noteleks Heroes Beyond Light');
 }
 
 export default game;

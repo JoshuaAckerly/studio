@@ -36,19 +36,6 @@ class Player extends GameObject {
             bodyWidth: 32,
             bodyHeight: 48
         }));
-        
-        // Debug player physics setup
-        setTimeout(() => {
-            console.log('👤 PLAYER PHYSICS DEBUG:');
-            console.log('  Position: x=' + this.sprite.x + ', y=' + this.sprite.y);
-            if (this.sprite.body) {
-                console.log('  Body: x=' + this.sprite.body.x + ', y=' + this.sprite.body.y + ', w=' + this.sprite.body.width + ', h=' + this.sprite.body.height);
-                console.log('  Velocity: x=' + this.sprite.body.velocity.x + ', y=' + this.sprite.body.velocity.y);
-                console.log('  CollideWorldBounds: ' + this.sprite.body.collideWorldBounds);
-            } else {
-                console.log('  Body: MISSING!');
-            }
-        }, 100);
 
         // Add movement component
         this.addComponent('movement', new MovementComponent(config.speed, config.jumpPower));
@@ -102,7 +89,6 @@ class Player extends GameObject {
 
         // Defensive check for input objects
         if (!cursors || !wasd || !spaceKey) {
-            console.warn('Player.update: Missing input objects', { cursors, wasd, spaceKey });
             return;
         }
 
@@ -138,10 +124,7 @@ class Player extends GameObject {
             }
 
             if (inputState.up && movementComponent.isOnGround()) {
-                const jumped = movementComponent.jump();
-                if (jumped) {
-                    console.log('Player jumped from position:', this.sprite.x, this.sprite.y);
-                }
+                movementComponent.jump();
             }
         }
     }

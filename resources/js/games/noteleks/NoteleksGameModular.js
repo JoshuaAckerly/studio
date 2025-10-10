@@ -45,11 +45,8 @@ class NoteleksGame {
         // Check if container exists
         const container = document.getElementById(containerId);
         if (!container) {
-            console.error(`❌ Game container '${containerId}' not found`);
             return false;
         }
-
-        console.log(`✅ Game container '${containerId}' found:`, container);
 
         // Create the game
         this.game = new Phaser.Game({
@@ -66,7 +63,7 @@ class NoteleksGame {
     setupEventListeners() {
         // Game ready event
         this.game.events.once('ready', () => {
-            console.log('🎮 Noteleks Heroes Beyond Light - Game Ready!');
+            // Game is ready
         });
 
         // Handle browser visibility changes

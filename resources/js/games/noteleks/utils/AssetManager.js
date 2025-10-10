@@ -9,7 +9,6 @@ export class AssetManager {
             if (textureConfig.color !== undefined) {
                 // Check if texture already exists
                 if (scene.textures.exists(key)) {
-                    console.log(`Texture '${key}' already exists, skipping creation`);
                     return;
                 }
                 
@@ -21,8 +20,6 @@ export class AssetManager {
                 // Generate texture and destroy graphics object
                 graphics.generateTexture(key, textureConfig.width, textureConfig.height);
                 graphics.destroy();
-                
-                console.log(`Created placeholder texture '${key}': ${textureConfig.width}x${textureConfig.height}, color: 0x${textureConfig.color.toString(16)}`);
             }
         });
     }
@@ -40,7 +37,7 @@ export class AssetManager {
                 scene.load.json('noteleks-skeleton-data', json);
             }
         } catch (error) {
-            console.warn('Failed to load Spine assets:', error);
+            // Silently handle error
         }
     }
 
@@ -74,7 +71,6 @@ export class AssetManager {
             
             return false;
         } catch (error) {
-            console.error('Failed to setup Spine data:', error);
             return false;
         }
     }
