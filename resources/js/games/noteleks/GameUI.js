@@ -23,30 +23,36 @@ class GameUI {
             strokeThickness: 2
         });
         this.scoreText.setScrollFactor(0); // Fixed position
+        this.scoreText.setDepth(1000); // Ensure UI is on top
         
-        // Health display
-        this.healthText = this.scene.add.text(16, 50, 'Health: 100', {
-            fontSize: '24px',
-            fill: '#ff4444',
+        // Health label
+        this.healthLabel = this.scene.add.text(16, 50, 'Health', {
+            fontSize: '16px',
+            fill: '#ffffff',
             fontFamily: 'Arial',
             stroke: '#000000',
-            strokeThickness: 2
+            strokeThickness: 1
         });
-        this.healthText.setScrollFactor(0);
+        this.healthLabel.setScrollFactor(0);
+        this.healthLabel.setDepth(1000);
         
-        // Health bar background
+        // Health bar background (moved down to make room for label)
         this.healthBarBg = this.scene.add.graphics();
-        this.healthBarBg.fillStyle(0x000000);
-        this.healthBarBg.fillRect(16, 80, 204, 24);
+        this.healthBarBg.fillStyle(0x333333); // Darker gray for better visibility
+        this.healthBarBg.fillRect(16, 70, 204, 20); // Adjusted position and made thinner
+        this.healthBarBg.lineStyle(2, 0xffffff); // White border
+        this.healthBarBg.strokeRect(16, 70, 204, 20);
         this.healthBarBg.setScrollFactor(0);
+        this.healthBarBg.setDepth(1000); // Ensure it's on top
         
         // Health bar
         this.healthBar = this.scene.add.graphics();
-        this.updateHealthBar();
         this.healthBar.setScrollFactor(0);
+        this.healthBar.setDepth(1001); // Higher than background
+        this.updateHealthBar(); // Update after setting scroll factor
         
         // Weapon indicator
-        this.weaponText = this.scene.add.text(16, 120, 'Weapon: Dagger', {
+        this.weaponText = this.scene.add.text(16, 100, 'Weapon: Dagger', {
             fontSize: '18px',
             fill: '#ffffff',
             fontFamily: 'Arial',
@@ -54,6 +60,7 @@ class GameUI {
             strokeThickness: 2
         });
         this.weaponText.setScrollFactor(0);
+        this.weaponText.setDepth(1000);
         
         // Game over screen (initially hidden)
         this.gameOverContainer = this.scene.add.container(400, 300);
@@ -64,6 +71,53 @@ class GameUI {
         
         // Update DOM elements as well
         this.updateDOMElements();
+        
+        // Create mobile UI elements if needed
+        this.createMobileUIElements();
+    }
+
+    createMobileUIElements() {
+        // Check if we're on mobile
+        const isMobile = this.detectMobile();
+        
+        if (isMobile) {
+            // Create pause button for mobile
+            this.mobilePauseButton = this.scene.add.graphics();
+            this.mobilePauseButton.fillStyle(0x333333, 0.8);
+            this.mobilePauseButton.fillRoundedRect(this.scene.scale.width - 60, 10, 50, 30, 5);
+            this.mobilePauseButton.lineStyle(2, 0xffffff, 1);
+            this.mobilePauseButton.strokeRoundedRect(this.scene.scale.width - 60, 10, 50, 30, 5);
+            this.mobilePauseButton.setScrollFactor(0);
+            this.mobilePauseButton.setDepth(1000);
+            this.mobilePauseButton.setInteractive(
+                new Phaser.Geom.Rectangle(this.scene.scale.width - 60, 10, 50, 30),
+                Phaser.Geom.Rectangle.Contains
+            );
+            
+            // Pause button text
+            this.mobilePauseText = this.scene.add.text(this.scene.scale.width - 35, 25, '⏸', {
+                fontSize: '16px',
+                fill: '#ffffff',
+                fontFamily: 'Arial'
+            });
+            this.mobilePauseText.setOrigin(0.5);
+            this.mobilePauseText.setScrollFactor(0);
+            this.mobilePauseText.setDepth(1001);
+            
+            // Handle pause button tap
+            this.mobilePauseButton.on('pointerdown', () => {
+                if (this.scene.gameState === 'playing') {
+                    this.scene.pauseGame();
+                } else if (this.scene.gameState === 'paused') {
+                    this.scene.resumeGame();
+                }
+            });
+        }
+    }
+
+    detectMobile() {
+        const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+        return /android|avantgo|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino/i.test(userAgent) || ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
     }
 
     createGameOverScreen() {
@@ -96,15 +150,47 @@ class GameUI {
         this.gameOverContainer.add(this.finalScoreText);
         
         // Instructions
-        const instructionsText = this.scene.add.text(0, 30, 'Press R to restart or ESC to quit', {
+        const isMobile = this.detectMobile();
+        const instructionText = isMobile ? 'Tap to restart or use browser back to quit' : 'Press R to restart or ESC to quit';
+        
+        const instructionsText = this.scene.add.text(0, 30, instructionText, {
             fontSize: '18px',
             fill: '#4ade80',
             fontFamily: 'Arial',
             stroke: '#000000',
-            strokeThickness: 2
+            strokeThickness: 2,
+            align: 'center'
         });
         instructionsText.setOrigin(0.5);
         this.gameOverContainer.add(instructionsText);
+        
+        // Add mobile restart button
+        if (isMobile) {
+            const restartButton = this.scene.add.graphics();
+            restartButton.fillStyle(0x4ade80, 0.8);
+            restartButton.fillRoundedRect(-80, 60, 160, 40, 10);
+            restartButton.lineStyle(2, 0xffffff, 1);
+            restartButton.strokeRoundedRect(-80, 60, 160, 40, 10);
+            this.gameOverContainer.add(restartButton);
+            
+            const restartText = this.scene.add.text(0, 80, 'RESTART', {
+                fontSize: '18px',
+                fill: '#ffffff',
+                fontFamily: 'Arial Bold',
+                align: 'center'
+            });
+            restartText.setOrigin(0.5);
+            this.gameOverContainer.add(restartText);
+            
+            // Make button interactive
+            restartButton.setInteractive(
+                new Phaser.Geom.Rectangle(-80, 60, 160, 40),
+                Phaser.Geom.Rectangle.Contains
+            );
+            restartButton.on('pointerdown', () => {
+                this.scene.restartGame();
+            });
+        }
     }
 
     updateScore(newScore) {
@@ -120,24 +206,21 @@ class GameUI {
 
     updateHealth(newHealth) {
         this.health = Math.max(0, Math.min(this.maxHealth, newHealth));
-        this.healthText.setText(`Health: ${this.health}`);
         this.updateHealthBar();
         this.updateDOMElements();
         
-        // Flash effect when health is low
+        // Flash effect on health bar when health is low
         if (this.health <= 25) {
-            this.healthText.setFill('#ff0000');
             this.scene.tweens.add({
-                targets: this.healthText,
+                targets: this.healthBar,
                 alpha: 0.5,
                 duration: 200,
                 yoyo: true,
                 repeat: -1
             });
         } else {
-            this.healthText.setFill('#ff4444');
-            this.scene.tweens.killTweensOf(this.healthText);
-            this.healthText.setAlpha(1);
+            this.scene.tweens.killTweensOf(this.healthBar);
+            this.healthBar.setAlpha(1);
         }
     }
 
@@ -158,8 +241,13 @@ class GameUI {
         if (healthPercent < 0.5) color = 0xffff00; // Yellow
         if (healthPercent < 0.25) color = 0xff0000; // Red
         
+        // Draw the health bar fill
         this.healthBar.fillStyle(color);
-        this.healthBar.fillRect(18, 82, barWidth, 20);
+        this.healthBar.fillRect(18, 72, barWidth, 16); // Adjusted to match new background position
+        
+        // Add a white border around the health bar for visibility
+        this.healthBar.lineStyle(2, 0xffffff);
+        this.healthBar.strokeRect(18, 72, 200, 16);
     }
 
     updateWeapon(weaponType) {
@@ -188,7 +276,10 @@ class GameUI {
     showPauseScreen() {
         // Simple pause indicator
         if (!this.pauseText) {
-            this.pauseText = this.scene.add.text(400, 300, 'PAUSED\nPress P to resume', {
+            const isMobile = this.detectMobile();
+            const pauseMessage = isMobile ? 'PAUSED\nTap pause button to resume' : 'PAUSED\nPress P to resume';
+            
+            this.pauseText = this.scene.add.text(400, 300, pauseMessage, {
                 fontSize: '36px',
                 fill: '#ffffff',
                 fontFamily: 'Arial',
@@ -200,21 +291,29 @@ class GameUI {
             this.pauseText.setScrollFactor(0);
         }
         this.pauseText.setVisible(true);
+        
+        // Hide touch controls when paused
+        if (this.scene.inputManager && this.scene.inputManager.isMobileDevice()) {
+            this.scene.inputManager.showTouchControls(false);
+        }
     }
 
     hidePauseScreen() {
         if (this.pauseText) {
             this.pauseText.setVisible(false);
         }
+        
+        // Show touch controls when unpaused
+        if (this.scene.inputManager && this.scene.inputManager.isMobileDevice()) {
+            this.scene.inputManager.showTouchControls(true);
+        }
     }
 
     updateDOMElements() {
         // Update DOM elements if they exist
         const scoreElement = document.getElementById('score-value');
-        const healthElement = document.getElementById('health-value');
         
         if (scoreElement) scoreElement.textContent = this.score;
-        if (healthElement) healthElement.textContent = this.health;
     }
 
     reset() {

@@ -119,6 +119,11 @@ class GameScene extends Phaser.Scene {
             playerConfig.startPosition.y
         );
         // Player is updated manually in GameScene, not through SystemManager
+        
+        // Initialize UI with player's starting health
+        if (this.gameUI && this.player) {
+            this.gameUI.updateHealth(this.player.getHealth());
+        }
     }
 
     setupCollisions() {
@@ -257,6 +262,11 @@ class GameScene extends Phaser.Scene {
             playerConfig.startPosition.x, 
             playerConfig.startPosition.y
         );
+        
+        // Update UI with reset health
+        if (this.gameUI && this.player) {
+            this.gameUI.updateHealth(this.player.getHealth());
+        }
         
         // Resume physics
         this.physics.resume();

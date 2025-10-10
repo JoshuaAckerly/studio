@@ -24,6 +24,14 @@
             background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
             font-family: Arial, sans-serif;
             color: #fff;
+            /* Mobile optimizations */
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
         
         #game-container {
@@ -58,6 +66,11 @@
             display: block;
             width: 100% !important;
             height: 100% !important;
+            /* Prevent mobile scrolling and selection */
+            touch-action: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
         
         #game-controls {
@@ -108,7 +121,6 @@
     <div id="game-container">
         <div id="game-ui">
             <div id="score">Score: <span id="score-value">0</span></div>
-            <div id="health">Health: <span id="health-value">100</span></div>
         </div>
         <div id="phaser-game"></div>
         <div id="game-controls">
