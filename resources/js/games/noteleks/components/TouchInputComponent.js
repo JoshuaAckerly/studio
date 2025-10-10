@@ -414,12 +414,31 @@ class TouchInputComponent extends Component {
      */
     setupJoystickEvents(joystickContainer, joystickKnob) {
         let isDragging = false;
-        let centerX = 60; // Half of container width
-        let centerY = 60; // Half of container height
+        let activeTouch = null; // Track specific touch
+        const centerX = 60; // Half of container width
+        const centerY = 60; // Half of container height
         const maxDistance = 35; // Maximum distance from center
+
+        const resetJoystick = () => {
+            joystickKnob.style.transform = 'translate(-50%, -50%)';
+            joystickContainer.style.opacity = '0.8';
+            
+            // Reset movement state
+            this.touchState.left = false;
+            this.touchState.right = false;
+            this.touchState.up = false;
+            this.touchState.down = false;
+        };
 
         const handleStart = (e) => {
             e.preventDefault();
+            e.stopPropagation();
+            
+            // For touch events, track the specific touch
+            if (e.touches) {
+                activeTouch = e.touches[0].identifier;
+            }
+            
             isDragging = true;
             joystickContainer.style.opacity = '1';
         };
@@ -427,11 +446,22 @@ class TouchInputComponent extends Component {
         const handleMove = (e) => {
             if (!isDragging) return;
             e.preventDefault();
+            e.stopPropagation();
+
+            let clientX, clientY;
+            
+            if (e.touches) {
+                // Find the correct touch if multiple touches exist
+                const touch = Array.from(e.touches).find(t => t.identifier === activeTouch);
+                if (!touch) return;
+                clientX = touch.clientX;
+                clientY = touch.clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
 
             const rect = joystickContainer.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            
             let deltaX = clientX - rect.left - centerX;
             let deltaY = clientY - rect.top - centerY;
             
@@ -442,7 +472,11 @@ class TouchInputComponent extends Component {
                 deltaY = (deltaY / distance) * maxDistance;
             }
             
-            joystickKnob.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+            // Position knob relative to center, accounting for the -50% transform
+            const knobX = centerX + deltaX;
+            const knobY = centerY + deltaY;
+            joystickKnob.style.left = `${knobX}px`;
+            joystickKnob.style.top = `${knobY}px`;
             
             // Update touch state
             const normalizedX = deltaX / maxDistance;
@@ -455,27 +489,52 @@ class TouchInputComponent extends Component {
         };
 
         const handleEnd = (e) => {
-            e.preventDefault();
-            isDragging = false;
-            joystickKnob.style.transform = 'translate(0px, 0px)';
-            joystickContainer.style.opacity = '0.8';
+            // Only handle if this is our active touch
+            if (e.changedTouches && activeTouch !== null) {
+                const endedTouch = Array.from(e.changedTouches).find(t => t.identifier === activeTouch);
+                if (!endedTouch) return;
+            }
             
-            // Reset movement state
-            this.touchState.left = false;
-            this.touchState.right = false;
-            this.touchState.up = false;
-            this.touchState.down = false;
+            e.preventDefault();
+            e.stopPropagation();
+            
+            isDragging = false;
+            activeTouch = null;
+            
+            // Reset knob to center
+            joystickKnob.style.left = '50%';
+            joystickKnob.style.top = '50%';
+            
+            resetJoystick();
         };
 
-        // Touch events
+        // Touch events - use specific event targets to avoid conflicts
         joystickContainer.addEventListener('touchstart', handleStart, { passive: false });
-        document.addEventListener('touchmove', handleMove, { passive: false });
-        document.addEventListener('touchend', handleEnd, { passive: false });
+        joystickContainer.addEventListener('touchmove', handleMove, { passive: false });
+        joystickContainer.addEventListener('touchend', handleEnd, { passive: false });
+        
+        // Also listen for touch events that might end outside the joystick
+        document.addEventListener('touchend', (e) => {
+            if (isDragging && activeTouch !== null) {
+                const endedTouch = Array.from(e.changedTouches).find(t => t.identifier === activeTouch);
+                if (endedTouch) {
+                    handleEnd(e);
+                }
+            }
+        }, { passive: false });
         
         // Mouse events for testing
         joystickContainer.addEventListener('mousedown', handleStart);
-        document.addEventListener('mousemove', handleMove);
-        document.addEventListener('mouseup', handleEnd);
+        joystickContainer.addEventListener('mousemove', handleMove);
+        joystickContainer.addEventListener('mouseup', handleEnd);
+        
+        // Handle mouse leaving the joystick area
+        joystickContainer.addEventListener('mouseleave', () => {
+            if (isDragging) {
+                isDragging = false;
+                resetJoystick();
+            }
+        });
     }
 
     /**
