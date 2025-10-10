@@ -79,6 +79,7 @@ class TouchInputComponent extends Component {
         // Create HTML-based controls
         this.createHTMLJoystick(mobileControlsArea);
         this.createHTMLButtons(mobileControlsArea);
+        this.createGameControlButtons(mobileControlsArea);
     }
 
     /**
@@ -240,6 +241,83 @@ class TouchInputComponent extends Component {
 
         // Setup button events
         this.setupButtonEvents(jumpButton, attackButton);
+    }
+
+    /**
+     * Create game control buttons (pause, restart, back) integrated into mobile controls
+     */
+    createGameControlButtons(container) {
+        // Create game controls bar at the top of mobile controls area
+        const gameControlsBar = document.createElement('div');
+        gameControlsBar.style.cssText = `
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 15;
+        `;
+
+        // Get the existing buttons (they're hidden in the HTML)
+        const existingControls = document.getElementById('game-controls');
+        const pauseBtn = document.getElementById('pause-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const backBtn = document.getElementById('back-btn');
+
+        if (pauseBtn && restartBtn && backBtn) {
+            // Style the buttons for mobile integration
+            [pauseBtn, restartBtn, backBtn].forEach(button => {
+                button.style.cssText = `
+                    padding: 6px 12px;
+                    font-size: 10px;
+                    background: linear-gradient(145deg, #4a4a4a, #2a2a2a);
+                    border: 2px solid #555;
+                    border-radius: 6px;
+                    color: #fff;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                    min-width: 55px;
+                    height: 28px;
+                    white-space: nowrap;
+                    cursor: pointer;
+                    user-select: none;
+                    font-weight: bold;
+                    transition: all 0.1s ease;
+                `;
+
+                // Add hover effects
+                button.addEventListener('mouseenter', () => {
+                    button.style.background = 'linear-gradient(145deg, #5a5a5a, #3a3a3a)';
+                    button.style.transform = 'translateY(-1px)';
+                });
+
+                button.addEventListener('mouseleave', () => {
+                    button.style.background = 'linear-gradient(145deg, #4a4a4a, #2a2a2a)';
+                    button.style.transform = 'translateY(0)';
+                });
+
+                // Add active effects
+                button.addEventListener('touchstart', () => {
+                    button.style.transform = 'translateY(1px)';
+                    button.style.boxShadow = '0 1px 2px rgba(0,0,0,0.3)';
+                });
+
+                button.addEventListener('touchend', () => {
+                    button.style.transform = 'translateY(0)';
+                    button.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+                });
+            });
+
+            // Move buttons to the game controls bar
+            gameControlsBar.appendChild(pauseBtn);
+            gameControlsBar.appendChild(restartBtn);
+            gameControlsBar.appendChild(backBtn);
+
+            // Show the buttons
+            existingControls.style.display = 'flex';
+        }
+
+        container.appendChild(gameControlsBar);
     }
 
     /**

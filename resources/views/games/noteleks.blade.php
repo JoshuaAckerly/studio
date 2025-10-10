@@ -108,57 +108,7 @@
                 flex-shrink: 0;
             }
 
-            /* Game Boy-style control area positioned above mobile controls */
-            #game-controls-area {
-                background: linear-gradient(145deg, #333, #1a1a1a);
-                border: 3px solid #1a1a1a;
-                border-radius: 12px;
-                padding: 15px;
-                margin: 10px 0;
-                box-shadow: 
-                    inset 0 0 10px rgba(0,0,0,0.3),
-                    0 4px 8px rgba(0,0,0,0.3);
-                flex-shrink: 0;
-            }
 
-            #game-controls {
-                display: flex;
-                justify-content: center;
-                gap: 15px;
-                position: relative;
-            }
-
-            #game-controls button {
-                padding: 10px 18px;
-                font-size: 11px;
-                min-width: 75px;
-                height: 40px;
-                background: linear-gradient(145deg, #4a4a4a, #2a2a2a);
-                border: 3px solid #555;
-                border-radius: 10px;
-                color: #fff;
-                box-shadow: 
-                    0 3px 6px rgba(0,0,0,0.4),
-                    inset 0 1px 0 rgba(255,255,255,0.1);
-                transition: all 0.2s ease;
-                font-weight: bold;
-                text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-            }
-
-            #game-controls button:hover {
-                background: linear-gradient(145deg, #5a5a5a, #3a3a3a);
-                transform: translateY(-1px);
-                box-shadow: 
-                    0 4px 8px rgba(0,0,0,0.5),
-                    inset 0 1px 0 rgba(255,255,255,0.1);
-            }
-
-            #game-controls button:active {
-                transform: translateY(1px);
-                box-shadow: 
-                    0 1px 3px rgba(0,0,0,0.3),
-                    inset 0 1px 0 rgba(255,255,255,0.1);
-            }
 
             /* Game Boy-style mobile controls underneath the game */
             #mobile-controls-area {
@@ -212,30 +162,7 @@
                 border-radius: 8px;
             }
 
-            /* Control area positioned in the mobile controls section for landscape */
-            #game-controls-area {
-                position: absolute;
-                top: 10px;
-                left: 10px;
-                right: 10px;
-                background: linear-gradient(145deg, #333, #1a1a1a);
-                border: 2px solid #444;
-                border-radius: 8px;
-                padding: 8px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-                z-index: 10;
-            }
 
-            #game-controls {
-                gap: 6px;
-            }
-
-            #game-controls button {
-                padding: 4px 8px;
-                font-size: 9px;
-                min-width: 50px;
-                height: 26px;
-            }
         }
         
         #phaser-game canvas {
@@ -293,35 +220,7 @@
                 box-shadow: 0 2px 8px rgba(0,0,0,0.3);
             }
             
-            /* Default mobile control area styling */
-            #game-controls-area {
-                background: linear-gradient(145deg, #333, #1a1a1a);
-                border: 2px solid #444;
-                border-radius: 8px;
-                padding: 10px;
-                margin: 10px 0;
-            }
 
-            #game-controls {
-                display: flex;
-                justify-content: center;
-                gap: 8px;
-            }
-
-            #game-controls button {
-                padding: 6px 12px;
-                font-size: 10px;
-                background: linear-gradient(145deg, #4a4a4a, #2a2a2a);
-                border: 2px solid #555;
-                border-radius: 6px;
-                color: #fff;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-                min-width: 55px;
-                height: 30px;
-                white-space: nowrap;
-                text-overflow: ellipsis;
-                overflow: hidden;
-            }
 
             #game-controls button:active {
                 transform: translateY(1px);
@@ -356,14 +255,14 @@
             <div id="score">Score: <span id="score-value">0</span></div>
         </div>
         <div id="phaser-game"></div>
-        <div id="game-controls-area">
-            <div id="game-controls">
+        <div id="mobile-controls-area">
+            <!-- Game control buttons will be added here by TouchInputComponent -->
+            <div id="game-controls" style="display: none;">
                 <button id="pause-btn">Pause</button>
                 <button id="restart-btn">Restart</button>
                 <button id="back-btn">Back to Studio</button>
             </div>
         </div>
-        <div id="mobile-controls-area"></div>
     </div>
 
     <div id="game-info">
