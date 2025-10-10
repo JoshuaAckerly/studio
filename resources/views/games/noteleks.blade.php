@@ -109,6 +109,14 @@
                 border-radius: 12px;
                 position: relative;
             }
+
+            /* Make buttons even smaller in portrait */
+            #game-controls button {
+                padding: 3px 6px;
+                font-size: 9px;
+                min-width: 45px;
+                height: 24px;
+            }
         }
 
         @media (max-width: 768px) and (orientation: landscape) {
@@ -141,6 +149,19 @@
                 height: 90vh;
                 background: #2a2a2a;
                 border-radius: 8px;
+            }
+
+            /* Adjust button size for landscape */
+            #game-controls {
+                bottom: 5px;
+                gap: 3px;
+            }
+
+            #game-controls button {
+                padding: 2px 5px;
+                font-size: 8px;
+                min-width: 40px;
+                height: 22px;
             }
         }
         
@@ -204,18 +225,24 @@
                 bottom: 10px;
                 left: 50%;
                 transform: translateX(-50%);
-                gap: 10px;
+                display: flex;
+                gap: 5px;
                 z-index: 1000;
             }
 
             #game-controls button {
-                padding: 8px 16px;
-                font-size: 12px;
+                padding: 4px 8px;
+                font-size: 10px;
                 background: linear-gradient(145deg, #4a4a4a, #2a2a2a);
-                border: 2px solid #555;
-                border-radius: 6px;
+                border: 1px solid #555;
+                border-radius: 4px;
                 color: #fff;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+                min-width: 50px;
+                height: 28px;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                overflow: hidden;
             }
 
             #game-controls button:active {
