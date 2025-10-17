@@ -38,3 +38,11 @@ Route::post('/track-visit', function (Request $request) {
     
     return response()->json(['status' => 'success', 'data' => $visitData]);
 });
+
+use App\Http\Controllers\VideoLogController;
+
+// Video logs API (stateless)
+Route::get('/video-logs', [VideoLogController::class, 'api']);
+if (app()->environment(['local', 'testing'])) {
+    Route::get('/video-logs/serve', [VideoLogController::class, 'serve']);
+}

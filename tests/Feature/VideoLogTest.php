@@ -20,6 +20,8 @@ class VideoLogTest extends TestCase
         Storage::disk('s3')->put('video-logs/testvideo.mp4', 'video-content');
         Storage::disk('s3')->put('images/vlogs/testvideo.jpg', 'thumb-content');
 
+    // Put files on fake disk (no explicit existence checks)
+
         // Call the API
         $response = $this->getJson('/api/video-logs');
 
@@ -32,8 +34,36 @@ class VideoLogTest extends TestCase
         // Find our testvideo entry
         $found = collect($data)->firstWhere('title', 'Testvideo');
         $this->assertNotNull($found, 'Expected to find testvideo in API output');
-        $this->assertArrayHasKey('url', $found);
-        $this->assertArrayHasKey('thumbnail', $found);
+    $this->assertArrayHasKey('url', $found);
+    $this->assertArrayHasKey('thumbnail', $found);
+
+    // (no debug output)
+
+        // Verify the returned URLs are reachable (proxy will serve fake storage files)
+        if (! empty($found['url'])) {
+            $videoUrl = $found['url'];
+            // If an absolute URL was returned, convert to a relative path for the test client
+            if (preg_match('#^https?://#', $videoUrl)) {
+                $p = parse_url($videoUrl);
+                $videoUrl = ($p['path'] ?? $videoUrl) . (isset($p['query']) ? '?' . $p['query'] : '');
+            }
+
+            $videoResponse = $this->get($videoUrl);
+            $videoResponse->assertStatus(200);
+            $this->assertStringStartsWith('video/', $videoResponse->headers->get('Content-Type'));
+        }
+
+        if (! empty($found['thumbnail'])) {
+            $thumbUrl = $found['thumbnail'];
+            if (preg_match('#^https?://#', $thumbUrl)) {
+                $p = parse_url($thumbUrl);
+                $thumbUrl = ($p['path'] ?? $thumbUrl) . (isset($p['query']) ? '?' . $p['query'] : '');
+            }
+
+            $thumbResponse = $this->get($thumbUrl);
+            $thumbResponse->assertStatus(200);
+            $this->assertStringStartsWith('image/', $thumbResponse->headers->get('Content-Type'));
+        }
     }
 
     public function test_api_falls_back_to_static_when_no_s3()
