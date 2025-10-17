@@ -4,20 +4,23 @@ namespace App\Services;
 
 use App\Models\VideoLog;
 use Illuminate\Contracts\Filesystem\Filesystem;
-use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class VideoLogService
 {
-    protected FilesystemAdapter $s3;
+    /**
+     * Underlying S3 disk. Kept untyped to allow injection of test doubles in unit tests.
+     * @var mixed
+     */
+    protected $s3;
     protected string $videoPrefix;
     protected string $imagePrefix;
     protected ?string $cloudfrontDomain;
 
-    public function __construct()
+    public function __construct($s3 = null)
     {
-        $this->s3 = Storage::disk('s3');
+        $this->s3 = $s3 ?? Storage::disk('s3');
         $this->videoPrefix = env('VIDEO_LOGS_PREFIX', 'video-logs');
         $this->imagePrefix = rtrim('images/vlogs', '/');
         $this->cloudfrontDomain = env('CLOUDFRONT_DOMAIN') ?: null;
