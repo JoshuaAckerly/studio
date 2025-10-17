@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { Inertia } from '@inertiajs/inertia';
 
 type Illustration = {
     url: string;
