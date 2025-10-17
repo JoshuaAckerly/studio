@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use App\Services\VideoLogService;
+use App\Http\Resources\VideoLogResource;
 
 class VideoLogController extends Controller
 {
@@ -20,11 +21,7 @@ class VideoLogController extends Controller
         $service = new VideoLogService();
         $items = $service->list();
 
-        $data = array_map(function ($v) {
-            return $v->toArray();
-        }, $items);
-
-        return response()->json(['data' => $data]);
+        return VideoLogResource::collection($items);
     }
 
     /**
