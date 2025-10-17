@@ -46,3 +46,8 @@ Route::get('/video-logs', [VideoLogController::class, 'api']);
 if (app()->environment(['local', 'testing'])) {
     Route::get('/video-logs/serve', [VideoLogController::class, 'serve']);
 }
+
+use App\Http\Controllers\IllustrationController;
+
+// Illustrations listing (images)
+Route::get('/illustrations', [IllustrationController::class, 'api']);
