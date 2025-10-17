@@ -14,6 +14,10 @@ use App\Http\Controllers\VideoLogController;
 
 Route::get('/video-log', [VideoLogController::class, 'index'])->name('video-log');
 
+Route::get('/illustrations', function () {
+    return Inertia::render('Illustrations');
+})->name('illustrations');
+
 // Noteleks Game
 Route::get('/noteleks', function () {
     return view('games.noteleks');
