@@ -1,10 +1,10 @@
-import GameObject from '../core/GameObject.js';
-import MovementComponent from '../components/MovementComponent.js';
-import HealthComponent from '../components/HealthComponent.js';
-import PhysicsComponent from '../components/PhysicsComponent.js';
-import InputComponent from '../components/InputComponent.js';
 import AttackComponent from '../components/AttackComponent.js';
+import HealthComponent from '../components/HealthComponent.js';
+import InputComponent from '../components/InputComponent.js';
+import MovementComponent from '../components/MovementComponent.js';
+import PhysicsComponent from '../components/PhysicsComponent.js';
 import GameConfig from '../config/GameConfig.js';
+import GameObject from '../core/GameObject.js';
 
 /**
  * Player Entity
@@ -20,7 +20,7 @@ class Player extends GameObject {
     createPlayer() {
         // Create player sprite with physics
         this.sprite = this.scene.physics.add.sprite(this.x, this.y, 'skeleton');
-        
+
         // Store reference to this player class in the sprite
         this.sprite.playerRef = this;
     }
@@ -29,12 +29,15 @@ class Player extends GameObject {
         const config = GameConfig.player;
 
         // Add physics component
-        this.addComponent('physics', new PhysicsComponent({
-            bounce: 0.2,
-            collideWorldBounds: true,
-            bodyWidth: 32,
-            bodyHeight: 48
-        }));
+        this.addComponent(
+            'physics',
+            new PhysicsComponent({
+                bounce: 0.2,
+                collideWorldBounds: true,
+                bodyWidth: 32,
+                bodyHeight: 48,
+            }),
+        );
 
         // Add movement component
         this.addComponent('movement', new MovementComponent(config.speed, config.jumpPower));
@@ -66,12 +69,7 @@ class Player extends GameObject {
             // Handle attack logic
             if (this.scene.weaponManager) {
                 const direction = facing || this.getComponent('movement').getFacing();
-                this.scene.weaponManager.createWeapon(
-                    this.sprite.x, 
-                    this.sprite.y, 
-                    direction, 
-                    target
-                );
+                this.scene.weaponManager.createWeapon(this.sprite.x, this.sprite.y, direction, target);
             }
         });
     }
@@ -101,10 +99,10 @@ class Player extends GameObject {
         if (inputComponent && movementComponent) {
             // Create input state object
             const inputState = {
-                left: (cursors.left?.isDown || false) || (wasd.A?.isDown || false),
-                right: (cursors.right?.isDown || false) || (wasd.D?.isDown || false),
-                up: (cursors.up?.isDown || false) || (wasd.W?.isDown || false) || (spaceKey.isDown || false),
-                attack: false // Mouse input handled separately
+                left: cursors.left?.isDown || false || wasd.A?.isDown || false,
+                right: cursors.right?.isDown || false || wasd.D?.isDown || false,
+                up: cursors.up?.isDown || false || wasd.W?.isDown || false || spaceKey.isDown || false,
+                attack: false, // Mouse input handled separately
             };
 
             this.processInputState(inputState, inputComponent, movementComponent);
@@ -190,7 +188,7 @@ class Player extends GameObject {
     reset(x, y) {
         // Reset position
         this.setPosition(x, y);
-        
+
         // Reset health properly using the reset method instead of heal
         const healthComponent = this.getComponent('health');
         if (healthComponent) {

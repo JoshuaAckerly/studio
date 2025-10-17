@@ -1,6 +1,6 @@
 /* global Phaser */
-import Player from '../entities/Player.js';
 import GameConfig from '../config/GameConfig.js';
+import Player from '../entities/Player.js';
 import AssetManager from '../utils/AssetManager.js';
 import { GameStateUtils } from '../utils/GameUtils.js';
 
@@ -10,10 +10,10 @@ import InputManager from '../managers/InputManager.js';
 import PlatformManager from '../managers/PlatformManager.js';
 
 // Legacy imports (to be refactored)
-import WeaponManager from '../WeaponManager.js';
+import GameObjectFactory from '../factories/GameObjectFactory.js';
 import GameUI from '../GameUI.js';
 import SystemManager from '../systems/SystemManager.js';
-import GameObjectFactory from '../factories/GameObjectFactory.js';
+import WeaponManager from '../WeaponManager.js';
 
 /**
  * Main Game Scene - Refactored for modularity
@@ -21,20 +21,20 @@ import GameObjectFactory from '../factories/GameObjectFactory.js';
 class GameScene extends Phaser.Scene {
     constructor() {
         super({ key: 'GameScene' });
-        
+
         // Game state
         this.gameState = GameStateUtils.STATES.LOADING;
-        
+
         // Core game objects
         this.player = null;
-        
+
         // Managers
         this.enemyManager = null;
         this.inputManager = null;
         this.platformManager = null;
         this.weaponManager = null;
         this.gameUI = null;
-        
+
         // Legacy systems (to be refactored)
         this.systemManager = new SystemManager(this);
         this.gameObjectFactory = new GameObjectFactory(this);
@@ -42,10 +42,10 @@ class GameScene extends Phaser.Scene {
 
     preload() {
         this.showLoadingScreen();
-        
+
         // Load assets using AssetManager
         AssetManager.loadSpineAssets(this, GameConfig);
-        
+
         // Handle spine loading completion
         this.load.on('complete', () => {
             AssetManager.setupSpineData(this);
@@ -54,14 +54,14 @@ class GameScene extends Phaser.Scene {
 
     create() {
         this.gameState = GameStateUtils.STATES.PLAYING;
-        
+
         // Initialize core systems in the correct order
-        this.initializeManagers();     // Creates managers, initializes input only
-        this.createGameWorld();        // Creates textures, then initializes platform & enemy managers
-        this.setupGameObjects();       // Creates player and other game objects
-        this.setupCollisions();        // Sets up physics collisions
-        this.registerInputHandlers();  // Registers input event handlers
-        
+        this.initializeManagers(); // Creates managers, initializes input only
+        this.createGameWorld(); // Creates textures, then initializes platform & enemy managers
+        this.setupGameObjects(); // Creates player and other game objects
+        this.setupCollisions(); // Sets up physics collisions
+        this.registerInputHandlers(); // Registers input event handlers
+
         // Start game systems
         this.startGame();
     }
@@ -71,17 +71,17 @@ class GameScene extends Phaser.Scene {
         this.enemyManager = new EnemyManager(this);
         this.inputManager = new InputManager(this);
         this.platformManager = new PlatformManager(this);
-        
+
         // Initialize legacy systems
         this.weaponManager = new WeaponManager(this);
         this.gameUI = new GameUI(this);
-        
+
         // Initialize only input manager first (doesn't need textures)
         this.inputManager.initialize();
-        
+
         // NOTE: PlatformManager will be initialized AFTER textures are created
         // NOTE: EnemyManager will be initialized AFTER textures are created
-        
+
         // Initialize legacy systems
         this.systemManager.registerSystem('weaponManager', this.weaponManager);
         this.systemManager.registerSystem('gameUI', this.gameUI);
@@ -91,21 +91,17 @@ class GameScene extends Phaser.Scene {
     createGameWorld() {
         // Set physics world bounds
         this.physics.world.setBounds(0, 0, GameConfig.screen.width, GameConfig.screen.height);
-        
+
         // Create placeholder textures FIRST
         AssetManager.createPlaceholderTextures(this, GameConfig);
-        
+
         // Create background
-        this.add.image(
-            GameConfig.screen.width / 2, 
-            GameConfig.screen.height / 2, 
-            'background'
-        );
-        
+        this.add.image(GameConfig.screen.width / 2, GameConfig.screen.height / 2, 'background');
+
         // NOW initialize platform manager (after textures exist)
         this.platformManager.initialize();
         this.platforms = this.platformManager.getPlatforms();
-        
+
         // Initialize enemy manager after textures exist
         this.enemyManager.initialize();
     }
@@ -113,13 +109,9 @@ class GameScene extends Phaser.Scene {
     setupGameObjects() {
         // Create player
         const playerConfig = GameConfig.player;
-        this.player = new Player(
-            this, 
-            playerConfig.startPosition.x, 
-            playerConfig.startPosition.y
-        );
+        this.player = new Player(this, playerConfig.startPosition.x, playerConfig.startPosition.y);
         // Player is updated manually in GameScene, not through SystemManager
-        
+
         // Initialize UI with player's starting health
         if (this.gameUI && this.player) {
             this.gameUI.updateHealth(this.player.getHealth());
@@ -131,7 +123,7 @@ class GameScene extends Phaser.Scene {
         if (this.player && this.platforms) {
             this.physics.add.collider(this.player.sprite, this.platforms);
         }
-        
+
         // Setup collisions through managers
         this.enemyManager.setupCollisions(this.player, this.weaponManager);
     }
@@ -209,16 +201,13 @@ class GameScene extends Phaser.Scene {
     }
 
     showLoadingScreen() {
-        this.add.text(
-            GameConfig.screen.width / 2, 
-            GameConfig.screen.height / 2, 
-            'Loading Noteleks Heroes...', 
-            {
+        this.add
+            .text(GameConfig.screen.width / 2, GameConfig.screen.height / 2, 'Loading Noteleks Heroes...', {
                 fontSize: '24px',
                 fill: '#4ade80',
-                fontFamily: 'Arial'
-            }
-        ).setOrigin(0.5);
+                fontFamily: 'Arial',
+            })
+            .setOrigin(0.5);
     }
 
     addScore(points) {
@@ -249,7 +238,7 @@ class GameScene extends Phaser.Scene {
         this.gameState = GameStateUtils.STATES.GAME_OVER;
         this.physics.pause();
         this.gameUI.showGameOver();
-        
+
         // Stop enemy spawning
         this.enemyManager.stopSpawning();
     }
@@ -257,24 +246,21 @@ class GameScene extends Phaser.Scene {
     restartGame() {
         // Reset game state
         this.gameState = GameStateUtils.STATES.PLAYING;
-        
+
         // Reset managers
         this.enemyManager.reset();
         this.weaponManager.getWeaponsGroup().clear(true, true);
         this.gameUI.reset();
-        
+
         // Reset player
         const playerConfig = GameConfig.player;
-        this.player.reset(
-            playerConfig.startPosition.x, 
-            playerConfig.startPosition.y
-        );
-        
+        this.player.reset(playerConfig.startPosition.x, playerConfig.startPosition.y);
+
         // Update UI with reset health
         if (this.gameUI && this.player) {
             this.gameUI.updateHealth(this.player.getHealth());
         }
-        
+
         // Resume physics
         this.physics.resume();
     }
@@ -285,7 +271,7 @@ class GameScene extends Phaser.Scene {
         if (this.inputManager) this.inputManager.shutdown();
         if (this.platformManager) this.platformManager.shutdown();
         if (this.systemManager) this.systemManager.shutdown();
-        
+
         super.shutdown();
     }
 }

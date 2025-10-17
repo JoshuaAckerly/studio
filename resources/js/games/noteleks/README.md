@@ -1,6 +1,7 @@
 # Noteleks Heroes Beyond Light - Modular Structure
 
 ## Overview
+
 The Noteleks game has been refactored from a single monolithic script into a clean, modular architecture with separate classes and responsibilities.
 
 ## File Structure
@@ -19,18 +20,21 @@ resources/js/games/noteleks/
 ## Class Responsibilities
 
 ### `main.js` - GameMain Class
+
 - Entry point for the entire game
 - Handles DOM integration and button events
 - Manages game lifecycle (initialization, cleanup)
 - Error handling and user feedback
 
 ### `NoteleksGame.js` - NoteleksGame Class
+
 - Phaser game configuration and setup
 - Spine plugin integration
 - Game instance management
 - High-level game controls (pause, restart)
 
 ### `GameScene.js` - GameScene Class
+
 - Main Phaser scene implementation
 - Game loop and state management
 - Collision detection setup
@@ -38,6 +42,7 @@ resources/js/games/noteleks/
 - Input handling coordination
 
 ### `Player.js` - Player Class
+
 - Noteleks character implementation
 - Movement and physics
 - Spine 2D animation management
@@ -45,18 +50,21 @@ resources/js/games/noteleks/
 - Damage handling and visual effects
 
 ### `Enemy.js` - Enemy Class
+
 - Multiple enemy types (zombie, skeleton, ghost, boss)
 - Individual AI behaviors per enemy type
 - Health and damage systems
 - Scoring on destruction
 
 ### `WeaponManager.js` - WeaponManager Class
+
 - Weapon/projectile creation and management
 - Multiple weapon types (dagger, fireball, arrow, magic_bolt)
 - Hit detection and effects
 - Weapon cleanup and optimization
 
 ### `GameUI.js` - GameUI Class
+
 - Score and health display
 - Health bar visualization
 - Game over screen
@@ -66,30 +74,35 @@ resources/js/games/noteleks/
 ## Key Features
 
 ### Modular Design
+
 - Clean separation of concerns
 - Easy to extend and maintain
 - Individual class testing possible
 - Reusable components
 
 ### Enhanced Enemy System
+
 - Multiple enemy types with unique behaviors
 - Progressive difficulty based on score
 - Boss enemies at higher scores
 - Intelligent AI patterns
 
 ### Improved Weapon System
+
 - Multiple weapon types
 - Visual hit effects
 - Proper cleanup and optimization
 - Mouse/touch targeting support
 
 ### Professional UI Management
+
 - In-game overlay UI
 - Health bar with color coding
 - Animated game over screen
 - Proper pause functionality
 
 ### Error Handling
+
 - Graceful fallbacks for missing assets
 - User-friendly error messages
 - Debug information for troubleshooting
@@ -100,41 +113,37 @@ resources/js/games/noteleks/
 The game now loads via ES6 modules through Vite:
 
 ```html
-# Noteleks Game - Modular Architecture
-
-## Overview
-The Noteleks game has been completely refactored from a monolithic structure to a modular, component-based architecture using the Entity Component System (ECS) pattern with manager classes.
-
-## Architecture
-
-### Core Structure
+# Noteleks Game - Modular Architecture ## Overview The Noteleks game has been completely refactored from a monolithic structure to a modular,
+component-based architecture using the Entity Component System (ECS) pattern with manager classes. ## Architecture ### Core Structure
 ```
+
 resources/js/games/noteleks/
-├── main-modular.js          # Entry point
-├── NoteleksGameModular.js   # Main game class
+├── main-modular.js # Entry point
+├── NoteleksGameModular.js # Main game class
 ├── config/
-│   └── GameConfig.js        # Centralized configuration
+│ └── GameConfig.js # Centralized configuration
 ├── entities/
-│   ├── GameObject.js        # Base entity class
-│   ├── Player.js           # Player entity with components
-│   └── Enemy.js            # Enemy entity with components
+│ ├── GameObject.js # Base entity class
+│ ├── Player.js # Player entity with components
+│ └── Enemy.js # Enemy entity with components
 ├── components/
-│   ├── HealthComponent.js   # Health management
-│   ├── MovementComponent.js # Movement and physics
-│   ├── InputComponent.js    # Input handling
-│   ├── AttackComponent.js   # Attack system
-│   └── AIComponent.js       # AI behavior
+│ ├── HealthComponent.js # Health management
+│ ├── MovementComponent.js # Movement and physics
+│ ├── InputComponent.js # Input handling
+│ ├── AttackComponent.js # Attack system
+│ └── AIComponent.js # AI behavior
 ├── managers/
-│   ├── AssetManager.js      # Asset loading and management
-│   ├── InputManager.js      # Global input handling
-│   ├── EnemyManager.js      # Enemy spawning and lifecycle
-│   └── PlatformManager.js   # Platform generation
+│ ├── AssetManager.js # Asset loading and management
+│ ├── InputManager.js # Global input handling
+│ ├── EnemyManager.js # Enemy spawning and lifecycle
+│ └── PlatformManager.js # Platform generation
 ├── scenes/
-│   └── GameScene.js         # Main game scene
+│ └── GameScene.js # Main game scene
 ├── utils/
-│   └── MathUtils.js         # Mathematical utilities
+│ └── MathUtils.js # Mathematical utilities
 └── factories/
-    └── GameObjectFactory.js # Object creation factory
+└── GameObjectFactory.js # Object creation factory
+
 ```
 
 ## Key Features
@@ -193,16 +202,19 @@ All game logic is automatically initialized when the DOM loads, with proper clea
 ## Development
 
 ### Adding New Enemy Types
+
 1. Add new type to `Enemy.js` configuration objects
 2. Implement AI behavior in `Enemy.js`
 3. Add spawn logic in `GameScene.js`
 
 ### Adding New Weapons
+
 1. Add weapon configuration to `WeaponManager.js`
 2. Create placeholder texture in `GameScene.js`
 3. Implement any special behavior
 
 ### Extending UI
+
 1. Add new elements in `GameUI.js`
 2. Update DOM template if needed
 3. Handle state synchronization
@@ -219,6 +231,7 @@ All game logic is automatically initialized when the DOM loads, with proper clea
 ## Migration Notes
 
 The refactored version maintains full backward compatibility with:
+
 - Existing Spine 2D animations
 - All game mechanics and controls
 - DOM integration and button events

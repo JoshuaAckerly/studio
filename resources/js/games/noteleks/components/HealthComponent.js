@@ -17,7 +17,7 @@ class HealthComponent extends Component {
 
     update(_deltaTime) {
         if (!this.enabled) return;
-        
+
         // Update invulnerability
         const currentTime = Date.now();
         if (this.isInvulnerable() && currentTime - this.lastDamageTime > this.invulnerabilityTime) {
@@ -42,12 +42,12 @@ class HealthComponent extends Component {
         this.applyDamageEffect();
 
         // Trigger damage callbacks
-        this.onDamageCallbacks.forEach(callback => callback(amount, this.currentHealth));
+        this.onDamageCallbacks.forEach((callback) => callback(amount, this.currentHealth));
 
         // Check for death
         if (this.currentHealth <= 0) {
             this.isDead = true;
-            this.onDeathCallbacks.forEach(callback => callback());
+            this.onDeathCallbacks.forEach((callback) => callback());
             return true;
         }
 
@@ -60,7 +60,7 @@ class HealthComponent extends Component {
      */
     heal(amount) {
         if (this.isDead) return;
-        
+
         this.currentHealth = Math.min(this.maxHealth, this.currentHealth + amount);
     }
 
@@ -78,7 +78,7 @@ class HealthComponent extends Component {
     applyDamageEffect() {
         if (this.gameObject.sprite) {
             this.gameObject.sprite.setTint(0xff0000);
-            
+
             // Clear effect after invulnerability period
             if (this.gameObject.scene) {
                 this.gameObject.scene.time.delayedCall(this.invulnerabilityTime, () => {

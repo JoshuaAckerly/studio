@@ -1,9 +1,9 @@
-import GameObject from '../core/GameObject.js';
-import MovementComponent from '../components/MovementComponent.js';
-import HealthComponent from '../components/HealthComponent.js';
-import PhysicsComponent from '../components/PhysicsComponent.js';
 import AIComponent from '../components/AIComponent.js';
+import HealthComponent from '../components/HealthComponent.js';
+import MovementComponent from '../components/MovementComponent.js';
+import PhysicsComponent from '../components/PhysicsComponent.js';
 import GameConfig from '../config/GameConfig.js';
+import GameObject from '../core/GameObject.js';
 
 /**
  * Enemy Entity
@@ -14,7 +14,7 @@ class Enemy extends GameObject {
         super(scene, x, y);
         this.type = type;
         this.config = GameConfig.enemies.types[type] || GameConfig.enemies.types.zombie;
-        
+
         this.createEnemy();
         this.setupComponents();
     }
@@ -23,19 +23,22 @@ class Enemy extends GameObject {
         // Create enemy sprite with physics
         this.sprite = this.scene.physics.add.sprite(this.x, this.y, 'enemy');
         this.sprite.setTint(this.config.color);
-        
+
         // Store reference to this enemy class in the sprite
         this.sprite.enemyRef = this;
     }
 
     setupComponents() {
         // Add physics component
-        this.addComponent('physics', new PhysicsComponent({
-            bounce: 0.2,
-            collideWorldBounds: true,
-            bodyWidth: 32,
-            bodyHeight: 40
-        }));
+        this.addComponent(
+            'physics',
+            new PhysicsComponent({
+                bounce: 0.2,
+                collideWorldBounds: true,
+                bodyWidth: 32,
+                bodyHeight: 40,
+            }),
+        );
 
         // Add movement component
         this.addComponent('movement', new MovementComponent(this.config.speed, this.config.jumpPower));

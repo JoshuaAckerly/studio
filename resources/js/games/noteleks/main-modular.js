@@ -1,8 +1,8 @@
 /**
  * Noteleks Game - Modular Entry Point
- * 
+ *
  * This is the main entry point for the refactored, modular version of the game.
- * 
+ *
  * Key improvements:
  * - Configuration-driven design
  * - Modular manager system

@@ -40,7 +40,7 @@ class GameObject {
     addComponent(name, component) {
         component.gameObject = this;
         this.components.set(name, component);
-        
+
         if (component.onAttach) {
             component.onAttach();
         }

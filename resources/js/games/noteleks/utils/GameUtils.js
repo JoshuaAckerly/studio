@@ -29,10 +29,7 @@ export class MathUtils {
      * Check if a point is within a rectangle
      */
     static pointInRect(point, rect) {
-        return point.x >= rect.x && 
-               point.x <= rect.x + rect.width &&
-               point.y >= rect.y && 
-               point.y <= rect.y + rect.height;
+        return point.x >= rect.x && point.x <= rect.x + rect.width && point.y >= rect.y && point.y <= rect.y + rect.height;
     }
 
     /**
@@ -41,7 +38,7 @@ export class MathUtils {
     static randomPosition(bounds) {
         return {
             x: Math.random() * (bounds.maxX - bounds.minX) + bounds.minX,
-            y: Math.random() * (bounds.maxY - bounds.minY) + bounds.minY
+            y: Math.random() * (bounds.maxY - bounds.minY) + bounds.minY,
         };
     }
 }
@@ -55,7 +52,7 @@ export class GameStateUtils {
         PLAYING: 'playing',
         PAUSED: 'paused',
         GAME_OVER: 'gameOver',
-        MENU: 'menu'
+        MENU: 'menu',
     };
 
     static isPlayingState(state) {
@@ -80,7 +77,7 @@ export class InputUtils {
             cursors: scene.input.keyboard.createCursorKeys(),
             wasd: scene.input.keyboard.addKeys('W,S,A,D,P,R,ESC'),
             space: scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE),
-            mouse: scene.input.activePointer
+            mouse: scene.input.activePointer,
         };
     }
 

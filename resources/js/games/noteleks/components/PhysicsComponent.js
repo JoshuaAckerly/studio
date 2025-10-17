@@ -22,7 +22,7 @@ class PhysicsComponent extends Component {
         if (!this.gameObject.sprite.body) {
             this.gameObject.scene.physics.add.existing(this.gameObject.sprite, this.isStatic);
         }
-        
+
         if (this.gameObject.sprite.body) {
             this.body = this.gameObject.sprite.body;
             this.setupPhysicsProperties();

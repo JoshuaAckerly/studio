@@ -70,7 +70,7 @@ class InputComponent extends Component {
     triggerAction(action, value) {
         const callbacks = this.actionCallbacks.get(action);
         if (callbacks) {
-            callbacks.forEach(callback => callback(value));
+            callbacks.forEach((callback) => callback(value));
         }
     }
 

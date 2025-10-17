@@ -1,5 +1,5 @@
-import Component from '../core/Component.js';
 import GameConfig from '../config/GameConfig.js';
+import Component from '../core/Component.js';
 
 /**
  * AI component - handles artificial intelligence behavior for NPCs
@@ -10,7 +10,7 @@ class AIComponent extends Component {
         this.aiType = aiType;
         this.target = null;
         this.config = GameConfig.enemies.types[aiType] || GameConfig.enemies.types.zombie;
-        
+
         // Set properties from config
         this.speed = this.config.speed;
         this.detectionRange = this.config.detectionRange;
@@ -76,10 +76,10 @@ class AIComponent extends Component {
         if (!targetPos) return Infinity;
 
         const myPos = this.gameObject.getPosition();
-        
+
         const dx = targetPos.x - myPos.x;
         const dy = targetPos.y - myPos.y;
-        
+
         return Math.sqrt(dx * dx + dy * dy);
     }
 
@@ -108,12 +108,12 @@ class AIComponent extends Component {
         if (this.target.getPosition) {
             return this.target.getPosition();
         }
-        
+
         // Legacy object with sprite property
         if (this.target.sprite) {
             return { x: this.target.sprite.x, y: this.target.sprite.y };
         }
-        
+
         // Direct x,y properties
         if (this.target.x !== undefined && this.target.y !== undefined) {
             return { x: this.target.x, y: this.target.y };

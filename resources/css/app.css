@@ -139,3 +139,22 @@
         @apply bg-background text-foreground;
     }
 }
+
+/* Layout helpers */
+@layer utilities {
+    .container {
+        max-width: 1100px;
+    }
+
+    .text-muted-foreground {
+        color: var(--muted-foreground);
+    }
+
+    .bg-card\/40 {
+        background-color: color-mix(in srgb, var(--card) 40%, transparent);
+    }
+
+    .bg-card\/60 {
+        background-color: color-mix(in srgb, var(--card) 60%, transparent);
+    }
+}

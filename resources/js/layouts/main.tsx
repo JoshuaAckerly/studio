@@ -1,7 +1,7 @@
-import React from 'react';
-import Header from '@/components/header';
 import Footer from '@/components/footer';
+import Header from '@/components/header';
 import { useVisitorTracking } from '@/hooks/useTracking';
+import React from 'react';
 
 interface MainLayoutProps {
     children: React.ReactNode;
@@ -13,11 +13,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, enableTracking = true
     useVisitorTracking(enableTracking);
 
     return (
-        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <div className="flex min-h-screen flex-col bg-background text-foreground">
             <Header />
-            <main style={{ flex: 1, padding: '2rem' }}>
-                {children}
-            </main>
+
+            <main className="container mx-auto flex-1 px-4 py-8">{children}</main>
+
             <Footer />
         </div>
     );

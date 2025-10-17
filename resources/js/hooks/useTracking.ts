@@ -17,6 +17,10 @@ export const useVisitorTracking = (enabled: boolean = true) => {
     useEffect(() => {
         if (!enabled) return;
 
+        // Prevent duplicate tracking during the same browser session
+        const trackedKey = 'visitor_tracked_v1';
+        if (sessionStorage.getItem(trackedKey)) return;
+
         const trackVisit = async () => {
             try {
                 const visitData: VisitData = {
@@ -24,7 +28,7 @@ export const useVisitorTracking = (enabled: boolean = true) => {
                     subdomain: window.location.hostname,
                     page_title: document.title,
                     user_agent: navigator.userAgent,
-                    timestamp: new Date().toISOString()
+                    timestamp: new Date().toISOString(),
                 };
 
                 console.log('🎯 Tracking visitor:', visitData.subdomain, visitData.page_title);
@@ -34,9 +38,9 @@ export const useVisitorTracking = (enabled: boolean = true) => {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Accept': 'application/json'
+                        Accept: 'application/json',
                     },
-                    body: JSON.stringify(visitData)
+                    body: JSON.stringify(visitData),
                 });
 
                 const result = await response.json();
@@ -49,11 +53,17 @@ export const useVisitorTracking = (enabled: boolean = true) => {
                         event_label: visitData.subdomain,
                         custom_parameter_referrer: visitData.referrer,
                         custom_parameter_subdomain: visitData.subdomain,
-                        custom_parameter_page_title: visitData.page_title
+                        custom_parameter_page_title: visitData.page_title,
                     });
                     console.log('📊 Google Analytics event sent');
                 } else {
                     console.log('⚠️ Google Analytics not available');
+                }
+                // mark tracked for this session so subsequent mounts don't re-send
+                try {
+                    sessionStorage.setItem(trackedKey, '1');
+                } catch {
+                    /* ignore */
                 }
             } catch (error) {
                 console.error('❌ Tracking failed:', error);
@@ -71,7 +81,7 @@ export const useGameTracking = (gameName: string) => {
             gtag('event', 'game_access', {
                 event_category: 'games',
                 event_label: gameName,
-                custom_parameter_subdomain: window.location.hostname
+                custom_parameter_subdomain: window.location.hostname,
             });
             console.log('🎮 Game access tracked:', gameName);
         }
@@ -84,7 +94,7 @@ export const trackCustomEvent = (eventName: string, category: string, label?: st
         gtag('event', eventName, {
             event_category: category,
             event_label: label,
-            custom_parameter_subdomain: window.location.hostname
+            custom_parameter_subdomain: window.location.hostname,
         });
         console.log('🎯 Custom event:', eventName, category, label);
     }

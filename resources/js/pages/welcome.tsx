@@ -3,13 +3,14 @@
 import { Dialog, DialogPanel } from '@headlessui/react';
 import { ArrowPathIcon, Bars3Icon, CubeIcon, FingerPrintIcon, MusicalNoteIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
-import { useVisitorTracking } from '@/hooks/useTracking';
+// Removed unused import
 
 const navigation = [
     { name: '3D Art', href: '#3d' },
     { name: 'Music', href: '#music' },
     { name: 'Games', href: '#games' },
     { name: 'Gallery', href: '#gallery' },
+    { name: 'Video Logs', href: '/video-log' },
     { name: 'About', href: '#about' },
 ];
 const features = [
@@ -77,7 +78,7 @@ const footerNavigation = {
         { name: '2D Concepts', href: '#concepts' },
         { name: '3D Collaborations', href: '#3d' },
         { name: 'Games', href: '#games' },
-        { name: 'Video Logs', href: '#vlogs' },
+        { name: 'Video Logs', href: '/video-log' },
     ],
     connect: [
         { name: 'Contact', href: '#contact' },
@@ -101,8 +102,7 @@ export default function Welcome() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const cdn = import.meta.env.VITE_ASSET_URL as string;
 
-    // Track visitor automatically
-    useVisitorTracking();
+    // Tracking is handled by the main layout to avoid duplicate events
     return (
         <div className="bg-[var(--foreground)] dark:bg-[var(--background)]">
             {/* Header */}
@@ -111,8 +111,16 @@ export default function Welcome() {
                     <div className="flex">
                         <a href="#" className="-m-1.5 p-1.5">
                             <span className="sr-only">Creative Studio</span>
-                            <img alt="GraveYard Jokes Studio Logo" src={`${cdn}/images/GraveYardJokesLogoJester.svg`} className="h-16 w-auto dark:hidden" />
-                            <img alt="GraveYard Jokes Studio Logo" src={`${cdn}/images/GraveYardJokesLogoJester.svg`} className="h-16 w-auto not-dark:hidden" />
+                            <img
+                                alt="GraveYard Jokes Studio Logo"
+                                src={`${cdn}/images/GraveYardJokesLogoJester.svg`}
+                                className="h-16 w-auto dark:hidden"
+                            />
+                            <img
+                                alt="GraveYard Jokes Studio Logo"
+                                src={`${cdn}/images/GraveYardJokesLogoJester.svg`}
+                                className="h-16 w-auto not-dark:hidden"
+                            />
                         </a>
                     </div>
                     <div className="flex lg:hidden">
@@ -125,7 +133,7 @@ export default function Welcome() {
                             <Bars3Icon aria-hidden="true" className="size-6" />
                         </button>
                     </div>
-                    <div className="hidden lg:flex lg:gap-x-12 items-center mx-auto">
+                    <div className="mx-auto hidden items-center lg:flex lg:gap-x-12">
                         {navigation.map((item) => (
                             <a key={item.name} href={item.href} className="text-sm/6 font-semibold text-gray-900 dark:text-white">
                                 {item.name}
@@ -139,8 +147,16 @@ export default function Welcome() {
                         <div className="flex items-center justify-between">
                             <a href="#" className="-m-1.5 p-1.5">
                                 <span className="sr-only">GraveYard Jokes Studios</span>
-                                <img alt="GraveYard Jokes Studios Logo" src={`${cdn}/images/GraveYardJokesLogoJester.svg`} className="h-24 w-auto dark:hidden" />
-                                <img alt="GraveYard Jokes Studios Logo" src={`${cdn}/images/GraveYardJokesLogoJester.svg`} className="h-24 w-auto not-dark:hidden" />
+                                <img
+                                    alt="GraveYard Jokes Studios Logo"
+                                    src={`${cdn}/images/GraveYardJokesLogoJester.svg`}
+                                    className="h-24 w-auto dark:hidden"
+                                />
+                                <img
+                                    alt="GraveYard Jokes Studios Logo"
+                                    src={`${cdn}/images/GraveYardJokesLogoJester.svg`}
+                                    className="h-24 w-auto not-dark:hidden"
+                                />
                             </a>
                             <button
                                 type="button"
@@ -202,14 +218,18 @@ export default function Welcome() {
                                     <a href="#gallery" className="text-sm/6 font-semibold text-gray-900 dark:text-white">
                                         View Gallery <span aria-hidden="true">→</span>
                                     </a>
+
+                                    <a
+                                        href="/video-log"
+                                        className="ml-2 inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:opacity-95"
+                                    >
+                                        Video Logs
+                                    </a>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div
-                        aria-hidden="true"
-                        className="absolute inset-x-0 -z-10 transform-gpu overflow-hidden blur-3xl"
-                    >
+                    <div aria-hidden="true" className="absolute inset-x-0 -z-10 transform-gpu overflow-hidden blur-3xl">
                         <div
                             style={{
                                 clipPath:
@@ -317,7 +337,7 @@ export default function Welcome() {
             <footer className="relative mx-auto mt-32 max-w-7xl px-6 lg:px-8">
                 <div className="border-t border-gray-900/10 py-16 sm:py-24 lg:py-32 dark:border-white/10">
                     <div className="xl:grid xl:grid-cols-3 xl:gap-8">
-                        <img alt="GraveYard Jokes Studios" src={`${cdn}/images/GraveYardJokesLogoJester.svg`}className="h-18 dark:hidden" />
+                        <img alt="GraveYard Jokes Studios" src={`${cdn}/images/GraveYardJokesLogoJester.svg`} className="h-18 dark:hidden" />
                         <img alt="GraveYard Jokes Studios" src={`${cdn}/images/GraveYardJokesLogoJester.svg`} className="h-18 not-dark:hidden" />
                         <div className="mt-16 grid grid-cols-2 gap-8 xl:col-span-2 xl:mt-0">
                             <div className="md:grid md:grid-cols-2 md:gap-8">

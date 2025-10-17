@@ -1,5 +1,5 @@
-import Player from '../entities/Player.js';
 import Enemy from '../entities/Enemy.js';
+import Player from '../entities/Player.js';
 
 /**
  * Factory for creating game objects with proper component setup

@@ -7,22 +7,22 @@ export const GameConfig = {
     screen: {
         width: 800,
         height: 600,
-        backgroundColor: 0x2d2d2d
+        backgroundColor: 0x2d2d2d,
     },
 
     // Physics settings
     physics: {
         gravity: { x: 0, y: 300 },
-        debug: false
+        debug: false,
     },
 
-    // Player settings  
+    // Player settings
     player: {
         startPosition: { x: 100, y: 520 }, // Ground at y=568, player height=48, so y=568-24=544 minus some clearance
         speed: 160,
         jumpPower: 330,
         health: 100,
-        maxHealth: 100
+        maxHealth: 100,
     },
 
     // Enemy settings
@@ -30,7 +30,7 @@ export const GameConfig = {
         spawnInterval: 3000, // milliseconds
         spawnDistance: {
             minFromEdge: 50,
-            maxFromEdge: 200
+            maxFromEdge: 200,
         },
         types: {
             zombie: {
@@ -40,7 +40,7 @@ export const GameConfig = {
                 damage: 20,
                 detectionRange: 800,
                 color: 0x00ff00,
-                score: 10
+                score: 10,
             },
             skeleton: {
                 health: 3,
@@ -49,7 +49,7 @@ export const GameConfig = {
                 damage: 25,
                 detectionRange: 850,
                 color: 0xcccccc,
-                score: 15
+                score: 15,
             },
             ghost: {
                 health: 1,
@@ -58,7 +58,7 @@ export const GameConfig = {
                 damage: 15,
                 detectionRange: 900,
                 color: 0x8888ff,
-                score: 20
+                score: 20,
             },
             boss: {
                 health: 10,
@@ -67,9 +67,9 @@ export const GameConfig = {
                 damage: 40,
                 detectionRange: 1000,
                 color: 0xff0000,
-                score: 100
-            }
-        }
+                score: 100,
+            },
+        },
     },
 
     // Weapon settings
@@ -77,23 +77,23 @@ export const GameConfig = {
         dagger: {
             damage: 1,
             range: 50,
-            cooldown: 500
+            cooldown: 500,
         },
         fireball: {
             damage: 2,
             speed: 300,
-            cooldown: 800
+            cooldown: 800,
         },
         arrow: {
             damage: 1.5,
             speed: 400,
-            cooldown: 600
+            cooldown: 600,
         },
         magic_bolt: {
             damage: 3,
             speed: 350,
-            cooldown: 1000
-        }
+            cooldown: 1000,
+        },
     },
 
     // UI settings
@@ -101,13 +101,13 @@ export const GameConfig = {
         healthBar: {
             position: { x: 20, y: 20 },
             width: 200,
-            height: 20
+            height: 20,
         },
         score: {
             position: { x: 20, y: 50 },
             fontSize: '20px',
-            color: '#4ade80'
-        }
+            color: '#4ade80',
+        },
     },
 
     // Asset paths
@@ -115,7 +115,7 @@ export const GameConfig = {
         spine: {
             atlas: '/games/noteleks/spine/characters/Noteleks.atlas',
             json: '/games/noteleks/spine/characters/Noteleks.json',
-            png: '/games/noteleks/spine/characters/Noteleks.png'
+            png: '/games/noteleks/spine/characters/Noteleks.png',
         },
         textures: {
             skeleton: { width: 32, height: 48, color: 0xffffff },
@@ -125,9 +125,9 @@ export const GameConfig = {
             dagger: { width: 16, height: 4, color: 0xc0c0c0 },
             fireball: { width: 16, height: 16, color: 0xff4400 },
             arrow: { width: 20, height: 4, color: 0x8b4513 },
-            magic_bolt: { width: 12, height: 12, color: 0x9900ff }
-        }
-    }
+            magic_bolt: { width: 12, height: 12, color: 0x9900ff },
+        },
+    },
 };
 
 export default GameConfig;

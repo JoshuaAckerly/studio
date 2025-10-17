@@ -1,6 +1,6 @@
 /* global Phaser */
-import GameScene from './scenes/GameScene.js';
 import GameConfig from './config/GameConfig.js';
+import GameScene from './scenes/GameScene.js';
 
 /**
  * Noteleks Game - Main Game Class
@@ -22,8 +22,8 @@ class NoteleksGame {
                 default: 'arcade',
                 arcade: {
                     gravity: GameConfig.physics.gravity,
-                    debug: GameConfig.physics.debug
-                }
+                    debug: GameConfig.physics.debug,
+                },
             },
             scene: [GameScene],
             scale: {
@@ -31,13 +31,13 @@ class NoteleksGame {
                 autoCenter: Phaser.Scale.CENTER_BOTH,
                 min: {
                     width: 400,
-                    height: 300
+                    height: 300,
                 },
                 max: {
                     width: 1600,
-                    height: 1200
-                }
-            }
+                    height: 1200,
+                },
+            },
         };
     }
 
@@ -51,7 +51,7 @@ class NoteleksGame {
         // Create the game
         this.game = new Phaser.Game({
             ...this.config,
-            parent: containerId
+            parent: containerId,
         });
 
         // Add game event listeners

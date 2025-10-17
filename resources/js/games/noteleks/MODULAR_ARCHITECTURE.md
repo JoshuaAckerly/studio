@@ -123,21 +123,25 @@ const enemyCount = scene.enemyManager.getEnemyCount();
 ## Benefits
 
 ### Maintainability
+
 - Clear separation of concerns
 - Single responsibility principle
 - Easy to modify and extend
 
 ### Modularity
+
 - Reusable components
 - Independent managers
 - Pluggable architecture
 
 ### Configuration
+
 - Centralized settings
 - Easy to balance gameplay
 - Environment-specific configs
 
 ### Testing
+
 - Isolated modules
 - Mockable dependencies
 - Clear interfaces
@@ -147,31 +151,34 @@ const enemyCount = scene.enemyManager.getEnemyCount();
 ### From Legacy to Modular
 
 1. **Replace main import**:
-   ```javascript
-   // Old
-   import './main.js';
-   
-   // New
-   import './main-modular.js';
-   ```
+
+    ```javascript
+    // Old
+    import './main.js';
+
+    // New
+    import './main-modular.js';
+    ```
 
 2. **Update configuration**:
-   ```javascript
-   // Old: Hard-coded values
-   const speed = 160;
-   
-   // New: Configuration-driven
-   const speed = GameConfig.player.speed;
-   ```
+
+    ```javascript
+    // Old: Hard-coded values
+    const speed = 160;
+
+    // New: Configuration-driven
+    const speed = GameConfig.player.speed;
+    ```
 
 3. **Use managers**:
-   ```javascript
-   // Old: Direct management
-   this.spawnEnemy();
-   
-   // New: Manager-based
-   this.enemyManager.spawnEnemy();
-   ```
+
+    ```javascript
+    // Old: Direct management
+    this.spawnEnemy();
+
+    // New: Manager-based
+    this.enemyManager.spawnEnemy();
+    ```
 
 ## Extension Points
 
@@ -198,7 +205,7 @@ class PowerUpManager {
     constructor(scene) {
         this.scene = scene;
     }
-    
+
     initialize() {
         // Setup power-up spawning
     }
@@ -218,9 +225,9 @@ export const GameConfig = {
         spawnRate: 10000,
         types: {
             health: { healing: 25 },
-            speed: { boost: 50, duration: 5000 }
-        }
-    }
+            speed: { boost: 50, duration: 5000 },
+        },
+    },
 };
 ```
 

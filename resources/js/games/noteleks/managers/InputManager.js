@@ -19,16 +19,16 @@ export class InputManager {
             // Initialize touch input component
             this.touchInput = new TouchInputComponent(this.scene);
             this.isMobile = this.touchInput.isMobileDevice();
-            
+
             console.log('InputManager: Mobile device detected:', this.isMobile);
             console.log('InputManager: User agent:', navigator.userAgent);
-            
+
             // Create control scheme (always create for desktop fallback)
             this.controls = {
                 cursors: this.scene.input.keyboard.createCursorKeys(),
                 wasd: this.scene.input.keyboard.addKeys('W,S,A,D,P,R,ESC'),
                 space: this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE),
-                mouse: this.scene.input.activePointer
+                mouse: this.scene.input.activePointer,
             };
 
             // Verify controls were created successfully
@@ -46,7 +46,7 @@ export class InputManager {
 
             // Setup pointer input (for both mouse and touch)
             this.scene.input.on('pointerdown', this.handlePointerDown.bind(this));
-            
+
             return true;
         } catch (error) {
             console.error('InputManager initialization failed:', error);
@@ -105,9 +105,7 @@ export class InputManager {
             const touchState = this.touchInput.getTouchState();
             return touchState.up;
         }
-        return this.controls.cursors.up.isDown || 
-               this.controls.wasd.W.isDown || 
-               this.controls.space.isDown;
+        return this.controls.cursors.up.isDown || this.controls.wasd.W.isDown || this.controls.space.isDown;
     }
 
     // Action input checks
@@ -153,22 +151,22 @@ export class InputManager {
             }
             return touchState;
         }
-        
+
         return {
             left: this.isMovingLeft(),
             right: this.isMovingRight(),
             up: this.isJumping(),
-            attack: false // Handled via pointer events
+            attack: false, // Handled via pointer events
         };
     }
 
     shutdown() {
         this.inputHandlers.clear();
-        
+
         if (this.scene.input) {
             this.scene.input.off('pointerdown', this.handlePointerDown);
         }
-        
+
         if (this.touchInput) {
             this.touchInput.destroy();
             this.touchInput = null;

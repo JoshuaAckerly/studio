@@ -16,7 +16,7 @@ class SystemManager {
      */
     registerSystem(name, system) {
         this.systems.set(name, system);
-        
+
         // Initialize system if manager is already running
         if (this.isRunning && system.initialize) {
             system.initialize();
@@ -45,7 +45,7 @@ class SystemManager {
      */
     removeGameObject(gameObject) {
         this.gameObjects.delete(gameObject);
-        
+
         // Clean up destroyed objects
         if (gameObject.isDestroyed) {
             gameObject.destroy();
@@ -57,7 +57,7 @@ class SystemManager {
      */
     initialize() {
         this.isRunning = true;
-        
+
         for (const system of this.systems.values()) {
             if (system.initialize) {
                 system.initialize();
@@ -95,14 +95,14 @@ class SystemManager {
      */
     cleanupDestroyedObjects() {
         const destroyedObjects = [];
-        
+
         for (const gameObject of this.gameObjects) {
             if (gameObject.isDestroyed) {
                 destroyedObjects.push(gameObject);
             }
         }
 
-        destroyedObjects.forEach(obj => {
+        destroyedObjects.forEach((obj) => {
             this.removeGameObject(obj);
         });
     }
@@ -112,7 +112,7 @@ class SystemManager {
      */
     pause() {
         this.isRunning = false;
-        
+
         for (const system of this.systems.values()) {
             if (system.pause) {
                 system.pause();
@@ -125,7 +125,7 @@ class SystemManager {
      */
     resume() {
         this.isRunning = true;
-        
+
         for (const system of this.systems.values()) {
             if (system.resume) {
                 system.resume();
@@ -138,7 +138,7 @@ class SystemManager {
      */
     shutdown() {
         this.isRunning = false;
-        
+
         // Shutdown all systems
         for (const system of this.systems.values()) {
             if (system.shutdown) {

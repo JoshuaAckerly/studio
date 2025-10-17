@@ -41,7 +41,7 @@ class AttackComponent extends Component {
         const facing = movementComponent ? movementComponent.getFacing() : 'right';
 
         // Trigger attack callbacks
-        this.onAttackCallbacks.forEach(callback => {
+        this.onAttackCallbacks.forEach((callback) => {
             callback(target, facing, this.damage);
         });
 
@@ -53,7 +53,7 @@ class AttackComponent extends Component {
      */
     canAttack() {
         const currentTime = Date.now();
-        return !this.isAttacking && (currentTime - this.lastAttackTime >= this.attackCooldown);
+        return !this.isAttacking && currentTime - this.lastAttackTime >= this.attackCooldown;
     }
 
     /**

@@ -10,6 +10,11 @@ Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('welcome');
 
+use App\Http\Controllers\VideoLogController;
+
+Route::get('/video-log', [VideoLogController::class, 'index'])->name('video-log');
+Route::get('/api/video-logs', [VideoLogController::class, 'api']);
+
 // Noteleks Game
 Route::get('/noteleks', function () {
     return view('games.noteleks');
