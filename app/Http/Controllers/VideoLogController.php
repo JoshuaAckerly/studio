@@ -70,6 +70,27 @@ class VideoLogController extends Controller
                         }
                     }
 
+                    // If no per-basename thumbnail was found, try the first available image in images/vlogs/
+                    if (! $thumb) {
+                        try {
+                            $available = $s3->files('images/vlogs') ?: [];
+                            foreach ($available as $fb) {
+                                if (preg_match('/\.(jpg|png|webp|jpeg)$/i', $fb)) {
+                                    if (app()->environment('testing')) {
+                                        $thumb = url('/api/video-logs/serve?path=' . rawurlencode($fb));
+                                    } elseif (method_exists($s3, 'temporaryUrl')) {
+                                        $thumb = $s3->temporaryUrl($fb, now()->addHour());
+                                    } elseif (method_exists($s3, 'url')) {
+                                        $thumb = $s3->url($fb);
+                                    }
+                                    break;
+                                }
+                            }
+                        } catch (\Throwable $e) {
+                            // ignore
+                        }
+                    }
+
                     if (app()->environment('testing')) {
                         $url = url('/api/video-logs/serve?path=' . rawurlencode($file));
                     } elseif (method_exists($s3, 'temporaryUrl')) {
