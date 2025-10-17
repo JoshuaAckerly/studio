@@ -9,7 +9,7 @@ const navigation = [
     { name: '3D Art', href: '#3d' },
     { name: 'Music', href: '#music' },
     { name: 'Games', href: '#games' },
-    { name: 'Gallery', href: '#gallery' },
+    { name: 'Gallery', href: '/illustrations' },
     { name: 'Video Logs', href: '/video-log' },
     { name: 'About', href: '#about' },
 ];
@@ -215,7 +215,7 @@ export default function Welcome() {
                                     >
                                         Play Noteleks Heroes ⚔️
                                     </a>
-                                    <a href="#gallery" className="text-sm/6 font-semibold text-gray-900 dark:text-white">
+                                    <a href="/illustrations" className="text-sm/6 font-semibold text-gray-900 dark:text-white">
                                         View Gallery <span aria-hidden="true">→</span>
                                     </a>
 
@@ -308,7 +308,7 @@ export default function Welcome() {
                         </p>
                         <div className="mt-10 flex items-center justify-center gap-x-6">
                             <a
-                                href="#gallery"
+                                href="/illustrations"
                                 className="rounded-md bg-gray-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-gray-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600 dark:bg-gray-500 dark:shadow-none dark:hover:bg-gray-400 dark:focus-visible:outline-gray-500"
                             >
                                 Explore Gallery
