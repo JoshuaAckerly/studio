@@ -29,24 +29,31 @@ jobs:
 
       - name: Start MinIO container
         run: |
-          docker run -d --name minio -p 9000:9000 -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e server /data
+          # Start MinIO and expose API on 9000 and console on 9001. Use explicit console address so startup is deterministic.
+          docker run -d --name minio -p 9000:9000 -p 9001:9001 -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e server /data --console-address ":9001"
 
       - name: Wait for MinIO
         run: |
-          for i in {1..30}; do
-            if curl -sS http://localhost:9000/minio/health/live >/dev/null; then
-              echo "MinIO ready" && break
+          # Wait up to 60s for MinIO to be ready. Try health endpoint first, then fallback to root path.
+          for i in {1..60}; do
+            if curl -sS http://127.0.0.1:9000/minio/health/live >/dev/null 2>&1; then
+              echo "MinIO ready (health)" && break
             fi
+            if curl -sS http://127.0.0.1:9000/ >/dev/null 2>&1; then
+              echo "MinIO responding at root" && break
+            fi
+            echo "waiting for minio... ($i)"
             sleep 1
           done
 
       - name: Configure env for MinIO
         run: |
+          # Use 127.0.0.1 explicitly so processes in this runner use the loopback address (matches tests)
           echo "AWS_ACCESS_KEY_ID=minioadmin" >> $GITHUB_ENV
           echo "AWS_SECRET_ACCESS_KEY=minioadmin" >> $GITHUB_ENV
           echo "AWS_DEFAULT_REGION=us-east-1" >> $GITHUB_ENV
           echo "AWS_BUCKET=test-bucket" >> $GITHUB_ENV
-          echo "AWS_ENDPOINT=http://localhost:9000" >> $GITHUB_ENV
+          echo "AWS_ENDPOINT=http://127.0.0.1:9000" >> $GITHUB_ENV
           echo "AWS_USE_PATH_STYLE_ENDPOINT=true" >> $GITHUB_ENV
 
       - name: Create S3 bucket
@@ -64,6 +71,33 @@ jobs:
           aws --version
           aws --endpoint-url http://localhost:9000 s3api create-bucket --bucket test-bucket || echo "bucket create failed or exists"
 
+      - name: "Optional debug: CI_DEBUG_MINIO detailed diagnostics"
+        run: |
+          if [ "${CI_DEBUG_MINIO:-}" = 'true' ]; then
+            echo "---- DOCKER PS ----"
+            docker ps --no-trunc || true
+            echo "---- MINIO LOGS ----"
+            docker logs minio --tail 200 || true
+            echo "---- MC LS BUCKETS ----"
+            # Download mc client and list buckets
+            curl -sSfL https://dl.min.io/client/mc/release/linux-amd64/mc -o mc && chmod +x mc || true
+            ./mc alias set local http://127.0.0.1:9000 minioadmin minioadmin --api S3v4 || true
+            ./mc ls local || true
+            echo "---- AWS S3 LIST (via aws cli) ----"
+            aws --endpoint-url http://127.0.0.1:9000 s3 ls || true
+          else
+            echo "CI_DEBUG_MINIO not set; skipping detailed MinIO debug"
+          fi
+
+      - name: "Pre-test lightweight debug dump"
+        run: |
+          echo "---- docker ps (short) ----"
+          docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}' || true
+          echo "---- minio health check ----"
+          curl -sS -D - http://127.0.0.1:9000/minio/health/live || true
+          echo "---- mc ls local/test-bucket ----"
+          ./mc alias set local http://127.0.0.1:9000 minioadmin minioadmin --api S3v4 || true
+          ./mc ls local/test-bucket || true
       - name: Dump S3 env and Laravel S3 config (debug)
         run: |
           echo "--- S3 ENV VARS (CI) ---"

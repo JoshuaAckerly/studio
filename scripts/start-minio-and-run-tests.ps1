@@ -71,14 +71,40 @@ if (-not $ok) { Err "Timed out waiting for MinIO readiness at $healthUrl"; exit 
 Info "Ensuring bucket '$BucketName' exists (idempotent)..."
 # Try host.docker.internal first, then host-gateway mapping if needed
 $endpointHost = 'host.docker.internal'
-$createCmd = @("run","--rm","-e","AWS_ACCESS_KEY_ID=$MinioRootUser","-e","AWS_SECRET_ACCESS_KEY=$MinioRootPass","amazon/aws-cli","--endpoint-url","http://$endpointHost:$($ApiPort)","s3api","create-bucket","--bucket",$BucketName)
+$endpointUrl = 'http://' + $endpointHost + ':' + $ApiPort
 
 try {
-    docker @createCmd 2>&1 | Out-String | ForEach-Object { $_ } | Out-Null; if ($LASTEXITCODE -eq 0) { Info "Bucket '$BucketName' created or confirmed." }
+    Info "Attempting to create bucket via amazon/aws-cli at $endpointUrl"
+    function Run-Command($exe, $args) {
+        $outFile = [System.IO.Path]::GetTempFileName()
+        $errFile = [System.IO.Path]::GetTempFileName()
+        $psi = New-Object System.Diagnostics.ProcessStartInfo
+        $psi.FileName = $exe
+        $psi.Arguments = $args -join ' '
+        $psi.RedirectStandardOutput = $true
+        $psi.RedirectStandardError = $true
+        $psi.UseShellExecute = $false
+        $proc = New-Object System.Diagnostics.Process
+        $proc.StartInfo = $psi
+        $proc.Start() | Out-Null
+        $stdout = $proc.StandardOutput.ReadToEnd()
+        $stderr = $proc.StandardError.ReadToEnd()
+        $proc.WaitForExit()
+        Remove-Item $outFile -ErrorAction SilentlyContinue
+        Remove-Item $errFile -ErrorAction SilentlyContinue
+        return @{ ExitCode = $proc.ExitCode; Stdout = $stdout; Stderr = $stderr }
+    }
+
+    $cmdArgs = @('run','--rm','-e',"AWS_ACCESS_KEY_ID=$MinioRootUser",'-e',"AWS_SECRET_ACCESS_KEY=$MinioRootPass",'amazon/aws-cli','--endpoint-url',$endpointUrl,'s3api','create-bucket','--bucket',$BucketName)
+    $res = Run-Command 'docker' $cmdArgs
+    $out = ($res.Stdout + "`n" + $res.Stderr).Trim()
+    if ($res.ExitCode -eq 0) { Info "Bucket '$BucketName' created or confirmed." } elseif ($out -match 'BucketAlreadyOwnedByYou') { Info "Bucket already owned by you; continuing." } else { throw $out }
 } catch {
-    Info "Primary create attempt failed; retrying with host-gateway mapping..."
-    docker run --rm --add-host=host.docker.internal:host-gateway -e "AWS_ACCESS_KEY_ID=$MinioRootUser" -e "AWS_SECRET_ACCESS_KEY=$MinioRootPass" amazon/aws-cli --endpoint-url "http://host.docker.internal:$ApiPort" s3api create-bucket --bucket $BucketName 2>&1 | Out-String | ForEach-Object { $_ } | Out-Null
-    if ($LASTEXITCODE -ne 0) { Err "Failed to create bucket '$BucketName'"; exit 5 }
+    Info "Primary create attempt failed (caught); retrying with host-gateway mapping..."
+    $cmdArgs2 = @('run','--rm','--add-host=host.docker.internal:host-gateway','-e',"AWS_ACCESS_KEY_ID=$MinioRootUser",'-e',"AWS_SECRET_ACCESS_KEY=$MinioRootPass",'amazon/aws-cli','--endpoint-url',$endpointUrl,'s3api','create-bucket','--bucket',$BucketName)
+    $res2 = Run-Command 'docker' $cmdArgs2
+    $out2 = ($res2.Stdout + "`n" + $res2.Stderr).Trim()
+    if ($res2.ExitCode -eq 0) { Info "Bucket '$BucketName' created or confirmed on retry." } elseif ($out2 -match 'BucketAlreadyOwnedByYou') { Info "Bucket already owned by you; continuing." } else { Err "Failed to create bucket '$BucketName': $out2"; exit 5 }
 }
 
 Info "Running PHPUnit integration tests..."
