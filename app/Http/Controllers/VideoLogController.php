@@ -36,17 +36,10 @@ class VideoLogController extends Controller
      *
      * Query param: path (required)
      */
-    public function serve(Request $request)
+    public function serve(\App\Http\Requests\ServeFileRequest $request)
     {
-        // Safety: only allow serving via this endpoint in local/testing
-        if (! app()->environment(['local', 'testing'])) {
-            return response('Not found', 404);
-        }
-
+        // The FormRequest handles authorize() (environment) and presence of 'path'
         $path = $request->query('path');
-        if (! $path) {
-            return response('Missing path', 400);
-        }
 
         try {
             /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
