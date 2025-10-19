@@ -19,14 +19,30 @@ class StorageIntegrationTest extends TestCase
         config(['filesystems.default' => 's3']);
 
         // Ensure S3 disk has required config values in CI/integration environments
+        // Ensure env vars are present and set sane defaults for integration (MinIO)
+        if (! env('AWS_BUCKET')) {
+            putenv('AWS_BUCKET=test-bucket');
+            $_ENV['AWS_BUCKET'] = 'test-bucket';
+            $_SERVER['AWS_BUCKET'] = 'test-bucket';
+        }
+        if (! env('AWS_ENDPOINT')) {
+            putenv('AWS_ENDPOINT=http://localhost:9000');
+            $_ENV['AWS_ENDPOINT'] = 'http://localhost:9000';
+            $_SERVER['AWS_ENDPOINT'] = 'http://localhost:9000';
+        }
+
+        // Ensure S3 disk config is populated from env / existing config and not empty
         config(['filesystems.disks.s3' => array_merge(config('filesystems.disks.s3', []), [
             'key' => env('AWS_ACCESS_KEY_ID', config('filesystems.disks.s3.key')),
             'secret' => env('AWS_SECRET_ACCESS_KEY', config('filesystems.disks.s3.secret')),
             'region' => env('AWS_DEFAULT_REGION', config('filesystems.disks.s3.region', 'us-east-1')),
             'bucket' => env('AWS_BUCKET', config('filesystems.disks.s3.bucket', 'test-bucket')),
-            'endpoint' => env('AWS_ENDPOINT', config('filesystems.disks.s3.endpoint')),
-            'use_path_style_endpoint' => filter_var(env('AWS_USE_PATH_STYLE_ENDPOINT', config('filesystems.disks.s3.use_path_style_endpoint', false)), FILTER_VALIDATE_BOOLEAN),
+            'endpoint' => env('AWS_ENDPOINT', config('filesystems.disks.s3.endpoint', 'http://localhost:9000')),
+            'use_path_style_endpoint' => filter_var(env('AWS_USE_PATH_STYLE_ENDPOINT', config('filesystems.disks.s3.use_path_style_endpoint', true)), FILTER_VALIDATE_BOOLEAN),
         ])]);
+
+        // Ensure app.url does not match the S3 host in CI (prevents proxying in StorageUrlGenerator)
+        config(['app.url' => env('APP_URL', 'https://studio.test')]);
     }
 
     public function test_s3_temporary_url_and_upload()
