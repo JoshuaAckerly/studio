@@ -55,6 +55,8 @@ jobs:
           echo "AWS_BUCKET=test-bucket" >> $GITHUB_ENV
           echo "AWS_ENDPOINT=http://127.0.0.1:9000" >> $GITHUB_ENV
           echo "AWS_USE_PATH_STYLE_ENDPOINT=true" >> $GITHUB_ENV
+          # Enable detailed MinIO debug output for this CI run
+          echo "CI_DEBUG_MINIO=true" >> $GITHUB_ENV
 
       - name: Create S3 bucket
         run: |
