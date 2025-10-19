@@ -11,6 +11,13 @@ use App\Http\Resources\VideoLogResource;
 
 class VideoLogController extends Controller
 {
+    protected VideoLogService $videoLogService;
+
+    public function __construct(VideoLogService $videoLogService)
+    {
+        $this->videoLogService = $videoLogService;
+    }
+
     public function index()
     {
         return Inertia::render('VideoLog');
@@ -18,8 +25,7 @@ class VideoLogController extends Controller
 
     public function api(Request $request)
     {
-        $service = new VideoLogService();
-        $items = $service->list();
+        $items = $this->videoLogService->list();
 
         return VideoLogResource::collection($items);
     }

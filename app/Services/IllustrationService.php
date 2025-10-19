@@ -10,10 +10,24 @@ class IllustrationService
     protected $s3;
     protected string $prefix;
     protected ?string $cloudfrontDomain;
+    protected StorageUrlGenerator $urlGenerator;
 
-    public function __construct($s3 = null)
+    /**
+     * Backwards-compatible: first param may be the disk or the url generator.
+     *
+     * @param mixed|null $s3OrGenerator
+     * @param StorageUrlGenerator|null $maybeGenerator
+     */
+    public function __construct($s3OrGenerator = null, ?\App\Contracts\StorageUrlGeneratorInterface $maybeGenerator = null)
     {
-        $this->s3 = $s3 ?? Storage::disk('s3');
+        if ($s3OrGenerator instanceof StorageUrlGenerator) {
+            $this->urlGenerator = $s3OrGenerator;
+            $this->s3 = Storage::disk('s3');
+        } else {
+            $this->s3 = $s3OrGenerator ?? Storage::disk('s3');
+            $this->urlGenerator = $maybeGenerator ?? new StorageUrlGenerator($this->s3, env('CLOUDFRONT_DOMAIN') ?: null);
+        }
+
         $this->prefix = rtrim(env('ILLUSTRATIONS_PREFIX', 'images/Illustrations'), " /\\");
         $this->cloudfrontDomain = env('CLOUDFRONT_DOMAIN') ?: null;
     }
@@ -45,33 +59,6 @@ class IllustrationService
 
     protected function makeUrl(string $path): string
     {
-        // In testing, prefer the local serve proxy if app is testing
-        if (app()->environment('testing')) {
-            return url('/api/video-logs/serve?path=' . rawurlencode($path));
-        }
-
-        try {
-            if (method_exists($this->s3, 'temporaryUrl')) {
-                $url = $this->s3->temporaryUrl($path, now()->addHour());
-            } else {
-                $url = $this->s3->url($path);
-            }
-        } catch (\Throwable $e) {
-            try {
-                $url = $this->s3->url($path);
-            } catch (\Throwable $e) {
-                $url = '';
-            }
-        }
-
-        if ($this->cloudfrontDomain && $url) {
-            $parts = parse_url($url);
-            $scheme = $parts['scheme'] ?? 'https';
-            $p = $parts['path'] ?? ('/' . ltrim($path, '/'));
-            $q = isset($parts['query']) ? ('?' . $parts['query']) : '';
-            return $scheme . '://' . rtrim($this->cloudfrontDomain, '/') . $p . $q;
-        }
-
-        return $url ?: '';
+        return $this->urlGenerator->url($path);
     }
 }
