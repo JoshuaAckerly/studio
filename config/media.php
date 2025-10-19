@@ -6,7 +6,8 @@ return [
     'image_prefix' => env('VIDEO_IMAGES_PREFIX', 'images/vlogs'),
 
     // Illustrations
-    'illustrations_prefix' => env('ILLUSTRATIONS_PREFIX', 'images/illustrations'),
+    // The illustrations prefix is case-sensitive on S3. Use the actual path where objects live.
+    'illustrations_prefix' => env('ILLUSTRATIONS_PREFIX', 'images/Illustrations'),
 
     // CloudFront domain for URL rewrites
     'cloudfront_domain' => env('CLOUDFRONT_DOMAIN', null),
