@@ -70,6 +70,94 @@ class StorageIntegrationTest extends TestCase
         config(['app.url' => env('APP_URL', 'https://studio.test')]);
     }
 
+    /**
+     * When a test fails, write helpful debug files for CI artifact collection.
+     * PHPUnit will call this when a test throws an exception/fails.
+     *
+     * @param \Throwable $t
+     * @return void
+     * @throws \Throwable
+     */
+    public function onNotSuccessfulTest(\Throwable $t): void
+    {
+        try {
+            $this->writeFailureDebugFiles($t);
+        } catch (\Throwable $e) {
+            // Avoid masking the original failure; just log locally if debug write fails
+            @file_put_contents(base_path('artifacts/phpunit/debug-write-error.txt'), (string) $e);
+        }
+
+        parent::onNotSuccessfulTest($t);
+    }
+
+    protected function writeFailureDebugFiles(\Throwable $t): void
+    {
+    $timestamp = date('Ymd-His');
+    // Use class short name + uniqid to avoid relying on PHPUnit internals
+    $testName = preg_replace('/[^A-Za-z0-9_\-]/', '_', (new \ReflectionClass($this))->getShortName() . '_' . uniqid());
+
+        // Ensure directories exist in repo root so workflow artifact paths pick them up
+        $phpunitDir = base_path('artifacts/phpunit');
+        if (! is_dir($phpunitDir)) {
+            @mkdir($phpunitDir, 0777, true);
+        }
+
+        $minioDir = base_path('minio-debug');
+        if (! is_dir($minioDir)) {
+            @mkdir($minioDir, 0777, true);
+        }
+
+        // Debug file with exception and env dump
+        $debugPath = $phpunitDir . "/debug-{$testName}-{$timestamp}.log";
+        $content = "Exception: " . $t->getMessage() . "\n\n";
+        $content .= "Stack:\n" . $t->getTraceAsString() . "\n\n";
+        $content .= "ENV VARS:\n";
+        foreach (['AWS_BUCKET','AWS_ENDPOINT','AWS_ACCESS_KEY_ID','AWS_SECRET_ACCESS_KEY','APP_URL'] as $k) {
+            $val = getenv($k) ?: ($_ENV[$k] ?? ($_SERVER[$k] ?? '(empty)'));
+            $content .= "$k=$val\n";
+        }
+        $content .= "\nLaravel filesystems.disks.s3:\n" . var_export(config('filesystems.disks.s3'), true) . "\n";
+
+        @file_put_contents($debugPath, $content);
+
+        // Attempt to list a small prefix (integration-test/) via AWS SDK to avoid huge listings
+        try {
+            $s3 = new \Aws\S3\S3Client([
+                'version' => 'latest',
+                'region' => config('filesystems.disks.s3.region', 'us-east-1'),
+                'endpoint' => config('filesystems.disks.s3.endpoint') ?? null,
+                'use_path_style_endpoint' => config('filesystems.disks.s3.use_path_style_endpoint', true),
+                'credentials' => [
+                    'key' => config('filesystems.disks.s3.key'),
+                    'secret' => config('filesystems.disks.s3.secret'),
+                ],
+            ]);
+
+            $bucket = config('filesystems.disks.s3.bucket');
+            $prefix = 'integration-test/';
+
+            $out = [];
+            $paginator = $s3->getPaginator('ListObjectsV2', [
+                'Bucket' => $bucket,
+                'Prefix' => $prefix,
+                'MaxKeys' => 100,
+            ]);
+
+            foreach ($paginator as $page) {
+                if (! empty($page['Contents'])) {
+                    foreach ($page['Contents'] as $obj) {
+                        $out[] = sprintf("%s\t%d\t%s", $obj['Key'], $obj['Size'], $obj['LastModified']);
+                    }
+                }
+            }
+
+            $s3ListingPath = $minioDir . "/s3-listing-{$testName}-{$timestamp}.txt";
+            @file_put_contents($s3ListingPath, implode("\n", $out));
+        } catch (\Throwable $e) {
+            @file_put_contents($minioDir . '/s3-listing-error.txt', (string) $e);
+        }
+    }
+
     public function test_s3_temporary_url_and_upload()
     {
         $disk = Storage::disk('s3');
