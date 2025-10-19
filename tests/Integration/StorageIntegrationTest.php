@@ -80,7 +80,19 @@ class StorageIntegrationTest extends TestCase
 
         $disk->put($path, $contents);
 
-        $this->assertTrue($disk->exists($path));
+        // Sometimes MinIO in CI needs a moment to accept the object; poll for existence
+        $exists = false;
+        $maxAttempts = 10; // ~10s of waiting
+        for ($i = 0; $i < $maxAttempts; $i++) {
+            if ($disk->exists($path)) {
+                $exists = true;
+                break;
+            }
+            // small sleep between attempts
+            usleep(250 * 1000); // 250ms
+        }
+
+        $this->assertTrue($exists, 'Uploaded object did not become available in time');
 
         // temporaryUrl should return a string (MinIO will return a presigned URL)
         $tmp = $disk->temporaryUrl($path, now()->addMinutes(5));
