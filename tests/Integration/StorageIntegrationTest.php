@@ -30,6 +30,24 @@ class StorageIntegrationTest extends TestCase
             $_ENV['AWS_ENDPOINT'] = 'http://localhost:9000';
             $_SERVER['AWS_ENDPOINT'] = 'http://localhost:9000';
         }
+        // Ensure AWS credentials are present to prevent SDK trying instance profile (IMDS)
+        if (! env('AWS_ACCESS_KEY_ID')) {
+            putenv('AWS_ACCESS_KEY_ID=minioadmin');
+            $_ENV['AWS_ACCESS_KEY_ID'] = 'minioadmin';
+            $_SERVER['AWS_ACCESS_KEY_ID'] = 'minioadmin';
+        }
+        if (! env('AWS_SECRET_ACCESS_KEY')) {
+            putenv('AWS_SECRET_ACCESS_KEY=minioadmin');
+            $_ENV['AWS_SECRET_ACCESS_KEY'] = 'minioadmin';
+            $_SERVER['AWS_SECRET_ACCESS_KEY'] = 'minioadmin';
+        }
+
+        // Ensure app.url is not localhost in CI so StorageUrlGenerator won't proxy local URLs
+        if (! env('APP_URL')) {
+            putenv('APP_URL=https://studio.test');
+            $_ENV['APP_URL'] = 'https://studio.test';
+            $_SERVER['APP_URL'] = 'https://studio.test';
+        }
 
         // Ensure S3 disk config is populated from env / existing config and not empty
         config(['filesystems.disks.s3' => array_merge(config('filesystems.disks.s3', []), [
