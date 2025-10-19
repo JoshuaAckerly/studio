@@ -41,26 +41,6 @@ class IllustrationService
     {
         try {
             $files = $this->s3->files($this->prefix) ?: [];
-
-            // If no files found under primary prefix, try fallback prefixes from config
-            if (empty($files)) {
-                $fallbacks = config('media.illustrations_fallback_prefixes', ['','images']);
-                foreach ($fallbacks as $fb) {
-                    if ($fb === $this->prefix) continue;
-                    try {
-                        $fb = rtrim($fb, " /\\");
-                        $maybe = $this->s3->files($fb) ?: [];
-                        if (!empty($maybe)) {
-                            $files = $maybe;
-                            // adjust prefix for URL generation later
-                            $this->prefix = $fb;
-                            break;
-                        }
-                    } catch (\Throwable $e) {
-                        // ignore and try next fallback
-                    }
-                }
-            }
         } catch (\Throwable $e) {
             return [];
         }
