@@ -65,6 +65,15 @@ jobs:
           ./mc alias set local http://localhost:9000 minioadmin minioadmin --api S3v4
           ./mc mb -p local/test-bucket || true
 
+      - name: Wait for S3 API to accept operations (mc)
+        run: |
+          echo "Waiting for MinIO S3 API to accept operations (mc ls local/test-bucket)"
+          for i in {1..60}; do
+            ./mc ls local/test-bucket > /dev/null 2>&1 && echo "MinIO S3 API ready" && break
+            echo "MinIO not ready yet (attempt: $i), sleeping 1s"
+            sleep 1
+          done
+
       - name: Install AWS CLI and create bucket via aws
         run: |
           python -m pip install --user --upgrade pip
