@@ -60,8 +60,25 @@ class StorageUrlGenerator implements StorageUrlGeneratorInterface
                 if ($candidate) {
                     $parsedCandidate = parse_url((string) $candidate);
                     $appUrl = parse_url(config('app.url') ?: url('/'));
-                    if (isset($parsedCandidate['host']) && isset($appUrl['host']) && $parsedCandidate['host'] === $appUrl['host']) {
-                        return url('/api/video-logs/serve?path=' . rawurlencode($path));
+
+                    // If candidate includes presigned signature/query params, consider it a valid
+                    // presigned URL and do NOT proxy (MinIO/AWS presigned URLs include signature-related query params).
+                    if (isset($parsedCandidate['query'])) {
+                        parse_str($parsedCandidate['query'], $candidateQs);
+                        if (isset($candidateQs['X-Amz-Algorithm']) || isset($candidateQs['X-Amz-Signature']) || isset($candidateQs['Signature']) || isset($candidateQs['X-Amz-SignedHeaders']) || isset($candidateQs['X-Amz-Expires'])) {
+                            // It's a presigned URL; use it.
+                            // do nothing here — allow normal flow to use $candidate
+                        } else {
+                            // If no signature-like params and host matches app host, proxy
+                            if (isset($parsedCandidate['host']) && isset($appUrl['host']) && $parsedCandidate['host'] === $appUrl['host']) {
+                                return url('/api/video-logs/serve?path=' . rawurlencode($path));
+                            }
+                        }
+                    } else {
+                        // No query — if host matches app host, treat as fake and proxy
+                        if (isset($parsedCandidate['host']) && isset($appUrl['host']) && $parsedCandidate['host'] === $appUrl['host']) {
+                            return url('/api/video-logs/serve?path=' . rawurlencode($path));
+                        }
                     }
                 }
             } catch (\Throwable $e) {
