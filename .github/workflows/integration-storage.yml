@@ -75,18 +75,21 @@ jobs:
 
       - name: "Optional debug: CI_DEBUG_MINIO detailed diagnostics"
         run: |
+          mkdir -p minio-debug
           if [ "${CI_DEBUG_MINIO:-}" = 'true' ]; then
-            echo "---- DOCKER PS ----"
-            docker ps --no-trunc || true
-            echo "---- MINIO LOGS ----"
-            docker logs minio --tail 200 || true
-            echo "---- MC LS BUCKETS ----"
-            # Download mc client and list buckets
+            echo "Writing docker ps to minio-debug/docker-ps.txt"
+            docker ps --no-trunc > minio-debug/docker-ps.txt 2>&1 || true
+
+            echo "Writing minio logs to minio-debug/minio-logs.txt"
+            docker logs minio --tail 200 > minio-debug/minio-logs.txt 2>&1 || true
+
+            echo "Writing mc ls output to minio-debug/mc-ls.txt"
             curl -sSfL https://dl.min.io/client/mc/release/linux-amd64/mc -o mc && chmod +x mc || true
-            ./mc alias set local http://127.0.0.1:9000 minioadmin minioadmin --api S3v4 || true
-            ./mc ls local || true
-            echo "---- AWS S3 LIST (via aws cli) ----"
-            aws --endpoint-url http://127.0.0.1:9000 s3 ls || true
+            ./mc alias set local http://127.0.0.1:9000 minioadmin minioadmin --api S3v4 > minio-debug/mc-alias.txt 2>&1 || true
+            ./mc ls local > minio-debug/mc-ls.txt 2>&1 || true
+
+            echo "Writing aws s3 ls to minio-debug/aws-s3-ls.txt"
+            aws --endpoint-url http://127.0.0.1:9000 s3 ls > minio-debug/aws-s3-ls.txt 2>&1 || true
           else
             echo "CI_DEBUG_MINIO not set; skipping detailed MinIO debug"
           fi
@@ -100,6 +103,13 @@ jobs:
           echo "---- mc ls local/test-bucket ----"
           ./mc alias set local http://127.0.0.1:9000 minioadmin minioadmin --api S3v4 || true
           ./mc ls local/test-bucket || true
+
+      - name: "Upload MinIO debug artifact"
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: minio-debug-${{ github.run_id }}
+          path: minio-debug/**
       - name: Dump S3 env and Laravel S3 config (debug)
         run: |
           echo "--- S3 ENV VARS (CI) ---"
