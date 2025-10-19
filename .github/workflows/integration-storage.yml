@@ -113,8 +113,14 @@ jobs:
           ./mc alias set local http://127.0.0.1:9000 minioadmin minioadmin --api S3v4 || true
           ./mc ls local/test-bucket || true
 
-      # NOTE: debug artifact upload removed to reduce noise; keep debug files available
-      # in the workflow logs or re-enable uploads temporarily when needed.
+      # Upload debug artifacts only when the job fails to reduce noise but capture
+      # useful files for investigation.
+      - name: "Upload MinIO debug artifact (on failure)"
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: minio-debug-${{ github.run_id }}
+          path: minio-debug/**
       - name: Dump S3 env and Laravel S3 config (debug)
         run: |
           echo "--- S3 ENV VARS (CI) ---"
@@ -133,5 +139,11 @@ jobs:
           # Run phpunit; write console output and JUnit XML for artifact upload
           vendor/bin/phpunit --configuration phpunit.xml --group integration --colors=never --log-junit artifacts/phpunit/phpunit-results.xml 2>&1 | tee artifacts/phpunit/phpunit-console.log
 
-      # PHPUnit artifacts upload removed to avoid storing logs as artifacts on every run.
-      # If you need artifacts for debugging, re-enable this step temporarily.
+      # Upload PHPUnit artifacts only when the job fails so developers can download
+      # console logs and JUnit XML for failing runs.
+      - name: "Upload PHPUnit artifacts (on failure)"
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: phpunit-artifacts-${{ github.run_id }}
+          path: artifacts/phpunit/**
