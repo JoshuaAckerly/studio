@@ -1,0 +1,68 @@
+name: Integration - Storage (MinIO)
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [ main ]
+
+jobs:
+  storage-integration:
+    name: Storage Integration Tests
+    runs-on: ubuntu-latest
+    # Run on push to main, or on PRs only when the `run-integration` label is present
+    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && contains(join(github.event.pull_request.labels.*.name, ','), 'run-integration')) }}
+    # Start MinIO in a step below using docker so the workflow is portable and easier to validate
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, sqlite, curl
+
+      - name: Install Composer dependencies
+        run: composer install --no-progress --no-suggest --prefer-dist
+
+      - name: Start MinIO container
+        run: |
+          docker run -d --name minio -p 9000:9000 -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin minio/minio:latest server /data
+
+      - name: Wait for MinIO
+        run: |
+          for i in {1..30}; do
+            if curl -sS http://localhost:9000/minio/health/live >/dev/null; then
+              echo "MinIO ready" && break
+            fi
+            sleep 1
+          done
+
+      - name: Configure env for MinIO
+        run: |
+          echo "AWS_ACCESS_KEY_ID=minioadmin" >> $GITHUB_ENV
+          echo "AWS_SECRET_ACCESS_KEY=minioadmin" >> $GITHUB_ENV
+          echo "AWS_DEFAULT_REGION=us-east-1" >> $GITHUB_ENV
+          echo "AWS_BUCKET=test-bucket" >> $GITHUB_ENV
+          echo "AWS_ENDPOINT=http://localhost:9000" >> $GITHUB_ENV
+          echo "AWS_USE_PATH_STYLE_ENDPOINT=true" >> $GITHUB_ENV
+
+      - name: Create S3 bucket
+        run: |
+          # Use mc (MinIO client) to create bucket
+          curl -sSfL https://dl.min.io/client/mc/release/linux-amd64/mc -o mc && chmod +x mc
+          ./mc alias set local http://localhost:9000 minioadmin minioadmin --api S3v4
+          ./mc mb -p local/test-bucket || true
+
+      - name: Install AWS CLI and create bucket via aws
+        run: |
+          python -m pip install --user --upgrade pip
+          python -m pip install --user awscli
+          export PATH="$HOME/.local/bin:$PATH"
+          aws --version
+          aws --endpoint-url http://localhost:9000 s3api create-bucket --bucket test-bucket || echo "bucket create failed or exists"
+
+      - name: Run integration tests
+        run: vendor/bin/phpunit --configuration phpunit.xml --group integration --colors=never

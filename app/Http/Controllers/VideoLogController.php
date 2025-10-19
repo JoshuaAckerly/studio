@@ -11,6 +11,13 @@ use App\Http\Resources\VideoLogResource;
 
 class VideoLogController extends Controller
 {
+    protected VideoLogService $videoLogService;
+
+    public function __construct(VideoLogService $videoLogService)
+    {
+        $this->videoLogService = $videoLogService;
+    }
+
     public function index()
     {
         return Inertia::render('VideoLog');
@@ -18,8 +25,7 @@ class VideoLogController extends Controller
 
     public function api(Request $request)
     {
-        $service = new VideoLogService();
-        $items = $service->list();
+        $items = $this->videoLogService->list();
 
         return VideoLogResource::collection($items);
     }
@@ -30,17 +36,10 @@ class VideoLogController extends Controller
      *
      * Query param: path (required)
      */
-    public function serve(Request $request)
+    public function serve(\App\Http\Requests\ServeFileRequest $request)
     {
-        // Safety: only allow serving via this endpoint in local/testing
-        if (! app()->environment(['local', 'testing'])) {
-            return response('Not found', 404);
-        }
-
+        // The FormRequest handles authorize() (environment) and presence of 'path'
         $path = $request->query('path');
-        if (! $path) {
-            return response('Missing path', 400);
-        }
 
         try {
             /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
