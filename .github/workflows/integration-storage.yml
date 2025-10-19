@@ -64,5 +64,17 @@ jobs:
           aws --version
           aws --endpoint-url http://localhost:9000 s3api create-bucket --bucket test-bucket || echo "bucket create failed or exists"
 
+      - name: Dump S3 env and Laravel S3 config (debug)
+        run: |
+          echo "--- S3 ENV VARS (CI) ---"
+          echo "AWS_BUCKET=$AWS_BUCKET"
+          echo "AWS_ENDPOINT=$AWS_ENDPOINT"
+          echo "AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID"
+          echo "AWS_SECRET_ACCESS_KEY=$( [ -n "$AWS_SECRET_ACCESS_KEY" ] && echo '***' || echo '(empty)')"
+          echo "FILESYSTEM_DISK=$FILESYSTEM_DISK"
+          echo ""
+          echo "--- Laravel filesystems.disks.s3 config ---"
+          php -r "require 'vendor/autoload.php'; \$app = require 'bootstrap/app.php'; \$kernel = \$app->make(Illuminate\\Contracts\\Console\\Kernel::class); \$kernel->bootstrap(); var_export(config('filesystems.disks.s3'));"
+
       - name: Run integration tests
         run: vendor/bin/phpunit --configuration phpunit.xml --group integration --colors=never
