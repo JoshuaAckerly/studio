@@ -17,6 +17,16 @@ class StorageIntegrationTest extends TestCase
 
         // Ensure we use the s3 disk for integration
         config(['filesystems.default' => 's3']);
+
+        // Ensure S3 disk has required config values in CI/integration environments
+        config(['filesystems.disks.s3' => array_merge(config('filesystems.disks.s3', []), [
+            'key' => env('AWS_ACCESS_KEY_ID', config('filesystems.disks.s3.key')),
+            'secret' => env('AWS_SECRET_ACCESS_KEY', config('filesystems.disks.s3.secret')),
+            'region' => env('AWS_DEFAULT_REGION', config('filesystems.disks.s3.region', 'us-east-1')),
+            'bucket' => env('AWS_BUCKET', config('filesystems.disks.s3.bucket', 'test-bucket')),
+            'endpoint' => env('AWS_ENDPOINT', config('filesystems.disks.s3.endpoint')),
+            'use_path_style_endpoint' => filter_var(env('AWS_USE_PATH_STYLE_ENDPOINT', config('filesystems.disks.s3.use_path_style_endpoint', false)), FILTER_VALIDATE_BOOLEAN),
+        ])]);
     }
 
     public function test_s3_temporary_url_and_upload()
