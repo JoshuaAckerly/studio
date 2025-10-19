@@ -43,3 +43,29 @@ Notes
 - The main integration workflow only uploads artifacts on failure to reduce noise. Use the manual debug workflow for full artifacts on demand.
 - The helper script and workflows use the default MinIO credentials `minioadmin:minioadmin`. Do not use these credentials in production.
 - If you want me to add a migration script to normalize object prefixes or add a fallback prefix lookup in `IllustrationService`, tell me which option you prefer.
+
+Migration helper (CLI)
+
+This repo includes an Artisan command to normalize S3 object prefixes called `s3:normalize-prefix`.
+
+Usage examples:
+
+   # Dry run: show what would be copied
+   php artisan s3:normalize-prefix --source=old-prefix --target=images/illustrations --dry
+
+   # Live run: copy objects and delete originals
+   php artisan s3:normalize-prefix --source=old-prefix --target=images/illustrations --bucket=your-bucket --delete-original
+
+Options:
+- `--dry` (show actions only)
+- `--source` (required) source prefix
+- `--target` (required) target prefix
+- `--bucket` override bucket from config
+- `--delete-original` remove the original object after copying
+- `--overwrite` overwrite existing target keys
+- `--limit` stop after processing N objects (safety)
+
+Before running a live migration:
+- Run with `--dry` first to confirm actions.
+- Prefer running in a staging environment with a copy of production data.
+- Ensure credentials and permissions allow copy/delete operations.
