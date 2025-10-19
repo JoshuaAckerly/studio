@@ -8,6 +8,10 @@ return [
     // Illustrations
     'illustrations_prefix' => env('ILLUSTRATIONS_PREFIX', 'images/illustrations'),
 
+    // Additional prefixes to try when the primary illustrations prefix yields no results.
+    // Useful for buckets that store images at the root or alternate paths.
+    'illustrations_fallback_prefixes' => env('ILLUSTRATIONS_FALLBACK_PREFIXES') ? explode(',', env('ILLUSTRATIONS_FALLBACK_PREFIXES')) : ['', 'images'],
+
     // CloudFront domain for URL rewrites
     'cloudfront_domain' => env('CLOUDFRONT_DOMAIN', null),
 
