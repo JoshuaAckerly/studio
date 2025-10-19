@@ -17,13 +17,28 @@ class VideoLogService
     protected string $videoPrefix;
     protected string $imagePrefix;
     protected ?string $cloudfrontDomain;
+    protected StorageUrlGenerator $urlGenerator;
 
-    public function __construct($s3 = null)
+    /**
+     * Backwards-compatible constructor: first param may be the disk or the url generator.
+     * Prefer injecting a StorageUrlGenerator for URL resolution.
+     *
+     * @param mixed|null $s3OrGenerator
+     * @param StorageUrlGenerator|null $maybeGenerator
+     */
+    public function __construct($s3OrGenerator = null, ?\App\Contracts\StorageUrlGeneratorInterface $maybeGenerator = null)
     {
-        $this->s3 = $s3 ?? Storage::disk('s3');
-        $this->videoPrefix = env('VIDEO_LOGS_PREFIX', 'video-logs');
-        $this->imagePrefix = rtrim('images/vlogs', '/');
-        $this->cloudfrontDomain = env('CLOUDFRONT_DOMAIN') ?: null;
+        if ($s3OrGenerator instanceof StorageUrlGenerator) {
+            $this->urlGenerator = $s3OrGenerator;
+            $this->s3 = Storage::disk('s3');
+        } else {
+            $this->s3 = $s3OrGenerator ?? Storage::disk('s3');
+            $this->urlGenerator = $maybeGenerator ?? new StorageUrlGenerator($this->s3, env('CLOUDFRONT_DOMAIN') ?: null);
+        }
+
+    $this->videoPrefix = config('media.video_prefix', 'video-logs');
+    $this->imagePrefix = rtrim(config('media.image_prefix', 'images/vlogs'), '/');
+    $this->cloudfrontDomain = config('media.cloudfront_domain') ?: null;
     }
 
     /**
@@ -35,8 +50,8 @@ class VideoLogService
     {
         // Decide whether to use S3: use S3 when the default disk is 's3', or when an AWS_BUCKET is configured
         // and we're not in testing. This mirrors the previous controller logic.
-        $defaultDisk = config('filesystems.default');
-        $useS3 = ($defaultDisk === 's3') || (!app()->environment('testing') && (bool) env('AWS_BUCKET'));
+    $defaultDisk = config('filesystems.default');
+    $useS3 = ($defaultDisk === 's3') || (!app()->environment('testing') && (bool) env('AWS_BUCKET'));
 
         if (! $useS3) {
             // Static fallback (same items the controller returned previously)
@@ -135,35 +150,6 @@ class VideoLogService
 
     protected function makeS3Url(string $path): string
     {
-        // If testing, return the local proxy so Storage::fake files can be requested by tests
-        if (app()->environment('testing')) {
-            return url('/api/video-logs/serve?path=' . rawurlencode($path));
-        }
-        // Prefer temporaryUrl if available (private objects)
-        try {
-            if (method_exists($this->s3, 'temporaryUrl')) {
-                $expires = now()->addMinutes((int) env('VIDEO_URL_EXPIRES', 60));
-                $url = $this->s3->temporaryUrl($path, $expires);
-            } else {
-                $url = $this->s3->url($path);
-            }
-        } catch (\Throwable $e) {
-            try {
-                $url = $this->s3->url($path);
-            } catch (\Throwable $e) {
-                $url = '';
-            }
-        }
-
-        // rewrite host to CloudFront if configured
-        if ($this->cloudfrontDomain && $url) {
-            $parsed = parse_url($url);
-            if ($parsed && isset($parsed['scheme'])) {
-                $scheme = $parsed['scheme'];
-                $url = $scheme . '://' . rtrim($this->cloudfrontDomain, '/') . (isset($parsed['path']) ? $parsed['path'] : '');
-            }
-        }
-
-        return $url ?: '';
+        return $this->urlGenerator->url($path);
     }
 }
