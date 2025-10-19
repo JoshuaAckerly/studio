@@ -26,9 +26,10 @@ class StorageIntegrationTest extends TestCase
             $_SERVER['AWS_BUCKET'] = 'test-bucket';
         }
         if (! env('AWS_ENDPOINT')) {
-            putenv('AWS_ENDPOINT=http://localhost:9000');
-            $_ENV['AWS_ENDPOINT'] = 'http://localhost:9000';
-            $_SERVER['AWS_ENDPOINT'] = 'http://localhost:9000';
+            // force localhost/127.0.0.1 for local integration runs to avoid bucket-as-host virtual addressing
+            putenv('AWS_ENDPOINT=http://127.0.0.1:9000');
+            $_ENV['AWS_ENDPOINT'] = 'http://127.0.0.1:9000';
+            $_SERVER['AWS_ENDPOINT'] = 'http://127.0.0.1:9000';
         }
         // Ensure AWS credentials are present to prevent SDK trying instance profile (IMDS)
         if (! env('AWS_ACCESS_KEY_ID')) {
@@ -50,14 +51,20 @@ class StorageIntegrationTest extends TestCase
         }
 
         // Ensure S3 disk config is populated from env / existing config and not empty
-        config(['filesystems.disks.s3' => array_merge(config('filesystems.disks.s3', []), [
-            'key' => env('AWS_ACCESS_KEY_ID', config('filesystems.disks.s3.key')),
-            'secret' => env('AWS_SECRET_ACCESS_KEY', config('filesystems.disks.s3.secret')),
+        // Populate S3 disk config but FORCE MinIO values for local integration runs so tests don't
+        // accidentally pick up developer AWS credentials from the environment which will cause 403s.
+        $s3Config = array_merge(config('filesystems.disks.s3', []), [
+            // Explicit MinIO test credentials and endpoint for local integration
+            'key' => 'minioadmin',
+            'secret' => 'minioadmin',
             'region' => env('AWS_DEFAULT_REGION', config('filesystems.disks.s3.region', 'us-east-1')),
-            'bucket' => env('AWS_BUCKET', config('filesystems.disks.s3.bucket', 'test-bucket')),
-            'endpoint' => env('AWS_ENDPOINT', config('filesystems.disks.s3.endpoint', 'http://localhost:9000')),
-            'use_path_style_endpoint' => filter_var(env('AWS_USE_PATH_STYLE_ENDPOINT', config('filesystems.disks.s3.use_path_style_endpoint', true)), FILTER_VALIDATE_BOOLEAN),
-        ])]);
+            'bucket' => env('AWS_BUCKET', config('filesystems.disks.s3.bucket', 'graveyardjokes-cdn')),
+            'endpoint' => env('AWS_ENDPOINT', config('filesystems.disks.s3.endpoint', 'http://127.0.0.1:9000')),
+            // Ensure path-style addressing so the host is 127.0.0.1 and bucket isn't used as hostname
+            'use_path_style_endpoint' => true,
+        ]);
+
+        config(['filesystems.disks.s3' => $s3Config]);
 
         // Ensure app.url does not match the S3 host in CI (prevents proxying in StorageUrlGenerator)
         config(['app.url' => env('APP_URL', 'https://studio.test')]);
