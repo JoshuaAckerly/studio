@@ -9,7 +9,8 @@ class ServeFileRequest extends FormRequest
     public function authorize(): bool
     {
         // Only allow in local/testing environments per controller intention
-        return app()->environment(['local', 'testing']);
+        $env = config('app.env', env('APP_ENV'));
+        return in_array($env, ['local', 'testing'], true);
     }
 
     public function rules(): array

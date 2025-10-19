@@ -99,7 +99,8 @@ class VideoLogTest extends TestCase
         // Simulate production environment
         config(['app.env' => 'production']);
 
-        $response = $this->get('/api/video-logs/serve?path=some/path.mp4');
-        $response->assertStatus(404);
+    $response = $this->get('/api/video-logs/serve?path=some/path.mp4');
+    // FormRequest::authorize() returns false, which results in a 403 Forbidden response
+    $response->assertStatus(403);
     }
 }
