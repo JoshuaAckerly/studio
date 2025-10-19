@@ -36,9 +36,9 @@ class VideoLogService
             $this->urlGenerator = $maybeGenerator ?? new StorageUrlGenerator($this->s3, env('CLOUDFRONT_DOMAIN') ?: null);
         }
 
-        $this->videoPrefix = env('VIDEO_LOGS_PREFIX', 'video-logs');
-        $this->imagePrefix = rtrim('images/vlogs', '/');
-        $this->cloudfrontDomain = env('CLOUDFRONT_DOMAIN') ?: null;
+    $this->videoPrefix = config('media.video_prefix', 'video-logs');
+    $this->imagePrefix = rtrim(config('media.image_prefix', 'images/vlogs'), '/');
+    $this->cloudfrontDomain = config('media.cloudfront_domain') ?: null;
     }
 
     /**
@@ -50,8 +50,8 @@ class VideoLogService
     {
         // Decide whether to use S3: use S3 when the default disk is 's3', or when an AWS_BUCKET is configured
         // and we're not in testing. This mirrors the previous controller logic.
-        $defaultDisk = config('filesystems.default');
-        $useS3 = ($defaultDisk === 's3') || (!app()->environment('testing') && (bool) env('AWS_BUCKET'));
+    $defaultDisk = config('filesystems.default');
+    $useS3 = ($defaultDisk === 's3') || (!app()->environment('testing') && (bool) env('AWS_BUCKET'));
 
         if (! $useS3) {
             // Static fallback (same items the controller returned previously)

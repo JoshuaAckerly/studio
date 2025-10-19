@@ -19,8 +19,8 @@ class AppServiceProvider extends ServiceProvider
         // Bind a StorageUrlGenerator so services can request canonical URLs for storage paths
         $this->app->singleton(StorageUrlGenerator::class, function ($app) {
             $disk = Storage::disk('s3');
-            $cloudfront = env('CLOUDFRONT_DOMAIN') ?: null;
-            $expires = (int) env('VIDEO_URL_EXPIRES', 60);
+            $cloudfront = config('media.cloudfront_domain') ?: null;
+            $expires = (int) config('media.url_expires_minutes', 60);
             return new StorageUrlGenerator($disk, $cloudfront, $expires);
         });
 

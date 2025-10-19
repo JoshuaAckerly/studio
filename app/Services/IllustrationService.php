@@ -28,8 +28,8 @@ class IllustrationService
             $this->urlGenerator = $maybeGenerator ?? new StorageUrlGenerator($this->s3, env('CLOUDFRONT_DOMAIN') ?: null);
         }
 
-        $this->prefix = rtrim(env('ILLUSTRATIONS_PREFIX', 'images/Illustrations'), " /\\");
-        $this->cloudfrontDomain = env('CLOUDFRONT_DOMAIN') ?: null;
+    $this->prefix = rtrim(config('media.illustrations_prefix', 'images/illustrations'), " /\\");
+    $this->cloudfrontDomain = config('media.cloudfront_domain') ?: null;
     }
 
     /**
