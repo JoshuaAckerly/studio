@@ -79,4 +79,27 @@ class VideoLogTest extends TestCase
         $this->assertCount(2, $data);
         $this->assertEquals('Studio Update — Composing Session', $data[0]['title']);
     }
+
+    public function test_serve_endpoint_returns_file_in_testing_env()
+    {
+        // Ensure testing environment and s3 disk
+        config(['app.env' => 'testing', 'filesystems.default' => 's3']);
+        Storage::fake('s3');
+
+        $path = 'video-logs/serve-test.mp4';
+        Storage::disk('s3')->put($path, 'dummy-video');
+
+        $response = $this->get('/api/video-logs/serve?path=' . urlencode($path));
+        $response->assertStatus(200);
+        $this->assertStringStartsWith('video/', $response->headers->get('Content-Type'));
+    }
+
+    public function test_serve_endpoint_blocked_in_production()
+    {
+        // Simulate production environment
+        config(['app.env' => 'production']);
+
+        $response = $this->get('/api/video-logs/serve?path=some/path.mp4');
+        $response->assertStatus(404);
+    }
 }
