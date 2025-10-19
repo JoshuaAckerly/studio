@@ -65,7 +65,9 @@
         "test": [
             "@php artisan config:clear --ansi",
             "@php artisan test"
-        ]
+        ],
+        "test:fast": "php vendor\\bin\\phpunit --configuration=phpunit.xml --exclude-group integration",
+        "test:integration": "php vendor\\bin\\phpunit --configuration=phpunit.xml --group integration"
     },
     "extra": {
         "laravel": {
