@@ -89,6 +89,20 @@ jobs:
           ./mc ls local/debug-test-bucket > minio-debug/mc-ls.txt 2>&1 || true
           aws --endpoint-url http://127.0.0.1:9000 s3 ls > minio-debug/aws-s3-ls.txt 2>&1 || true
 
+      - name: Print s3-normalize compact summary (if present)
+        run: |
+          # Find the first s3-normalize JSON report produced under artifacts/
+          report=$(ls artifacts/s3-normalize-*.json 2>/dev/null | head -n1 || true)
+          if [ -z "$report" ]; then
+            echo "No s3-normalize report found in artifacts/"
+          else
+            echo "Found s3-normalize report: $report"
+            # Print a compact one-line stats summary
+            jq -r '.stats | "processed=\(.processed) copied=\(.copied) skipped=\(.skipped) deleted=\(.deleted) failed=\(.failed) elapsed_s=\(.elapsed_seconds) rate/s=\(.rate_per_second)"' "$report" || true
+            # Print options line
+            jq -r '.options | "options: delete=\(.delete) overwrite=\(.overwrite) spinner=\(.spinner) progress_only=\(.progress_only)"' "$report" || true
+          fi
+
       - name: Upload debug artifacts
         if: always()
         uses: actions/upload-artifact@v4

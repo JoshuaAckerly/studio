@@ -113,6 +113,56 @@ jobs:
           ./mc alias set local http://127.0.0.1:9000 minioadmin minioadmin --api S3v4 || true
           ./mc ls local/test-bucket || true
 
+      - name: Run s3:normalize-prefix (dry-run summary report)
+        run: |
+          mkdir -p artifacts || true
+          # Run the migration command in dry-run summary-only mode and write report to artifacts/
+          php artisan s3:normalize-prefix --dry --source=integration-test --target=integration-target --summary-only --report-path=artifacts
+
+      - name: Validate s3-normalize JSON report
+        run: |
+          set -euo pipefail
+          # pick the first generated report
+          report=$(ls artifacts/s3-normalize-*.json 2>/dev/null | head -n1 || true)
+          if [ -z "$report" ]; then
+            echo 'ERROR: No s3-normalize JSON report found in artifacts/' >&2
+            exit 1
+          fi
+          echo "Found report: $report"
+          # Validate richer schema using jq: ensure stats.* are numbers and options.* are booleans
+          if ! command -v jq >/dev/null 2>&1; then
+            echo 'jq not found; installing jq' >&2
+            sudo apt-get update -y && sudo apt-get install -y jq
+          fi
+
+          # Build a jq expression that enforces required types
+          jq_expr='(
+            .stats and
+            (.stats.processed|type=="number") and
+            (.stats.copied|type=="number") and
+            (.stats.skipped|type=="number") and
+            (.stats.deleted|type=="number") and
+            (.stats.failed|type=="number") and
+            (.options and
+              (.options.delete|type=="boolean") and
+              (.options.overwrite|type=="boolean") and
+              (.options.spinner|type=="boolean") and
+              (.options.progress_only|type=="boolean")
+            )
+          )'
+
+          if ! jq -e "$jq_expr" "$report" >/dev/null 2>&1; then
+            echo 'Invalid report: schema mismatch (expected numeric stats and boolean options) or invalid JSON' >&2
+            echo 'Report preview:' >&2
+            jq '.' "$report" >&2 || true
+            exit 2
+          fi
+          echo 's3-normalize report: OK'
+          # Print a compact summary for easy scanning in CI logs
+          echo 'Report summary:'
+          jq -r '.stats | "processed=\(.processed) copied=\(.copied) skipped=\(.skipped) deleted=\(.deleted) failed=\(.failed) elapsed_s=\(.elapsed_seconds) rate/s=\(.rate_per_second)"' "$report" || true
+          jq -r '.options | "options: delete=\(.delete) overwrite=\(.overwrite) spinner=\(.spinner) progress_only=\(.progress_only)"' "$report" || true
+
       # Upload debug artifacts only when the job fails to reduce noise but capture
       # useful files for investigation.
       - name: "Upload MinIO debug artifact (on failure)"
@@ -147,3 +197,96 @@ jobs:
         with:
           name: phpunit-artifacts-${{ github.run_id }}
           path: artifacts/phpunit/**
+
+      - name: "Upload s3-normalize JSON report"
+        uses: actions/upload-artifact@v4
+        with:
+          name: s3-normalize-report-${{ github.run_id }}
+          path: artifacts/s3-normalize-*.json
+
+  s3-normalize-check:
+    name: s3:normalize-prefix CI smoke check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: curl
+
+      - name: Install Composer dependencies
+        run: composer install --no-progress --no-suggest --prefer-dist
+
+      - name: Start MinIO container (smoke)
+        run: |
+          docker run -d --name minio-smoke -p 9002:9000 -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin minio/minio server /data --console-address ":9001"
+
+      - name: Wait for MinIO (smoke)
+        run: |
+          for i in {1..30}; do
+            if curl -sS http://127.0.0.1:9002/minio/health/live >/dev/null 2>&1; then
+              echo "MinIO ready" && break
+            fi
+            echo "waiting for minio... ($i)"; sleep 1
+          done
+
+      - name: Configure env for smoke MinIO
+        run: |
+          echo "AWS_ACCESS_KEY_ID=minioadmin" >> $GITHUB_ENV
+          echo "AWS_SECRET_ACCESS_KEY=minioadmin" >> $GITHUB_ENV
+          echo "AWS_DEFAULT_REGION=us-east-1" >> $GITHUB_ENV
+          echo "AWS_BUCKET=ci-smoke-bucket" >> $GITHUB_ENV
+          echo "AWS_ENDPOINT=http://127.0.0.1:9002" >> $GITHUB_ENV
+          echo "AWS_USE_PATH_STYLE_ENDPOINT=true" >> $GITHUB_ENV
+
+      - name: Create bucket (mc)
+        run: |
+          curl -sSfL https://dl.min.io/client/mc/release/linux-amd64/mc -o mc && chmod +x mc
+          ./mc alias set local http://127.0.0.1:9002 minioadmin minioadmin --api S3v4
+          ./mc mb -p local/ci-smoke-bucket || true
+
+      - name: Run s3:normalize-prefix (dry-run smoke)
+        run: |
+          mkdir -p artifacts || true
+          php artisan s3:normalize-prefix --dry --source=ci-smoke --target=ci-smoke-target --summary-only --report-path=artifacts
+
+      - name: Validate s3-normalize JSON report (smoke)
+        run: |
+          set -euo pipefail
+          report=$(ls artifacts/s3-normalize-*.json 2>/dev/null | head -n1 || true)
+          if [ -z "$report" ]; then
+            echo 'ERROR: No s3-normalize JSON report found in artifacts/' >&2
+            exit 1
+          fi
+          echo "Found report: $report"
+          if ! command -v jq >/dev/null 2>&1; then
+            sudo apt-get update -y && sudo apt-get install -y jq
+          fi
+          jq_expr='(
+            .stats and
+            (.stats.processed|type=="number") and
+            (.stats.copied|type=="number") and
+            (.stats.skipped|type=="number") and
+            (.stats.deleted|type=="number") and
+            (.stats.failed|type=="number") and
+            (.options and
+              (.options.delete|type=="boolean") and
+              (.options.overwrite|type=="boolean") and
+              (.options.spinner|type=="boolean") and
+              (.options.progress_only|type=="boolean")
+            )
+          )'
+          if ! jq -e "$jq_expr" "$report" >/dev/null 2>&1; then
+            echo 'Invalid report: schema mismatch or invalid JSON' >&2
+            jq '.' "$report" >&2 || true
+            exit 2
+          fi
+          echo 's3-normalize smoke report: OK'
+
+      - name: Upload s3-normalize smoke report
+        uses: actions/upload-artifact@v4
+        with:
+          name: s3-normalize-smoke-${{ github.run_id }}
+          path: artifacts/s3-normalize-*.json

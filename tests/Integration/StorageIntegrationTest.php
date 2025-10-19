@@ -78,7 +78,7 @@ class StorageIntegrationTest extends TestCase
      * @return void
      * @throws \Throwable
      */
-    public function onNotSuccessfulTest(\Throwable $t): void
+    public function onNotSuccessfulTest(\Throwable $t): never
     {
         try {
             $this->writeFailureDebugFiles($t);
@@ -158,8 +158,35 @@ class StorageIntegrationTest extends TestCase
         }
     }
 
+    /**
+     * Wait for an object to be visible on the given disk.
+     * Returns true when the object exists within the timeout, false otherwise.
+     *
+     * @param \Illuminate\Contracts\Filesystem\Filesystem $disk
+     * @param string $path
+     * @param int $timeoutSeconds
+     * @param int $intervalMs
+     * @return bool
+     */
+    protected function waitForObject($disk, string $path, int $timeoutSeconds = 10, int $intervalMs = 250): bool
+    {
+        $attempts = (int) ceil(($timeoutSeconds * 1000) / $intervalMs);
+        for ($i = 0; $i < $attempts; $i++) {
+            try {
+                if ($disk->exists($path)) {
+                    return true;
+                }
+            } catch (\Throwable $e) {
+                // Ignore transient SDK exceptions while waiting
+            }
+            usleep($intervalMs * 1000);
+        }
+        return false;
+    }
+
     public function test_s3_temporary_url_and_upload()
     {
+        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
         $disk = Storage::disk('s3');
 
         // create a small test file
@@ -168,19 +195,8 @@ class StorageIntegrationTest extends TestCase
 
         $disk->put($path, $contents);
 
-        // Sometimes MinIO in CI needs a moment to accept the object; poll for existence
-        $exists = false;
-        $maxAttempts = 10; // ~10s of waiting
-        for ($i = 0; $i < $maxAttempts; $i++) {
-            if ($disk->exists($path)) {
-                $exists = true;
-                break;
-            }
-            // small sleep between attempts
-            usleep(250 * 1000); // 250ms
-        }
-
-        $this->assertTrue($exists, 'Uploaded object did not become available in time');
+        // Wait for object to be visible (MinIO / CI can be transient)
+        $this->assertTrue($this->waitForObject($disk, $path, 10, 250), 'Uploaded object did not become available in time');
 
         // temporaryUrl should return a string (MinIO will return a presigned URL)
         $tmp = $disk->temporaryUrl($path, now()->addMinutes(5));
@@ -195,10 +211,12 @@ class StorageIntegrationTest extends TestCase
 
     public function test_storage_url_generator_signed_url_and_cloudfront_rewrite()
     {
+        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
         $disk = Storage::disk('s3');
 
-        $path = 'integration-test/' . uniqid() . '.txt';
-        $disk->put($path, 'integration-url-test');
+    $path = 'integration-test/' . uniqid() . '.txt';
+    $disk->put($path, 'integration-url-test');
+    $this->assertTrue($this->waitForObject($disk, $path, 10, 250), 'Uploaded object did not become available in time');
 
         // instantiate generator with disk and a fake cloudfront domain
         $generator = new StorageUrlGenerator($disk, 'd123.cloudfront.net', 10);
@@ -254,10 +272,12 @@ class StorageIntegrationTest extends TestCase
 
     public function test_unsigned_disk_url_has_no_signature_params()
     {
+        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
         $disk = Storage::disk('s3');
 
-        $path = 'integration-test/' . uniqid() . '.txt';
-        $disk->put($path, 'unsigned-url-test');
+    $path = 'integration-test/' . uniqid() . '.txt';
+    $disk->put($path, 'unsigned-url-test');
+    $this->assertTrue($this->waitForObject($disk, $path, 10, 250), 'Uploaded object did not become available in time');
 
         // get unsigned url from the disk (no temporaryUrl)
         $url = $disk->url($path);
