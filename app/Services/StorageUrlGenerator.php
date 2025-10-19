@@ -31,8 +31,10 @@ class StorageUrlGenerator implements StorageUrlGeneratorInterface
      */
     public function url(string $path, ?int $expiresMinutes = null): string
     {
-        // In testing, prefer local proxy so Storage::fake files can be requested
-        if (app()->environment('testing')) {
+        // In testing, prefer local proxy only when the configured filesystem is 'local'
+        // This lets integration tests that explicitly use the 's3' disk still exercise
+        // real presigned URLs (MinIO) and CloudFront hostname rewrite.
+        if (app()->environment('testing') && config('filesystems.default') === 'local') {
             return url('/api/video-logs/serve?path=' . rawurlencode($path));
         }
 
