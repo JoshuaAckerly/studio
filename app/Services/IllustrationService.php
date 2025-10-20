@@ -4,13 +4,14 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Contracts\StorageUrlGeneratorInterface;
 
 class IllustrationService
 {
     protected $s3;
     protected string $prefix;
     protected ?string $cloudfrontDomain;
-    protected StorageUrlGenerator $urlGenerator;
+    protected StorageUrlGeneratorInterface $urlGenerator;
 
     /**
      * Backwards-compatible: first param may be the disk or the url generator.
@@ -20,7 +21,7 @@ class IllustrationService
      */
     public function __construct($s3OrGenerator = null, ?\App\Contracts\StorageUrlGeneratorInterface $maybeGenerator = null)
     {
-        if ($s3OrGenerator instanceof StorageUrlGenerator) {
+        if ($s3OrGenerator instanceof StorageUrlGeneratorInterface) {
             $this->urlGenerator = $s3OrGenerator;
             $this->s3 = Storage::disk('s3');
         } else {
@@ -28,7 +29,15 @@ class IllustrationService
             $this->urlGenerator = $maybeGenerator ?? new StorageUrlGenerator($this->s3, env('CLOUDFRONT_DOMAIN') ?: null);
         }
 
-    $this->prefix = rtrim(config('media.illustrations_prefix', 'images/illustrations'), " /\\");
+    // Enforce canonical prefix: trim whitespace, normalize leading/trailing slashes,
+    // and ensure lowercase to avoid case-sensitive S3 surprises.
+    $raw = config('media.illustrations_prefix', 'images/illustrations');
+    $normalized = trim($raw);
+    $normalized = ltrim($normalized, '/\\');
+    if ($normalized === '') { $normalized = 'images/illustrations'; }
+    $normalized = strtolower($normalized);
+    if (!str_ends_with($normalized, '/')) { $normalized = $normalized . '/'; }
+    $this->prefix = $normalized;
     $this->cloudfrontDomain = config('media.cloudfront_domain') ?: null;
     }
 

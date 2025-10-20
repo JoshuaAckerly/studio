@@ -3,12 +3,12 @@
 namespace Tests\Integration;
 
 use Illuminate\Support\Facades\Storage;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\TestCase;
 use App\Services\StorageUrlGenerator;
+use App\Services\StorageConfigProvider;
 
-/**
- * @group integration
- */
+#[Group('integration')]
 class StorageIntegrationTest extends TestCase
 {
     public function setUp(): void
@@ -19,36 +19,35 @@ class StorageIntegrationTest extends TestCase
         config(['filesystems.default' => 's3']);
 
         // Ensure S3 disk has required config values in CI/integration environments
-        // Ensure env vars are present and set sane defaults for integration (MinIO)
-        if (! env('AWS_BUCKET')) {
-            putenv('AWS_BUCKET=test-bucket');
-            $_ENV['AWS_BUCKET'] = 'test-bucket';
-            $_SERVER['AWS_BUCKET'] = 'test-bucket';
-        }
-        if (! env('AWS_ENDPOINT')) {
-            // force localhost/127.0.0.1 for local integration runs to avoid bucket-as-host virtual addressing
-            putenv('AWS_ENDPOINT=http://127.0.0.1:9000');
-            $_ENV['AWS_ENDPOINT'] = 'http://127.0.0.1:9000';
-            $_SERVER['AWS_ENDPOINT'] = 'http://127.0.0.1:9000';
-        }
+        // Use StorageConfigProvider to normalize env reads and provide sensible defaults for integration (MinIO)
+        $provider = new StorageConfigProvider(base_path());
+
+        $awsBucket = env('AWS_BUCKET') ?: ($provider->lookup('AWS_BUCKET') ?: 'test-bucket');
+        putenv('AWS_BUCKET=' . $awsBucket);
+        $_ENV['AWS_BUCKET'] = $awsBucket;
+        $_SERVER['AWS_BUCKET'] = $awsBucket;
+
+        $awsEndpoint = env('AWS_ENDPOINT') ?: ($provider->lookup('AWS_ENDPOINT') ?: 'http://127.0.0.1:9000');
+        putenv('AWS_ENDPOINT=' . $awsEndpoint);
+        $_ENV['AWS_ENDPOINT'] = $awsEndpoint;
+        $_SERVER['AWS_ENDPOINT'] = $awsEndpoint;
+
         // Ensure AWS credentials are present to prevent SDK trying instance profile (IMDS)
-        if (! env('AWS_ACCESS_KEY_ID')) {
-            putenv('AWS_ACCESS_KEY_ID=minioadmin');
-            $_ENV['AWS_ACCESS_KEY_ID'] = 'minioadmin';
-            $_SERVER['AWS_ACCESS_KEY_ID'] = 'minioadmin';
-        }
-        if (! env('AWS_SECRET_ACCESS_KEY')) {
-            putenv('AWS_SECRET_ACCESS_KEY=minioadmin');
-            $_ENV['AWS_SECRET_ACCESS_KEY'] = 'minioadmin';
-            $_SERVER['AWS_SECRET_ACCESS_KEY'] = 'minioadmin';
-        }
+        $awsKey = env('AWS_ACCESS_KEY_ID') ?: ($provider->lookup('AWS_ACCESS_KEY_ID') ?: 'minioadmin');
+        putenv('AWS_ACCESS_KEY_ID=' . $awsKey);
+        $_ENV['AWS_ACCESS_KEY_ID'] = $awsKey;
+        $_SERVER['AWS_ACCESS_KEY_ID'] = $awsKey;
+
+        $awsSecret = env('AWS_SECRET_ACCESS_KEY') ?: ($provider->lookup('AWS_SECRET_ACCESS_KEY') ?: 'minioadmin');
+        putenv('AWS_SECRET_ACCESS_KEY=' . $awsSecret);
+        $_ENV['AWS_SECRET_ACCESS_KEY'] = $awsSecret;
+        $_SERVER['AWS_SECRET_ACCESS_KEY'] = $awsSecret;
 
         // Ensure app.url is not localhost in CI so StorageUrlGenerator won't proxy local URLs
-        if (! env('APP_URL')) {
-            putenv('APP_URL=https://studio.test');
-            $_ENV['APP_URL'] = 'https://studio.test';
-            $_SERVER['APP_URL'] = 'https://studio.test';
-        }
+        $appUrl = env('APP_URL') ?: ($provider->lookup('APP_URL') ?: 'https://studio.test');
+        putenv('APP_URL=' . $appUrl);
+        $_ENV['APP_URL'] = $appUrl;
+        $_SERVER['APP_URL'] = $appUrl;
 
         // Ensure S3 disk config is populated from env / existing config and not empty
         // Populate S3 disk config but FORCE MinIO values for local integration runs so tests don't
@@ -112,8 +111,9 @@ class StorageIntegrationTest extends TestCase
         $content = "Exception: " . $t->getMessage() . "\n\n";
         $content .= "Stack:\n" . $t->getTraceAsString() . "\n\n";
         $content .= "ENV VARS:\n";
+        $provider = new StorageConfigProvider(base_path());
         foreach (['AWS_BUCKET','AWS_ENDPOINT','AWS_ACCESS_KEY_ID','AWS_SECRET_ACCESS_KEY','APP_URL'] as $k) {
-            $val = getenv($k) ?: ($_ENV[$k] ?? ($_SERVER[$k] ?? '(empty)'));
+            $val = $provider->lookup($k) ?: (getenv($k) ?: ($_ENV[$k] ?? ($_SERVER[$k] ?? '(empty)')));
             $content .= "$k=$val\n";
         }
         $content .= "\nLaravel filesystems.disks.s3:\n" . var_export(config('filesystems.disks.s3'), true) . "\n";

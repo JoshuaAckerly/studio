@@ -24,46 +24,14 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-progress --no-suggest --prefer-dist
 
-      - name: Start MinIO container
+      - name: MinIO is local-only for CI
         run: |
-          docker run -d --name minio-debug -p 9000:9000 -p 9001:9001 -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e server /data --console-address ":9001"
-
-      - name: Wait for MinIO
-        run: |
-          for i in {1..60}; do
-            if curl -sS http://127.0.0.1:9000/minio/health/live >/dev/null 2>&1; then
-              echo "MinIO ready (health)" && break
-            fi
-            if curl -sS http://127.0.0.1:9000/ >/dev/null 2>&1; then
-              echo "MinIO responding at root" && break
-            fi
-            echo "waiting for minio... ($i)"
-            sleep 1
-          done
-
-      - name: Configure env for MinIO
-        run: |
-          echo "AWS_ACCESS_KEY_ID=minioadmin" >> $GITHUB_ENV
-          echo "AWS_SECRET_ACCESS_KEY=minioadmin" >> $GITHUB_ENV
-          echo "AWS_DEFAULT_REGION=us-east-1" >> $GITHUB_ENV
-          echo "AWS_BUCKET=debug-test-bucket" >> $GITHUB_ENV
-          echo "AWS_ENDPOINT=http://127.0.0.1:9000" >> $GITHUB_ENV
-          echo "AWS_USE_PATH_STYLE_ENDPOINT=true" >> $GITHUB_ENV
-
-      - name: Create S3 bucket
-        run: |
-          curl -sSfL https://dl.min.io/client/mc/release/linux-amd64/mc -o mc && chmod +x mc
-          ./mc alias set local http://localhost:9000 minioadmin minioadmin --api S3v4
-          ./mc mb -p local/debug-test-bucket || true
-
-      - name: Wait for S3 API to accept operations (mc)
-        run: |
-          echo "Waiting for MinIO S3 API to accept operations (mc ls local/debug-test-bucket)"
-          for i in {1..60}; do
-            ./mc ls local/debug-test-bucket > /dev/null 2>&1 && echo "MinIO S3 API ready" && break
-            echo "MinIO not ready yet (attempt: $i), sleeping 1s"
-            sleep 1
-          done
+          echo "This workflow previously started MinIO in CI."
+          echo "Per repository policy, MinIO is now local-only and will not be started in CI." 
+          echo "If you need to run MinIO-backed integration tests, run this workflow locally or use 'docker run' to start MinIO and then re-run tests manually."
+          echo "Skipping MinIO-dependent steps in CI." 
+          # No-op exit (success) so the rest of the workflow can continue to collect debug artifacts if present
+          true
 
       - name: Pre-test debug dump
         run: |

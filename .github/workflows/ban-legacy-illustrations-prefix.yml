@@ -1,0 +1,69 @@
+name: "Ban legacy illustrations prefix"
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  ban-legacy-prefix:
+    name: Check for legacy illustrations prefix
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Scan for legacy prefix
+        id: scan
+        run: |
+          set -euo pipefail
+
+          matches=$(git grep -n --no-color "images/Illustrations" || true)
+          if [ -z "$matches" ]; then
+            echo "no_matches=true" >> $GITHUB_OUTPUT
+            echo "No legacy prefix occurrences found."
+            exit 0
+          fi
+
+          # Build list of disallowed matches (exclude allowed locations)
+          disallowed=""
+          while IFS= read -r line; do
+            file=$(echo "$line" | cut -d: -f1)
+            # Allowed/ignored paths: migration scripts, README docs, generated dry-run reports,
+            # and build/vendor/storage/node_modules artifacts
+            if [[ "$file" =~ ^scripts/ ]] || [[ "$file" =~ ^README_MIGRATION.md$ ]] || [[ "$file" =~ ^README_DEBUG.md$ ]] || [[ "$file" =~ ^aws-move-illustrations-.*\.json$ ]] || [[ "$file" =~ ^public/build/ ]] || [[ "$file" =~ ^vendor/ ]] || [[ "$file" =~ ^storage/ ]] || [[ "$file" =~ ^node_modules/ ]]; then
+              continue
+            fi
+            disallowed="$disallowed"$'\n'$line
+          done <<< "$matches"
+
+          if [ -n "$disallowed" ]; then
+            echo "offenders<<EOF" >> $GITHUB_OUTPUT
+            echo "$disallowed" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            echo "found=true" >> $GITHUB_OUTPUT
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Post PR comment with offenders (and fail) if disallowed occurrences found
+        if: ${{ steps.scan.outputs.found == 'true' && github.event_name == 'pull_request' }}
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const offenders = (process.env['OFFENDERS'] || '').trim();
+            const body = `:warning: Legacy S3 prefix detected in application code.\n\nThe following occurrences of \`images/Illustrations\` were found (only migration scripts and reports are allowed to reference the legacy prefix):\n\n${offenders}`;
+            const pr = context.payload.pull_request.number;
+            await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: pr, body });
+            core.setFailed('Legacy prefix occurrences found. See comment on PR for details.');
+        env:
+          OFFENDERS: ${{ steps.scan.outputs.offenders }}
+
+      - name: Fail on disallowed occurrences (CI push branch)
+        if: ${{ steps.scan.outputs.found == 'true' && github.event_name != 'pull_request' }}
+        run: |
+          echo "Legacy prefix 'images/Illustrations' found in application code. Aborting CI run."
+          echo "Offending files:"; echo "${{ steps.scan.outputs.offenders }}"
+          exit 1

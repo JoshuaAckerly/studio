@@ -24,8 +24,8 @@ Extracts a typed `StorageAdapter` and a centralized `StorageUrlGenerator`, conso
 
 ## Testing & CI
 - Unit tests were added/updated for the URL generator and related services.
-- Integration tests (group: `integration`) were added at `tests/Integration/StorageIntegrationTest.php`. These run against MinIO in CI and validate presigned URL structure and CloudFront rewrite behavior.
-- CI workflow: `.github/workflows/integration-storage.yml` starts a MinIO container, creates a test bucket (uses `mc` and also demonstrates `aws` CLI usage), then runs:
+- Integration tests (group: `integration`) were added at `tests/Integration/StorageIntegrationTest.php`. These validate presigned URL structure and CloudFront rewrite behavior when run against an S3-compatible server.
+- Note: MinIO is local-only and CI workflows no longer start MinIO automatically. To run MinIO-backed integration tests, run them locally with MinIO running or use a self-hosted runner that provides MinIO. The `integration-storage.yml` workflow contains reporting steps but will not start MinIO in CI.
 
 ```bash
 vendor/bin/phpunit --group integration

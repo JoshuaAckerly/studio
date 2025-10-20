@@ -8,7 +8,8 @@ Files of interest
   - prefers admin credentials in `.env`: `AWS_ACCESS_KEY_ID_ADMIN` / `AWS_SECRET_ACCESS_KEY_ADMIN` if present,
   - falls back to `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`,
   - falls back to the AWS SDK default provider chain if no explicit credentials exist.
-  - Usage: `php scripts/aws_to_minio_copy.php [--dry]` (use `--dry` to list objects without copying).
+   - Usage: `php scripts/aws_to_minio_copy.php [--dry]` (use `--dry` to list objects without copying).
+   - Additional flags: `--bucket <name>`, `--prefix <prefix>`, `--dest-bucket <name>`, `--dest-endpoint <url>`, `--help`
 
 - `scripts/aws_move_illustrations_dryrun.ps1` — PowerShell dry-run enumerator for legacy prefix `images/Illustrations/` mapping to canonical `images/illustrations/` and writes a JSON report.
 
@@ -27,13 +28,13 @@ Quick start (local)
 3. Dry-run the copy to verify which objects will be copied:
 
    ```powershell
-   php scripts\aws_to_minio_copy.php --dry
+   php scripts\aws_to_minio_copy.php --dry --bucket graveyardjokes-cdn --prefix images/illustrations/
    ```
 
 4. If dry-run lists the expected files, run the real copy:
 
    ```powershell
-   php scripts\aws_to_minio_copy.php
+   php scripts\aws_to_minio_copy.php --bucket graveyardjokes-cdn --prefix images/illustrations/
    ```
 
 Notes about environments and region
@@ -52,3 +53,14 @@ Cleaning up
 - All scripts are safe to re-run; they skip copying if the target exists (the PowerShell copy script does; the PHP copy uploads unconditionally — run dry-run first if unsure).
 
 If you'd like, I can open a short PR with this README as `README_MIGRATION.md` and a follow-up `README_UI.md` addition, or rename this file to `README.md` — tell me which you'd prefer.
+
+Enable local commit hooks (optional)
+
+If you want to prevent accidental commits that introduce the legacy `images/Illustrations` prefix in application code, enable the repository-provided git hooks:
+
+```bash
+# from the repo root
+git config core.hooksPath .githooks
+```
+
+This will run a pre-commit hook that executes `scripts/check_legacy_prefix.ps1` and blocks commits if disallowed occurrences are found. Windows users who use PowerShell hooks are supported by the included `.githooks/pre-commit.ps1` file.

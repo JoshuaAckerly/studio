@@ -30,3 +30,7 @@ Notes
 - The sample API returns static items and file paths for thumbnails/videos. Add real media to `public/images/vlogs/*` and `public/videos/*` or update the returned URLs.
 - Accessibility: the page uses Headless UI `Dialog` for accessible modal behavior. Video player uses native controls.
 - Next improvements: pagination, server-side pagination API, lazy-loading thumbnails, lightbox transitions, or YouTube/OEmbed support for hosted videos.
+
+MinIO (local-only)
+
+- If you need to run storage integration tests or debug S3-like behavior locally, see `README_MINIO_LOCAL.md` for a short guide and convenience scripts. MinIO is intentionally local-only and CI will not start it automatically.

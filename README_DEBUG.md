@@ -1,6 +1,6 @@
 Debugging Storage Integration (MinIO)
 
-This repo includes a small local helper and CI workflows to run integration tests against a MinIO (S3-compatible) server.
+This repo includes a small local helper to run integration tests against a MinIO (S3-compatible) server. MinIO is intentionally local-only and CI will not start MinIO automatically.
 
 Files
 
@@ -31,6 +31,7 @@ How to use the manual debug workflow (GitHub Actions)
 1) Open the Actions tab in the repository in GitHub.
 2) Select `Debug - Integration Storage (MinIO)`.
 3) Click `Run workflow` and optionally provide inputs.
+4) IMPORTANT: This workflow no longer starts MinIO in CI. To exercise MinIO-backed scenarios you must run the workflow locally (via act) or start MinIO yourself in the runner before invoking tests. Alternatively run the `scripts/start-minio-and-run-tests.ps1` helper locally to start MinIO and run the integration tests on your machine.
 4) When the run completes the artifact `debug-integration-<run id>` will be available for download and will contain:
    - `artifacts/phpunit/phpunit-console.log`
    - `artifacts/phpunit/phpunit-results.xml`

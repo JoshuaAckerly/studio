@@ -27,82 +27,12 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-progress --no-suggest --prefer-dist
 
-      - name: Start MinIO container
+      - name: MinIO is local-only for CI
         run: |
-          # Start MinIO and expose API on 9000 and console on 9001. Use explicit console address so startup is deterministic.
-          docker run -d --name minio -p 9000:9000 -p 9001:9001 -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e server /data --console-address ":9001"
-
-      - name: Wait for MinIO
-        run: |
-          # Wait up to 60s for MinIO to be ready. Try health endpoint first, then fallback to root path.
-          for i in {1..60}; do
-            if curl -sS http://127.0.0.1:9000/minio/health/live >/dev/null 2>&1; then
-              echo "MinIO ready (health)" && break
-            fi
-            if curl -sS http://127.0.0.1:9000/ >/dev/null 2>&1; then
-              echo "MinIO responding at root" && break
-            fi
-            echo "waiting for minio... ($i)"
-            sleep 1
-          done
-
-      - name: Configure env for MinIO
-        run: |
-          # Use 127.0.0.1 explicitly so processes in this runner use the loopback address (matches tests)
-          echo "AWS_ACCESS_KEY_ID=minioadmin" >> $GITHUB_ENV
-          echo "AWS_SECRET_ACCESS_KEY=minioadmin" >> $GITHUB_ENV
-          echo "AWS_DEFAULT_REGION=us-east-1" >> $GITHUB_ENV
-          echo "AWS_BUCKET=test-bucket" >> $GITHUB_ENV
-          echo "AWS_ENDPOINT=http://127.0.0.1:9000" >> $GITHUB_ENV
-          echo "AWS_USE_PATH_STYLE_ENDPOINT=true" >> $GITHUB_ENV
-          # Enable detailed MinIO debug output for this CI run
-          echo "CI_DEBUG_MINIO=true" >> $GITHUB_ENV
-
-      - name: Create S3 bucket
-        run: |
-          # Use mc (MinIO client) to create bucket
-          curl -sSfL https://dl.min.io/client/mc/release/linux-amd64/mc -o mc && chmod +x mc
-          ./mc alias set local http://localhost:9000 minioadmin minioadmin --api S3v4
-          ./mc mb -p local/test-bucket || true
-
-      - name: Wait for S3 API to accept operations (mc)
-        run: |
-          echo "Waiting for MinIO S3 API to accept operations (mc ls local/test-bucket)"
-          for i in {1..60}; do
-            ./mc ls local/test-bucket > /dev/null 2>&1 && echo "MinIO S3 API ready" && break
-            echo "MinIO not ready yet (attempt: $i), sleeping 1s"
-            sleep 1
-          done
-
-      - name: Install AWS CLI and create bucket via aws
-        run: |
-          python -m pip install --user --upgrade pip
-          python -m pip install --user awscli
-          export PATH="$HOME/.local/bin:$PATH"
-          aws --version
-          aws --endpoint-url http://localhost:9000 s3api create-bucket --bucket test-bucket || echo "bucket create failed or exists"
-
-      - name: "Optional debug: CI_DEBUG_MINIO detailed diagnostics"
-        run: |
-          mkdir -p minio-debug
-          if [ "${CI_DEBUG_MINIO:-}" = 'true' ]; then
-            echo "Writing docker ps to minio-debug/docker-ps.txt"
-            docker ps --no-trunc > minio-debug/docker-ps.txt 2>&1 || true
-
-            echo "Writing minio logs to minio-debug/minio-logs.txt"
-            docker logs minio --tail 200 > minio-debug/minio-logs.txt 2>&1 || true
-
-            echo "Writing mc ls output to minio-debug/mc-ls.txt"
-            curl -sSfL https://dl.min.io/client/mc/release/linux-amd64/mc -o mc && chmod +x mc || true
-            ./mc alias set local http://127.0.0.1:9000 minioadmin minioadmin --api S3v4 > minio-debug/mc-alias.txt 2>&1 || true
-            ./mc ls local > minio-debug/mc-ls.txt 2>&1 || true
-
-            echo "Writing aws s3 ls to minio-debug/aws-s3-ls.txt"
-            aws --endpoint-url http://127.0.0.1:9000 s3 ls > minio-debug/aws-s3-ls.txt 2>&1 || true
-          else
-            echo "CI_DEBUG_MINIO not set; skipping detailed MinIO debug"
-          fi
-
+          echo "MinIO will not be started in CI (local-only policy)."
+          echo "If you need to run MinIO-backed integration tests, run them locally with MinIO running on port 9000."
+          echo "Skipping MinIO setup and related CI steps." 
+          true
       - name: "Pre-test lightweight debug dump"
         run: |
           echo "---- docker ps (short) ----"
@@ -219,33 +149,11 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-progress --no-suggest --prefer-dist
 
-      - name: Start MinIO container (smoke)
+      - name: MinIO is local-only for CI (smoke)
         run: |
-          docker run -d --name minio-smoke -p 9002:9000 -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin minio/minio server /data --console-address ":9001"
-
-      - name: Wait for MinIO (smoke)
-        run: |
-          for i in {1..30}; do
-            if curl -sS http://127.0.0.1:9002/minio/health/live >/dev/null 2>&1; then
-              echo "MinIO ready" && break
-            fi
-            echo "waiting for minio... ($i)"; sleep 1
-          done
-
-      - name: Configure env for smoke MinIO
-        run: |
-          echo "AWS_ACCESS_KEY_ID=minioadmin" >> $GITHUB_ENV
-          echo "AWS_SECRET_ACCESS_KEY=minioadmin" >> $GITHUB_ENV
-          echo "AWS_DEFAULT_REGION=us-east-1" >> $GITHUB_ENV
-          echo "AWS_BUCKET=ci-smoke-bucket" >> $GITHUB_ENV
-          echo "AWS_ENDPOINT=http://127.0.0.1:9002" >> $GITHUB_ENV
-          echo "AWS_USE_PATH_STYLE_ENDPOINT=true" >> $GITHUB_ENV
-
-      - name: Create bucket (mc)
-        run: |
-          curl -sSfL https://dl.min.io/client/mc/release/linux-amd64/mc -o mc && chmod +x mc
-          ./mc alias set local http://127.0.0.1:9002 minioadmin minioadmin --api S3v4
-          ./mc mb -p local/ci-smoke-bucket || true
+          echo "Smoke MinIO startup was removed from CI. MinIO is local-only."
+          echo "To run the smoke s3:normalize checks, start MinIO locally (or run this job on a self-hosted runner that provides MinIO)."
+          true
 
       - name: Run s3:normalize-prefix (dry-run smoke)
         run: |
