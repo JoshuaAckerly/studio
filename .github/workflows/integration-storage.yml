@@ -32,6 +32,22 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-progress --no-suggest --prefer-dist
 
+      - name: Ensure APP_KEY and AWS_DEFAULT_REGION are set for tests
+        run: |
+          # Generate a temporary APP_KEY if one isn't provided to avoid MissingAppKeyException
+          if [ -z "${APP_KEY:-}" ]; then
+            echo "Generating ephemeral APP_KEY for CI test run"
+            key=$(php -r "echo base64_encode(random_bytes(32));")
+            echo "APP_KEY=base64:$key" >> $GITHUB_ENV
+          else
+            echo "APP_KEY provided by environment"
+          fi
+
+          # Ensure AWS_DEFAULT_REGION is set (AWS SDK rejects empty region values)
+          if [ -z "${AWS_DEFAULT_REGION:-}" ]; then
+            echo "AWS_DEFAULT_REGION=us-east-1" >> $GITHUB_ENV
+          fi
+
       - name: MinIO is local-only for CI
         run: |
           echo "MinIO will not be started in CI (local-only policy)."
@@ -178,6 +194,17 @@ jobs:
 
       - name: Install Composer dependencies
         run: composer install --no-progress --no-suggest --prefer-dist
+
+      - name: Ensure APP_KEY and AWS_DEFAULT_REGION are set for smoke job
+        run: |
+          if [ -z "${APP_KEY:-}" ]; then
+            echo "Generating ephemeral APP_KEY for CI smoke run"
+            key=$(php -r "echo base64_encode(random_bytes(32));")
+            echo "APP_KEY=base64:$key" >> $GITHUB_ENV
+          fi
+          if [ -z "${AWS_DEFAULT_REGION:-}" ]; then
+            echo "AWS_DEFAULT_REGION=us-east-1" >> $GITHUB_ENV
+          fi
 
       - name: MinIO is local-only for CI (smoke)
         run: |
