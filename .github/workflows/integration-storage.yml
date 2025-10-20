@@ -150,7 +150,7 @@ jobs:
           if [ ! -f public/build/manifest.json ]; then
             echo 'Writing stub Vite manifest to public/build/manifest.json'
             mkdir -p public/build
-            printf '%s' '{"/resources/js/app.tsx":{"file":"/js/app.js","src":"resources/js/app.tsx"}}' > public/build/manifest.json
+            printf '%s' '{"resources/js/app.tsx":{"file":"/js/app.js","src":"resources/js/app.tsx"}}' > public/build/manifest.json
           fi
           # If MinIO is available run the integration group; otherwise run the test suite
           # excluding the integration group so CI doesn't fail when MinIO is intentionally
