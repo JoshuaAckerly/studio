@@ -30,29 +30,39 @@ jobs:
           disallowed=""
           while IFS= read -r line; do
             file=$(echo "$line" | cut -d: -f1)
+            # Normalize paths that may start with ./ (git grep sometimes emits ./path)
+            file="${file#./}"
+
             # Allowed/ignored paths: migration scripts, README docs, generated dry-run reports,
-            # and build/vendor/storage/node_modules artifacts
-            if [[ "$file" =~ ^scripts/ ]] || [[ "$file" =~ ^README_MIGRATION.md$ ]] || [[ "$file" =~ ^README_DEBUG.md$ ]] || [[ "$file" =~ ^aws-move-illustrations-.*\.json$ ]] || [[ "$file" =~ ^public/build/ ]] || [[ "$file" =~ ^vendor/ ]] || [[ "$file" =~ ^storage/ ]] || [[ "$file" =~ ^node_modules/ ]] || [[ "$file" =~ ^\.githooks/ ]] || [[ "$file" =~ ^\.githooks-template/ ]]; then
+            # workflow and hook templates, and build/vendor/storage/node_modules artifacts
+            if [[ "$file" =~ ^scripts/ ]] || [[ "$file" =~ ^README_MIGRATION.md$ ]] || [[ "$file" =~ ^README_DEBUG.md$ ]] || [[ "$file" =~ ^aws-move-illustrations-.*\.json$ ]] || [[ "$file" =~ ^public/build/ ]] || [[ "$file" =~ ^vendor/ ]] || [[ "$file" =~ ^storage/ ]] || [[ "$file" =~ ^node_modules/ ]] || [[ "$file" =~ ^\.githooks(/|$) ]] || [[ "$file" =~ ^\.githooks-template(/|$) ]] || [[ "$file" =~ ^\.github/workflows/ ]]; then
               continue
             fi
+
             disallowed="$disallowed"$'\n'$line
           done <<< "$matches"
 
           if [ -n "$disallowed" ]; then
+            # Emit as job output and also write a file so later steps can cat it safely
             echo "offenders<<EOF" >> $GITHUB_OUTPUT
             echo "$disallowed" >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
             echo "found=true" >> $GITHUB_OUTPUT
+            mkdir -p artifacts || true
+            printf '%s\n' "$disallowed" > artifacts/offenders.txt
           else
             echo "found=false" >> $GITHUB_OUTPUT
           fi
-
       - name: Post PR comment with offenders (and fail) if disallowed occurrences found
         if: ${{ steps.scan.outputs.found == 'true' && github.event_name == 'pull_request' }}
-        env:
-          OFFENDERS: ${{ steps.scan.outputs.offenders }}
         run: |
-          # Build a JSON body safely with jq to avoid interpolation issues
+          # Read offenders from file to avoid any runtime interpolation issues
+          if [ -f artifacts/offenders.txt ]; then
+            OFFENDERS=$(cat artifacts/offenders.txt)
+          else
+            OFFENDERS="${{ steps.scan.outputs.offenders }}"
+          fi
+
           prefix=':warning: Legacy S3 prefix detected in application code.\n\nThe following occurrences of `images/Illustrations` were found (only migration scripts and reports are allowed to reference the legacy prefix):\n\n'
           jq -n --arg p "$prefix" --arg o "$OFFENDERS" '{ body: ($p + $o) }' > /tmp/comment.json
 
@@ -66,5 +76,11 @@ jobs:
         if: ${{ steps.scan.outputs.found == 'true' && github.event_name != 'pull_request' }}
         run: |
           echo "Legacy prefix 'images/Illustrations' found in application code. Aborting CI run."
-          echo "Offending files:"; echo "${{ steps.scan.outputs.offenders }}"
+          echo "Offending files:"
+          if [ -f artifacts/offenders.txt ]; then
+            cat artifacts/offenders.txt
+          else
+            # Fallback to the step output if file missing
+            echo "${{ steps.scan.outputs.offenders }}"
+          fi
           exit 1
