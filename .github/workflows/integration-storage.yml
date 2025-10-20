@@ -60,18 +60,7 @@ jobs:
             echo 'MinIO not available in CI; writing stub s3-normalize report to artifacts/' >&2
             ts=$(date +%s)
             now=$(date -Iseconds)
-            cat > artifacts/s3-normalize-stub-${ts}.json <<JSON
-            {
-              "timestamp": "${now}",
-              "bucket": "ci-test-bucket",
-              "source": "integration-test",
-              "target": "integration-target",
-              "dry": true,
-              "options": {"delete": false, "overwrite": false, "spinner": false, "progress_only": true},
-              "stats": {"processed": 0, "copied": 0, "skipped": 0, "deleted": 0, "failed": 0, "elapsed_seconds": 0, "rate_per_second": 0},
-              "samples": []
-            }
-            JSON
+            printf '%s' "{\"timestamp\":\"${now}\",\"bucket\":\"ci-test-bucket\",\"source\":\"integration-test\",\"target\":\"integration-target\",\"dry\":true,\"options\":{\"delete\":false,\"overwrite\":false,\"spinner\":false,\"progress_only\":true},\"stats\":{\"processed\":0,\"copied\":0,\"skipped\":0,\"deleted\":0,\"failed\":0,\"elapsed_seconds\":0,\"rate_per_second\":0},\"samples\":[]}" > artifacts/s3-normalize-stub-${ts}.json
           fi
 
       - name: Validate s3-normalize JSON report
@@ -195,18 +184,7 @@ jobs:
             echo 'MinIO not available in CI (smoke); writing stub s3-normalize report to artifacts/' >&2
             ts=$(date +%s)
             now=$(date -Iseconds)
-            cat > artifacts/s3-normalize-stub-${ts}.json <<JSON
-            {
-              "timestamp": "${now}",
-              "bucket": "ci-test-bucket",
-              "source": "ci-smoke",
-              "target": "ci-smoke-target",
-              "dry": true,
-              "options": {"delete": false, "overwrite": false, "spinner": false, "progress_only": true},
-              "stats": {"processed": 0, "copied": 0, "skipped": 0, "deleted": 0, "failed": 0, "elapsed_seconds": 0, "rate_per_second": 0},
-              "samples": []
-            }
-            JSON
+            printf '%s' "{\"timestamp\":\"${now}\",\"bucket\":\"ci-test-bucket\",\"source\":\"ci-smoke\",\"target\":\"ci-smoke-target\",\"dry\":true,\"options\":{\"delete\":false,\"overwrite\":false,\"spinner\":false,\"progress_only\":true},\"stats\":{\"processed\":0,\"copied\":0,\"skipped\":0,\"deleted\":0,\"failed\":0,\"elapsed_seconds\":0,\"rate_per_second\":0},\"samples\":[]}" > artifacts/s3-normalize-stub-${ts}.json
           fi
 
       - name: Validate s3-normalize JSON report (smoke)
