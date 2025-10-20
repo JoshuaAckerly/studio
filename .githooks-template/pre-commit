@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Pre-commit hook template to prevent committing legacy images/Illustrations in application code
+REPO_ROOT=$(git rev-parse --show-toplevel)
+
+# Run legacy prefix check (existing)
+"$REPO_ROOT/scripts/check_legacy_prefix.ps1"
+STATUS=$?
+if [ $STATUS -ne 0 ]; then
+  echo "Commit blocked: legacy images/Illustrations occurrences found in application code. See output above." >&2
+  exit 1
+fi
+
+# Run PHPUnit docblock metadata checker on staged files
+"$REPO_ROOT/scripts/check_phpunit_docblock_metadata.ps1" --staged
+STATUS=$?
+if [ $STATUS -ne 0 ]; then
+  echo "Commit blocked: deprecated PHPUnit docblock metadata found in staged files. See output above." >&2
+  exit $STATUS
+fi
+
+exit 0

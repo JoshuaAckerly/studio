@@ -13,7 +13,9 @@ $grepMatches -split "\r?\n" | ForEach-Object {
             $file -match '^public/build/' -or
             $file -match '^vendor/' -or
             $file -match '^storage/' -or
-            $file -match '^node_modules/'
+            $file -match '^node_modules/' -or
+            $file -match '^\.githooks/' -or
+            $file -match '^\.githooks-template/'
         )) {
             $disallowed += $_
         }

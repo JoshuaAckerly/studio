@@ -64,3 +64,18 @@ git config core.hooksPath .githooks
 ```
 
 This will run a pre-commit hook that executes `scripts/check_legacy_prefix.ps1` and blocks commits if disallowed occurrences are found. Windows users who use PowerShell hooks are supported by the included `.githooks/pre-commit.ps1` file.
+
+Template hooks
+----------------
+
+To make it easy for maintainers to adopt the repository's recommended hooks without committing them directly into `.githooks/`, we've added a `.githooks-template/` directory that contains hook templates you can enable locally.
+
+To enable the templates as your repo hooks (copying them into `.githooks`):
+
+```bash
+# from the repo root
+cp -R .githooks-template .githooks
+git config core.hooksPath .githooks
+```
+
+The CI scan explicitly ignores `.githooks/` and `.githooks-template/` so your templates won't trigger the legacy prefix check.
