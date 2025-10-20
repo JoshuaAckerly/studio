@@ -13,7 +13,7 @@ docker run -d --name minio-test -p 9000:9000 -p 9001:9001 -e MINIO_ROOT_USER=min
 Write-Host "Waiting for MinIO to become healthy..."
 for ($i = 0; $i -lt 30; $i++) {
     try {
-        $r = Invoke-WebRequest -Uri http://127.0.0.1:9000/minio/health/live -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
+    Invoke-WebRequest -Uri http://127.0.0.1:9000/minio/health/live -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop | Out-Null
         Write-Host "MinIO is healthy"
         break
     } catch {
