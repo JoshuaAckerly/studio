@@ -16,6 +16,12 @@ Homestead.json
 Homestead.yaml
 npm-debug.log
 yarn-error.log
+.vscode/
+# Temporary debug and smoke files
+tmp_*.php
+*.out
+s3config.*
+/.idea/
 /auth.json
 /.fleet
 /.idea
