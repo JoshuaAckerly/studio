@@ -114,7 +114,8 @@ class StorageIntegrationTest extends TestCase
         $provider = new StorageConfigProvider(base_path());
         foreach (['AWS_BUCKET','AWS_ENDPOINT','AWS_ACCESS_KEY_ID','AWS_SECRET_ACCESS_KEY','APP_URL'] as $k) {
             $val = $provider->lookup($k) ?: (getenv($k) ?: ($_ENV[$k] ?? ($_SERVER[$k] ?? '(empty)')));
-            $content .= "$k=$val\n";
+            $masked = $this->redactEnvValue($k, $val);
+            $content .= "$k=$masked\n";
         }
         $content .= "\nLaravel filesystems.disks.s3:\n" . var_export(config('filesystems.disks.s3'), true) . "\n";
 
@@ -156,6 +157,51 @@ class StorageIntegrationTest extends TestCase
         } catch (\Throwable $e) {
             @file_put_contents($minioDir . '/s3-listing-error.txt', (string) $e);
         }
+    }
+
+    /**
+     * Redact sensitive environment variable values before writing to disk.
+     * Rules:
+     * - If value matches known low-value defaults (minioadmin, AKIA_TEST, SECRET_TEST) return an annotated tag
+     * - If value is '(empty)' or null, return '(empty)'
+     * - Otherwise, show first 4 and last 4 chars and mask the middle with '****' if length > 8
+     * - For short values, mask entirely except first/last char
+     *
+     * @param string $key
+     * @param string|null $val
+     * @return string
+     */
+    private function redactEnvValue(string $key, $val): string
+    {
+        if ($val === null) {
+            return '(empty)';
+        }
+
+        $val = (string) $val;
+
+        $lower = strtolower($val);
+        if ($lower === 'minioadmin') {
+            return '[MINIO_DEFAULT]';
+        }
+        if (in_array($val, ['AKIA_TEST', 'SECRET_TEST', 'ADMINKEY', 'ADMINSECRET'], true)) {
+            return '[TEST_VALUE]';
+        }
+
+        if ($val === '(empty)') {
+            return '(empty)';
+        }
+
+        $len = strlen($val);
+        if ($len <= 2) {
+            return str_repeat('*', $len);
+        }
+
+        if ($len <= 8) {
+            return substr($val, 0, 1) . str_repeat('*', max(0, $len - 2)) . substr($val, -1);
+        }
+
+        // longer values: keep first 4 and last 4
+        return substr($val, 0, 4) . '****' . substr($val, -4);
     }
 
     /**
