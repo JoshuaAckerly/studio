@@ -1,0 +1,108 @@
+name: Integration tests (MinIO)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  integration-minio:
+    name: Integration (start MinIO and run tests)
+    runs-on: ubuntu-latest
+    services:
+      minio:
+        image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+        ports:
+          - 9000:9000
+        options: >-
+          --health-cmd "curl -fsS http://127.0.0.1:9000/minio/health/ready || exit 1"
+          --health-interval 5s --health-timeout 2s --health-retries 12
+        env:
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
+        command: server /data
+
+    env:
+      # these will be used by the app during the job
+      AWS_BUCKET: test-bucket
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      AWS_ENDPOINT: http://127.0.0.1:9000
+      AWS_DEFAULT_REGION: us-east-2
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v4
+        with:
+          php-version: '8.4'
+          extensions: mbstring, xml, pcntl
+
+      - name: Setup Node (for Vite manifest generation steps in tests)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Composer install
+        run: composer install --no-progress --no-interaction --prefer-dist -o
+
+      - name: Generate APP_KEY and write environment file
+        run: |
+          APP_KEY=$(php -r "echo 'base64:'.base64_encode(random_bytes(32));")
+          echo "APP_KEY=$APP_KEY" > .env.ci
+          echo "APP_URL=http://localhost" >> .env.ci
+          cat .env.ci
+
+      - name: Start MinIO client (mc) and create bucket
+        run: |
+          curl -fsSLO https://dl.min.io/client/mc/release/linux-amd64/mc
+          chmod +x mc
+          ./mc --help
+          ./mc alias set local http://127.0.0.1:9000 minioadmin minioadmin
+          ./mc mb --ignore-existing local/${AWS_BUCKET}
+          ./mc ls local || true
+
+      - name: Run PHPUnit integration tests
+        id: phpunit
+        env:
+          APP_KEY: ${{ env.APP_KEY }}
+          APP_URL: http://localhost
+          AWS_BUCKET: ${{ env.AWS_BUCKET }}
+          AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          AWS_ENDPOINT: ${{ env.AWS_ENDPOINT }}
+          AWS_DEFAULT_REGION: ${{ env.AWS_DEFAULT_REGION }}
+          FILESYSTEM_DISK: s3
+          RUN_INTEGRATION: '1'
+        run: |
+          set -o pipefail || true
+          vendor/bin/phpunit --group integration --colors=always 2>&1 | tee phpunit-integration.log
+        continue-on-error: true
+
+      - name: Upload PHPUnit logs if failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phpunit-logs
+          path: phpunit-integration.log
+
+      - name: Start MinIO debug client and collect info
+        if: failure()
+        run: |
+          ./mc admin info local || true
+          ./mc admin trace local --duration 1s || true
+        continue-on-error: true
+
+      - name: Upload mc listing artifact
+        if: failure()
+        run: ./mc ls --recursive local/${{ env.AWS_BUCKET }} || true
+        continue-on-error: true
+
+      - name: Upload workspace for debugging
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: minio-debug-workspace
+          path: |
+            phpunit-integration.log
+            .

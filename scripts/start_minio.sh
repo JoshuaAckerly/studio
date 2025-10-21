@@ -26,9 +26,12 @@ for i in $(seq 1 30); do
   sleep 1
 done
 
-echo "Creating bucket 'test-bucket' (using mc)"
+echo "Creating bucket 'test-bucket' (idempotent, using mc)"
 # Create the bucket using the minio mc client in a container so we don't require mc installed
-docker run --rm --entrypoint /bin/sh quay.io/minio/mc -c "mc alias set local http://host.docker.internal:9000 minioadmin minioadmin --api S3v4 || mc alias set local http://127.0.0.1:9000 minioadmin minioadmin --api S3v4; mc mb --ignore-existing local/test-bucket"
+docker run --rm --entrypoint /bin/sh quay.io/minio/mc -c "\
+  mc alias set local http://host.docker.internal:9000 minioadmin minioadmin --api S3v4 2>/dev/null || true; \
+  mc alias set local http://127.0.0.1:9000 minioadmin minioadmin --api S3v4 2>/dev/null || true; \
+  mc mb --ignore-existing local/test-bucket || true"
 
 cat <<EOF
 MinIO is running.

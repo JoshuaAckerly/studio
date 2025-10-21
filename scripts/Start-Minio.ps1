@@ -22,8 +22,11 @@ for ($i = 0; $i -lt 30; $i++) {
     }
 }
 
-Write-Host "Creating bucket '$Bucket' using mc container"
-docker run --rm --entrypoint /bin/sh quay.io/minio/mc -c "mc alias set local http://host.docker.internal:9000 minioadmin minioadmin --api S3v4 || mc alias set local http://127.0.0.1:9000 minioadmin minioadmin --api S3v4; mc mb --ignore-existing local/$Bucket"
+Write-Host "Creating bucket '$Bucket' using mc container (idempotent)"
+docker run --rm --entrypoint /bin/sh quay.io/minio/mc -c "\
+    mc alias set local http://host.docker.internal:9000 minioadmin minioadmin --api S3v4 2>/dev/null || true; \
+    mc alias set local http://127.0.0.1:9000 minioadmin minioadmin --api S3v4 2>/dev/null || true; \
+    mc mb --ignore-existing local/$Bucket || true"
 
 Write-Host "MinIO started. Set these env vars in your PowerShell session:"
 Write-Host "  $env:AWS_BUCKET = '$Bucket'"
