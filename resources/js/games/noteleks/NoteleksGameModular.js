@@ -13,6 +13,24 @@ class NoteleksGame {
     }
 
     createGameConfig() {
+        // Try to detect a Spine plugin exposed on window by the spine-phaser iife.
+        // The IIFE commonly exposes a global like `SpinePlugin` or `spinePlugin`.
+        const possibleSpinePlugin = (typeof window !== 'undefined')
+            ? (window.SpinePlugin || window.spinePlugin || window.SpinePlugin || window.spine || null)
+            : null;
+
+        const pluginsConfig = possibleSpinePlugin
+            ? {
+                  scene: [
+                      {
+                          key: 'SpinePlugin',
+                          plugin: possibleSpinePlugin,
+                          mapping: 'spine',
+                      },
+                  ],
+              }
+            : undefined;
+
         return {
             type: Phaser.AUTO,
             width: GameConfig.screen.width,
@@ -25,6 +43,7 @@ class NoteleksGame {
                     debug: GameConfig.physics.debug,
                 },
             },
+            plugins: pluginsConfig,
             scene: [GameScene],
             scale: {
                 mode: Phaser.Scale.FIT,
@@ -54,6 +73,13 @@ class NoteleksGame {
             parent: containerId,
         });
 
+        // Log plugin registration status once a scene is booted
+        this.game.events.once('ready', () => {
+            const scene = this.game.scene.getScene('GameScene');
+            if (scene) {
+                console.info('[NoteleksGame] Scene ready. scene.load.spine available:', typeof scene.load.spine === 'function');
+            }
+        });
         // Add game event listeners
         this.setupEventListeners();
 

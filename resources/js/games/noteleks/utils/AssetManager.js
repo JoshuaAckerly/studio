@@ -29,15 +29,19 @@ export class AssetManager {
 
         try {
             if (scene.load.spine) {
+                // Phaser Spine plugin available: load using plugin loader
+                console.info('[AssetManager] Loading spine via plugin: noteleks-data', { json, atlas });
                 scene.load.spine('noteleks-data', json, atlas);
             } else {
                 // Fallback to manual loading
+                console.info('[AssetManager] Spine plugin missing; loading raw assets for manual setup', { png, atlas, json });
                 scene.load.image('noteleks-texture', png);
                 scene.load.text('noteleks-atlas-text', atlas);
                 scene.load.json('noteleks-skeleton-data', json);
             }
         } catch {
             // Silently handle error
+            console.warn('[AssetManager] Failed to queue spine assets for loading', { json, atlas, png });
         }
     }
 
@@ -66,6 +70,7 @@ export class AssetManager {
                 scene.cache.custom['spine-atlas'] = textureAtlas;
                 scene.cache.custom['spine-skeleton-data'] = skeletonDataObj;
 
+                console.info('[AssetManager] Spine data prepared and cached under scene.cache.custom', Object.keys(scene.cache.custom));
                 return true;
             }
 

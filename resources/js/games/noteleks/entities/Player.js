@@ -18,11 +18,32 @@ class Player extends GameObject {
     }
 
     createPlayer() {
-        // Create player sprite with physics
+        // Create player sprite with physics (physics sprite used for collisions)
         this.sprite = this.scene.physics.add.sprite(this.x, this.y, 'skeleton');
-
         // Store reference to this player class in the sprite
         this.sprite.playerRef = this;
+
+        // Try to create a Spine display for the character if the runtime/plugin and assets are available.
+        // We keep the physics sprite for collisions and sync the Spine visual to it, avoiding physics-plugin mismatches.
+        this.spine = null;
+        this._currentSpineAnim = null;
+
+        try {
+            if (this.scene.add && typeof this.scene.add.spine === 'function') {
+                // Attempt to add the spine object using the key used by AssetManager ('noteleks-data')
+                // If the skeleton isn't loaded yet this may throw — catch and fallback silently.
+                this.spine = this.scene.add.spine(this.x, this.y, 'noteleks-data', 'idle', true);
+                // Slight tuning for origin/scale so it sits on the physics body
+                if (typeof this.spine.setOrigin === 'function') {
+                    this.spine.setOrigin(0.5, 1);
+                }
+                // Ensure the spine is above the physics sprite visually
+                if (this.spine.setDepth) this.spine.setDepth(10);
+            }
+        } catch (e) {
+            // Silent fallback: leave this.spine as null
+            this.spine = null;
+        }
     }
 
     setupComponents() {
@@ -107,6 +128,25 @@ class Player extends GameObject {
 
             this.processInputState(inputState, inputComponent, movementComponent);
         }
+
+        // Sync spine position/flip if available
+        if (this.spine) {
+            try {
+                // Spine display may be a Phaser Spine Game Object with x/y properties
+                this.spine.x = this.sprite.x;
+                this.spine.y = this.sprite.y + (this.sprite.displayHeight / 2) - 4; // tuck into the sprite
+                // Flip spine horizontally to match sprite
+                if (this.sprite.flipX) {
+                    if (this.spine.scaleX && this.spine.scaleX > 0) this.spine.scaleX = -Math.abs(this.spine.scaleX || 1);
+                    else this.spine.scaleX = -1;
+                } else {
+                    if (this.spine.scaleX && this.spine.scaleX < 0) this.spine.scaleX = Math.abs(this.spine.scaleX || 1);
+                    else this.spine.scaleX = 1;
+                }
+            } catch (e) {
+                // ignore sync errors
+            }
+        }
     }
 
     updateWithInputState(inputState) {
@@ -131,19 +171,40 @@ class Player extends GameObject {
         // Apply movement based on input state directly
         if (inputState.left) {
             movementComponent.moveLeft();
+            this._setSpineAnimation('run', true);
         } else if (inputState.right) {
             movementComponent.moveRight();
+            this._setSpineAnimation('run', true);
         } else {
             movementComponent.stopHorizontal();
+            this._setSpineAnimation('idle', true);
         }
 
         if (inputState.up && movementComponent.isOnGround()) {
             movementComponent.jump();
+            this._setSpineAnimation('jump', false);
         }
 
         // Process attack input for mobile
         if (inputState.attack) {
             this.attack();
+            this._setSpineAnimation('attack', false);
+        }
+    }
+
+    _setSpineAnimation(name, loop = true) {
+        if (!this.spine) return;
+
+        try {
+            if (this._currentSpineAnim === name) return;
+            if (typeof this.spine.setAnimation === 'function') {
+                this.spine.setAnimation(0, name, loop);
+            } else if (this.spine.state && typeof this.spine.state.setAnimation === 'function') {
+                this.spine.state.setAnimation(0, name, loop);
+            }
+            this._currentSpineAnim = name;
+        } catch (e) {
+            // ignore animation errors
         }
     }
 
