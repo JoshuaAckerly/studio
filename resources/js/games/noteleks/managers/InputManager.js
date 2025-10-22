@@ -12,6 +12,10 @@ export class InputManager {
         this.inputHandlers = new Map();
         this.touchInput = null;
         this.isMobile = false;
+        // Bound handlers for adding/removing event listeners
+        this._onFirstTouch = this._onFirstTouch.bind(this);
+        this._onFirstPointer = this._onFirstPointer.bind(this);
+        this._onKeyDown = this._onKeyDown.bind(this);
     }
 
     initialize() {
@@ -44,6 +48,25 @@ export class InputManager {
                 console.log('InputManager: Using desktop controls');
             }
 
+            // Auto-detect input method at runtime: listen for the first touch or pointer/keyboard
+            // Touchstart will switch to mobile controls; mouse/keyboard will switch to desktop.
+            try {
+                window.addEventListener('touchstart', this._onFirstTouch, { once: true, passive: true });
+            } catch (e) {
+                // Some test environments may not have window
+            }
+
+            try {
+                window.addEventListener('mousedown', this._onFirstPointer, { once: true });
+            } catch (e) {
+                // ignore
+            }
+
+            // Listen for keyboard input to trigger actions (attack via space/enter/z)
+            if (this.scene && this.scene.input && this.scene.input.keyboard) {
+                this.scene.input.keyboard.on('keydown', this._onKeyDown);
+            }
+
             // Setup pointer input (for both mouse and touch)
             this.scene.input.on('pointerdown', this.handlePointerDown.bind(this));
 
@@ -71,6 +94,70 @@ export class InputManager {
             const attackHandler = this.inputHandlers.get('attack');
             if (attackHandler) {
                 attackHandler(pointer);
+            }
+        }
+    }
+
+    /**
+     * Called when the first touch is observed on the page — switch to mobile controls.
+     */
+    _onFirstTouch() {
+        if (!this.isMobile) {
+            this.isMobile = true;
+            if (!this.touchInput) {
+                this.touchInput = new (require('../components/TouchInputComponent.js').default)(this.scene);
+            }
+            if (this.touchInput && !this.touchInput.isEnabled) {
+                this.touchInput.initialize();
+            }
+            this.showTouchControls(true);
+            console.log('InputManager: Switched to mobile input (first touch detected)');
+        }
+    }
+
+    /**
+     * Called when the first pointer (mouse) is observed — switch to desktop controls.
+     */
+    _onFirstPointer() {
+        if (this.isMobile) {
+            this.isMobile = false;
+            this.showTouchControls(false);
+            console.log('InputManager: Switched to desktop input (pointer detected)');
+        }
+    }
+
+    /**
+     * Keyboard handler for actions like attack/pause/restart when appropriate
+     */
+    _onKeyDown(event) {
+        // Normalize code/name
+        const code = event.code || event.key;
+        // Attack keys: Space, KeyZ, Enter
+        if (code === 'Space' || code === 'KeyZ' || code === 'Enter') {
+            const attackHandler = this.inputHandlers.get('attack');
+            const ptr = { x: this.scene.scale.width / 2, y: this.scene.scale.height / 2 };
+
+            // On hybrid devices where touch UI exists but keyboard is used, mirror
+            // the input into the touch component so virtual UI reflects the action.
+            if (this.touchInput && this.touchInput.simulatePointerAttack) {
+                try {
+                    this.touchInput.simulatePointerAttack(ptr);
+                } catch (e) {
+                    // ignore
+                }
+            }
+
+            if (attackHandler) {
+                attackHandler(ptr);
+            }
+        }
+
+        // Jump via UpArrow or KeyW
+        if (code === 'ArrowUp' || code === 'KeyW') {
+            if (this.touchInput && this.touchInput.simulateJumpPress) {
+                try {
+                    this.touchInput.simulateJumpPress();
+                } catch (e) {}
             }
         }
     }
@@ -171,6 +258,19 @@ export class InputManager {
             this.touchInput.destroy();
             this.touchInput = null;
         }
+
+        // Remove global listeners if they were added
+        try {
+            window.removeEventListener('touchstart', this._onFirstTouch, { passive: true });
+        } catch (e) {}
+        try {
+            window.removeEventListener('mousedown', this._onFirstPointer);
+        } catch (e) {}
+        try {
+            if (this.scene && this.scene.input && this.scene.input.keyboard) {
+                this.scene.input.keyboard.off('keydown', this._onKeyDown);
+            }
+        } catch (e) {}
     }
 
     // Additional mobile-specific methods

@@ -768,6 +768,29 @@ class TouchInputComponent extends Component {
     }
 
     /**
+     * Simulate an attack from an external input (keyboard/mouse) so virtual
+     * controls react on hybrid devices.
+     */
+    simulatePointerAttack(pointer) {
+        this.touchState.attack = true;
+        this.triggerAttack(pointer);
+        // Auto-clear after a short delay to mimic touch
+        setTimeout(() => {
+            this.touchState.attack = false;
+        }, 100);
+    }
+
+    /**
+     * Simulate a jump press from an external input (keyboard/mouse)
+     */
+    simulateJumpPress() {
+        this.touchState.up = true;
+        setTimeout(() => {
+            this.touchState.up = false;
+        }, 150);
+    }
+
+    /**
      * Check if point is within bounds
      */
     isPointInBounds(x, y, bounds) {
