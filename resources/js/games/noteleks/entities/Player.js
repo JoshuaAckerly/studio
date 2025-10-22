@@ -46,6 +46,22 @@ class Player extends GameObject {
             this.spine = null;
             console.info('[Player] Spine display not created, falling back to sprite visual');
         }
+
+        // If spine wasn't ready yet, listen for the spine-ready event and try again once
+        if (!this.spine && this.scene && this.scene.events && typeof this.scene.events.once === 'function') {
+            this.scene.events.once('spine-ready', () => {
+                try {
+                    if (this.scene.add && typeof this.scene.add.spine === 'function') {
+                        this.spine = this.scene.add.spine(this.x, this.y, 'noteleks-data', 'idle', true);
+                        if (this.spine && typeof this.spine.setOrigin === 'function') this.spine.setOrigin(0.5, 1);
+                        if (this.spine && this.spine.setDepth) this.spine.setDepth(10);
+                        console.info('[Player] Spine display created on spine-ready event', { spine: !!this.spine });
+                    }
+                } catch (e) {
+                    console.warn('[Player] Failed to create spine display on spine-ready:', e);
+                }
+            });
+        }
     }
 
     setupComponents() {

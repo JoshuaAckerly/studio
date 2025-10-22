@@ -70,6 +70,15 @@ export class AssetManager {
                 scene.cache.custom['spine-atlas'] = textureAtlas;
                 scene.cache.custom['spine-skeleton-data'] = skeletonDataObj;
 
+                // Notify the scene that spine data is ready so game objects can create displays
+                try {
+                    if (scene && scene.events && typeof scene.events.emit === 'function') {
+                        scene.events.emit('spine-ready');
+                    }
+                } catch (e) {
+                    // ignore
+                }
+
                 console.info('[AssetManager] Spine data prepared and cached under scene.cache.custom', Object.keys(scene.cache.custom));
                 return true;
             }
