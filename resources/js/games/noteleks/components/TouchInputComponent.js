@@ -488,10 +488,10 @@ class TouchInputComponent extends Component {
             const normalizedX = deltaX / maxDistance;
             const normalizedY = deltaY / maxDistance;
 
+            // Only use horizontal axis for joystick movement. Vertical axis will
+            // no longer trigger jump; jumping is only via the jump button.
             this.touchState.left = normalizedX < -0.3;
             this.touchState.right = normalizedX > 0.3;
-            this.touchState.up = normalizedY < -0.3;
-            this.touchState.down = normalizedY > 0.3;
         };
 
         const handleEnd = (e) => {
