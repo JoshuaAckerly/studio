@@ -14,28 +14,45 @@ class NoteleksGame {
 
     createGameConfig() {
         // Try to detect a Spine plugin exposed on window by the spine-phaser iife.
-        // The IIFE commonly exposes a global like `SpinePlugin` or `spinePlugin` or `spine`.
-        let possibleSpinePlugin = null;
+        // The IIFE commonly exposes a global namespace `window.spine` which may contain a plugin constructor
+        // such as `SpinePlugin` or `SpineGameObject`. We prefer a real constructor function to register.
+        let possibleSpineGlobal = null;
         if (typeof window !== 'undefined') {
-            possibleSpinePlugin = window.SpinePlugin || window.spinePlugin || window.Spine || window.spine || null;
+            possibleSpineGlobal = window.SpinePlugin || window.spinePlugin || window.Spine || window.spine || null;
         }
 
-        // Only register as a Phaser Scene Plugin if it's a function/constructor. Some builds expose
-        // a namespace object under `window.spine`, which is not a valid plugin class for Phaser.
+        let pluginConstructor = null;
+        // If the global itself is a constructor, use it
+        if (possibleSpineGlobal && typeof possibleSpineGlobal === 'function') {
+            pluginConstructor = possibleSpineGlobal;
+            console.info('[NoteleksGame] Detected spine plugin constructor on window root.');
+        }
+
+        // If it's an object/namespace, inspect for known constructor properties
+        if (!pluginConstructor && possibleSpineGlobal && typeof possibleSpineGlobal === 'object') {
+            const candidateKeys = ['SpinePlugin', 'SpineGameObject', 'Spine', 'plugin', 'default'];
+            for (const k of candidateKeys) {
+                if (typeof possibleSpineGlobal[k] === 'function') {
+                    pluginConstructor = possibleSpineGlobal[k];
+                    console.info('[NoteleksGame] Found spine plugin constructor at window.spine.%s', k);
+                    break;
+                }
+            }
+        }
+
         let pluginsConfig = undefined;
-        if (possibleSpinePlugin && typeof possibleSpinePlugin === 'function') {
+        if (pluginConstructor) {
             pluginsConfig = {
                 scene: [
                     {
                         key: 'SpinePlugin',
-                        plugin: possibleSpinePlugin,
+                        plugin: pluginConstructor,
                         mapping: 'spine',
                     },
                 ],
             };
-        } else if (possibleSpinePlugin) {
-            // Detected something, but it's not a constructor - log for debugging and don't register.
-            console.info('[NoteleksGame] Detected spine global, but it is not a plugin constructor:', typeof possibleSpinePlugin, possibleSpinePlugin);
+        } else if (possibleSpineGlobal) {
+            console.info('[NoteleksGame] Detected spine global, but no plugin constructor found. Will not register as Phaser plugin.');
         } else {
             console.info('[NoteleksGame] No spine global detected on window.');
         }
