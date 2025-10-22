@@ -1,6 +1,7 @@
 // import GameConfig from '../config/GameConfig.js';
 import TouchInputComponent from '../components/TouchInputComponent.js';
 import { InputUtils } from '../utils/GameUtils.js';
+import InputModeController from './InputModeController.js';
 
 /**
  * Input Manager
@@ -14,9 +15,7 @@ export class InputManager {
         this.touchInput = null;
         this.isMobile = false;
         // Bound handlers for adding/removing event listeners
-        this._onFirstTouch = this._onFirstTouch.bind(this);
-        this._onFirstPointer = this._onFirstPointer.bind(this);
-        this._onKeyDown = this._onKeyDown.bind(this);
+    this._onKeyDown = this._onKeyDown.bind(this);
     }
 
     initialize() {
@@ -24,6 +23,9 @@ export class InputManager {
             // Initialize touch input component
             this.touchInput = new TouchInputComponent(this.scene);
             this.isMobile = this.touchInput.isMobileDevice();
+            // InputModeController handles runtime auto-detection and visibility
+            this.inputMode = new InputModeController(this.scene, this.touchInput);
+            this.inputMode.initialize();
 
             console.log('InputManager: Mobile device detected:', this.isMobile);
             console.log('InputManager: User agent:', navigator.userAgent);
@@ -44,21 +46,7 @@ export class InputManager {
                 console.log('InputManager: Using desktop controls');
             }
 
-            // Auto-detect input method at runtime: listen for the first touch or pointer/keyboard
-            // Touchstart will switch to mobile controls; mouse/keyboard will switch to desktop.
-            try {
-                window.addEventListener('touchstart', this._onFirstTouch, { once: true, passive: true });
-            } catch (e) {
-                // Some test environments may not have window
-            }
-
-            try {
-                window.addEventListener('mousedown', this._onFirstPointer, { once: true });
-            } catch (e) {
-                // ignore
-            }
-
-            // Listen for keyboard input to trigger actions (attack via space/enter/z)
+            // Keyboard handling remains in this manager for action mapping
             if (this.scene && this.scene.input && this.scene.input.keyboard) {
                 this.scene.input.keyboard.on('keydown', this._onKeyDown);
             }
@@ -97,38 +85,7 @@ export class InputManager {
     /**
      * Called when the first touch is observed on the page — switch to mobile controls.
      */
-    _onFirstTouch() {
-        if (!this.isMobile) {
-            this.isMobile = true;
-            if (!this.touchInput) {
-                this.touchInput = new (require('../components/TouchInputComponent.js').default)(this.scene);
-            }
-            if (this.touchInput && !this.touchInput.isEnabled) {
-                this.touchInput.initialize();
-            }
-            // Ensure mobile area is visible
-            if (this.touchInput && this.touchInput.setMobileAreaVisible) {
-                this.touchInput.setMobileAreaVisible(true);
-            }
-            this.showTouchControls(true);
-            console.log('InputManager: Switched to mobile input (first touch detected)');
-        }
-    }
 
-    /**
-     * Called when the first pointer (mouse) is observed — switch to desktop controls.
-     */
-    _onFirstPointer() {
-        if (this.isMobile) {
-            this.isMobile = false;
-            // Hide the mobile area when a pointer/mouse is used
-            if (this.touchInput && this.touchInput.setMobileAreaVisible) {
-                this.touchInput.setMobileAreaVisible(false);
-            }
-            this.showTouchControls(false);
-            console.log('InputManager: Switched to desktop input (pointer detected)');
-        }
-    }
 
     /**
      * Keyboard handler for actions like attack/pause/restart when appropriate
@@ -266,6 +223,13 @@ export class InputManager {
         if (this.touchInput) {
             this.touchInput.destroy();
             this.touchInput = null;
+        }
+
+        if (this.inputMode) {
+            try {
+                this.inputMode.shutdown();
+            } catch (e) {}
+            this.inputMode = null;
         }
 
         // Remove global listeners if they were added
