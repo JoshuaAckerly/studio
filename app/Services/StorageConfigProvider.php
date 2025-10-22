@@ -16,9 +16,10 @@ class StorageConfigProvider
 {
     protected string $basePath;
 
-    public function __construct(string $basePath = null)
+    public function __construct(?string $basePath = null)
     {
-        $this->basePath = $basePath ?: realpath(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..');
+        $resolved = $basePath ?: realpath(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..');
+        $this->basePath = $resolved ?: '';
         if ($this->basePath && file_exists($this->basePath . DIRECTORY_SEPARATOR . '.env')) {
             try {
                 Dotenv::createImmutable($this->basePath)->safeLoad();

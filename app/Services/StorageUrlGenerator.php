@@ -156,6 +156,24 @@ class StorageUrlGenerator implements StorageUrlGeneratorInterface
             }
         }
 
+        // In local/non-production development, avoid returning insecure (http) or
+        // IP-hosted URLs that would trigger mixed-content warnings when the app
+        // is served over HTTPS. Instead, proxy such paths through the application
+        // serve endpoint so the browser requests from the same origin (HTTPS).
+        if ($url && !app()->environment('production')) {
+            try {
+                $parsed = parse_url($url);
+                $isInsecureScheme = isset($parsed['scheme']) && strtolower($parsed['scheme']) === 'http';
+                $isIpHost = isset($parsed['host']) && preg_match('/^\d{1,3}(?:\.\d{1,3}){3}$/', $parsed['host']);
+
+                if ($isInsecureScheme || $isIpHost) {
+                    return url('/api/video-logs/serve?path=' . rawurlencode($path));
+                }
+            } catch (\Throwable $e) {
+                // ignore and fall through
+            }
+        }
+
         return $url ?: '';
     }
 }

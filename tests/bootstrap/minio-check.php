@@ -37,12 +37,41 @@ if ($shouldRun) {
     $diskName = getenv('FILESYSTEM_DISK') ?: 's3';
     $disk = Illuminate\Support\Facades\Storage::disk($diskName);
     try {
+        // Build an S3 client directly from config to avoid coupling to Flysystem internals
+        $s3cfg = config('filesystems.disks.' . $diskName, []);
+        $key = $s3cfg['key'] ?? getenv('AWS_ACCESS_KEY_ID');
+        $secret = $s3cfg['secret'] ?? getenv('AWS_SECRET_ACCESS_KEY');
+        $region = $s3cfg['region'] ?? getenv('AWS_DEFAULT_REGION') ?: 'us-east-1';
+        $endpoint = $s3cfg['endpoint'] ?? getenv('AWS_ENDPOINT');
+        $usePath = isset($s3cfg['use_path_style_endpoint']) ? (bool) $s3cfg['use_path_style_endpoint'] : filter_var(getenv('AWS_USE_PATH_STYLE_ENDPOINT') ?: 'false', FILTER_VALIDATE_BOOLEAN);
+
+        $client = new Aws\S3\S3Client([
+            'version' => 'latest',
+            'region' => $region,
+            'endpoint' => $endpoint ?: null,
+            'use_path_style_endpoint' => $usePath,
+            'credentials' => [
+                'key' => $key,
+                'secret' => $secret,
+            ],
+            'http' => ['verify' => false],
+        ]);
+
         // Attempt a minimal list to verify bucket accessibility
-        $client = $disk->getDriver()->getAdapter()->getClient();
         $client->listObjectsV2(['Bucket' => $bucket, 'MaxKeys' => 1]);
     } catch (Throwable $e) {
         fwrite(STDERR, "Integration bootstrap failure: S3 bucket '{$bucket}' not accessible.\n");
         fwrite(STDERR, "Ensure MinIO is running and the bucket exists (scripts/Start-Minio.ps1 or scripts/start_minio.sh).\n");
+        // Diagnostic info
+        fwrite(STDERR, "Exception: " . get_class($e) . " - " . $e->getMessage() . "\n");
+        if ($e instanceof Aws\Exception\AwsException && method_exists($e, 'getResponse')) {
+            $resp = $e->getResponse();
+            if ($resp) {
+                fwrite(STDERR, "Response code: " . $resp->getStatusCode() . "\n");
+                fwrite(STDERR, (string)$resp->getBody() . "\n");
+            }
+        }
+        fwrite(STDERR, "Stack:\n" . $e->getTraceAsString() . "\n");
         exit(2);
     }
 }

@@ -13,9 +13,10 @@ $dry = in_array('--dry', $argv, true);
 $help = in_array('--help', $argv, true) || in_array('-h', $argv, true);
 
 $sourceBucket = 'graveyardjokes-cdn';
-$prefix = rtrim('images/illustrations', '/') . '/';
+$prefix = rtrim('images/Illustrations', '/') . '/';
 $destBucket = 'graveyardjokes-cdn';
 $destEndpoint = null;
+$srcEndpoint = null;
 
 for ($i = 1; $i < count($argv); $i++) {
     $arg = $argv[$i];
@@ -23,6 +24,7 @@ for ($i = 1; $i < count($argv); $i++) {
     if ($arg === '--prefix' && isset($argv[$i+1])) { $prefix = rtrim($argv[++$i], '/') . '/'; }
     if ($arg === '--dest-bucket' && isset($argv[$i+1])) { $destBucket = $argv[++$i]; }
     if ($arg === '--dest-endpoint' && isset($argv[$i+1])) { $destEndpoint = $argv[++$i]; }
+    if ($arg === '--src-endpoint' && isset($argv[$i+1])) { $srcEndpoint = $argv[++$i]; }
     if ($arg === '--dry') { $dry = true; }
     if ($arg === '--help' || $arg === '-h') { $help = true; }
 }
@@ -77,6 +79,11 @@ if ($destEndpoint !== null && !preg_match('#^https?://#', $destEndpoint)) {
     exit(1);
 }
 
+if ($srcEndpoint !== null && !preg_match('#^https?://#', $srcEndpoint)) {
+    fwrite(STDERR, "ERROR: src-endpoint must start with http:// or https://\n");
+    exit(1);
+}
+
 $basePath = realpath(__DIR__ . DIRECTORY_SEPARATOR . '..');
 
 // Source (AWS) client - prefer admin creds from .env (if present), fall back to normal AWS_* values.
@@ -84,6 +91,17 @@ $basePath = realpath(__DIR__ . DIRECTORY_SEPARATOR . '..');
 $provider = new StorageConfigProvider($basePath);
 
 $srcConfig = $provider->sdkConfig(true);
+// If the user explicitly provided a source endpoint, use it. Otherwise
+// deliberately ignore any endpoint returned by StorageConfigProvider so
+// the source client talks to AWS by default (avoids accidentally using
+// a local AWS_ENDPOINT from the repo .env).
+if ($srcEndpoint !== null) {
+    $srcConfig['endpoint'] = $srcEndpoint;
+} else {
+    // ensure no endpoint is present so the SDK uses the real AWS endpoint
+    if (isset($srcConfig['endpoint'])) unset($srcConfig['endpoint']);
+}
+
 // Create source client (AWS)
 $srcClient = new S3Client($srcConfig);
 
@@ -92,12 +110,13 @@ $dstConfig = $provider->sdkConfig(false);
 // If no endpoint provided, default to local MinIO for this script
 if (empty($dstConfig['endpoint'])) {
     $dstConfig['endpoint'] = 'http://127.0.0.1:9000';
-    $dstConfig['region'] = $dstConfig['region'] ?? 'us-east-1';
+    $dstConfig['region'] = $dstConfig['region'] ?? 'us-east-2';
     $dstConfig['use_path_style_endpoint'] = true;
     // Default local credentials
+    // Use StorageConfigProvider lookup to avoid relying on Laravel helpers
     $dstConfig['credentials'] = [
-        'key' => 'minioadmin',
-        'secret' => 'minioadmin',
+        'key' => $provider->lookup('AWS_ACCESS_KEY_ID') ?: $provider->lookup('MINIO_ROOT_USER') ?: null,
+        'secret' => $provider->lookup('AWS_SECRET_ACCESS_KEY') ?: $provider->lookup('MINIO_ROOT_PASSWORD') ?: null,
     ];
 }
 

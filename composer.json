@@ -11,7 +11,7 @@
     "require": {
         "php": "^8.2",
         "inertiajs/inertia-laravel": "^2.0",
-        "laravel/framework": "^12.0",
+        "laravel/framework": "v12.35.0",
         "laravel/tinker": "^2.10.1",
         "league/flysystem-aws-s3-v3": "^3.29",
         "tightenco/ziggy": "^2.4"
