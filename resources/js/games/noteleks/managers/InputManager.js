@@ -192,7 +192,7 @@ export class InputManager {
             const touchState = this.touchInput.getTouchState();
             return touchState.up;
         }
-        return this.controls.cursors.up.isDown || this.controls.wasd.W.isDown || this.controls.space.isDown;
+        return this.controls.cursors.up.isDown || this.controls.wasd.W.isDown;
     }
 
     // Action input checks

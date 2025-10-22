@@ -90,7 +90,7 @@ export class InputUtils {
     }
 
     static isJumping(controls) {
-        return controls.cursors.up.isDown || controls.wasd.W.isDown || controls.space.isDown;
+        return controls.cursors.up.isDown || controls.wasd.W.isDown;
     }
 
     static isPausePressed(controls) {

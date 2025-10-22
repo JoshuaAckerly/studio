@@ -101,7 +101,7 @@ class Player extends GameObject {
             const inputState = {
                 left: cursors.left?.isDown || false || wasd.A?.isDown || false,
                 right: cursors.right?.isDown || false || wasd.D?.isDown || false,
-                up: cursors.up?.isDown || false || wasd.W?.isDown || false || spaceKey.isDown || false,
+                up: cursors.up?.isDown || false || wasd.W?.isDown || false,
                 attack: false, // Mouse input handled separately
             };
 
