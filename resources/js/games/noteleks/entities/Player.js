@@ -33,6 +33,7 @@ class Player extends GameObject {
                 // Attempt to add the spine object using the key used by AssetManager ('noteleks-data')
                 // If the skeleton isn't loaded yet this may throw — catch and fallback silently.
                 this.spine = this.scene.add.spine(this.x, this.y, 'noteleks-data', 'idle', true);
+                console.info('[Player] Spine display created via scene.add.spine', { spine: !!this.spine });
                 // Slight tuning for origin/scale so it sits on the physics body
                 if (typeof this.spine.setOrigin === 'function') {
                     this.spine.setOrigin(0.5, 1);
@@ -43,6 +44,7 @@ class Player extends GameObject {
         } catch (e) {
             // Silent fallback: leave this.spine as null
             this.spine = null;
+            console.info('[Player] Spine display not created, falling back to sprite visual');
         }
     }
 
