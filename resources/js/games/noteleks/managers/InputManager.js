@@ -190,6 +190,11 @@ export class InputManager {
     isJumping() {
         if (this.isMobile && this.touchInput) {
             const touchState = this.touchInput.getTouchState();
+            // If joystick is active, only allow jump from the dedicated jump
+            // button (touchState.up true) when joystick is not actively being used.
+            if (touchState.joystickActive) {
+                return false;
+            }
             return touchState.up;
         }
         return this.controls.cursors.up.isDown || this.controls.wasd.W.isDown;

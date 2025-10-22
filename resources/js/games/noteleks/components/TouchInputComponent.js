@@ -819,7 +819,10 @@ class TouchInputComponent extends Component {
      * Get current touch input state
      */
     getTouchState() {
-        return { ...this.touchState };
+        // Include whether a joystick touch is currently active so callers can
+        // ignore vertical joystick movement for jump logic if desired.
+        const joystickActive = Array.from(this.activeTouches.values()).some((t) => t.type === 'joystick');
+        return { ...this.touchState, joystickActive };
     }
 
     /**
