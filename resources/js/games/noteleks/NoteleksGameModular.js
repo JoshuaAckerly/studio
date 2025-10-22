@@ -14,22 +14,31 @@ class NoteleksGame {
 
     createGameConfig() {
         // Try to detect a Spine plugin exposed on window by the spine-phaser iife.
-        // The IIFE commonly exposes a global like `SpinePlugin` or `spinePlugin`.
-        const possibleSpinePlugin = (typeof window !== 'undefined')
-            ? (window.SpinePlugin || window.spinePlugin || window.SpinePlugin || window.spine || null)
-            : null;
+        // The IIFE commonly exposes a global like `SpinePlugin` or `spinePlugin` or `spine`.
+        let possibleSpinePlugin = null;
+        if (typeof window !== 'undefined') {
+            possibleSpinePlugin = window.SpinePlugin || window.spinePlugin || window.Spine || window.spine || null;
+        }
 
-        const pluginsConfig = possibleSpinePlugin
-            ? {
-                  scene: [
-                      {
-                          key: 'SpinePlugin',
-                          plugin: possibleSpinePlugin,
-                          mapping: 'spine',
-                      },
-                  ],
-              }
-            : undefined;
+        // Only register as a Phaser Scene Plugin if it's a function/constructor. Some builds expose
+        // a namespace object under `window.spine`, which is not a valid plugin class for Phaser.
+        let pluginsConfig = undefined;
+        if (possibleSpinePlugin && typeof possibleSpinePlugin === 'function') {
+            pluginsConfig = {
+                scene: [
+                    {
+                        key: 'SpinePlugin',
+                        plugin: possibleSpinePlugin,
+                        mapping: 'spine',
+                    },
+                ],
+            };
+        } else if (possibleSpinePlugin) {
+            // Detected something, but it's not a constructor - log for debugging and don't register.
+            console.info('[NoteleksGame] Detected spine global, but it is not a plugin constructor:', typeof possibleSpinePlugin, possibleSpinePlugin);
+        } else {
+            console.info('[NoteleksGame] No spine global detected on window.');
+        }
 
         return {
             type: Phaser.AUTO,
