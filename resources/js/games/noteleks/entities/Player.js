@@ -47,7 +47,26 @@ class Player extends GameObject {
             console.info('[Player] Spine display not created, falling back to sprite visual');
         }
 
-        // If spine wasn't ready yet, listen for the spine-ready event and try again once
+        // If the spine data was prepared before this Player was constructed, try to create from cache now.
+        try {
+            const cached = this.scene && this.scene.cache && this.scene.cache.custom ? this.scene.cache.custom : null;
+            if (!this.spine && cached && (cached['spine-skeleton-data'] || cached['spine-atlas'])) {
+                if (this.scene.add && typeof this.scene.add.spine === 'function') {
+                    try {
+                        this.spine = this.scene.add.spine(this.x, this.y, 'noteleks-data', 'idle', true);
+                        if (this.spine && typeof this.spine.setOrigin === 'function') this.spine.setOrigin(0.5, 1);
+                        if (this.spine && this.spine.setDepth) this.spine.setDepth(10);
+                        console.info('[Player] Spine display created from cache during construction', { spine: !!this.spine });
+                    } catch (err) {
+                        console.warn('[Player] Failed to create spine display from cache during construction:', err);
+                    }
+                }
+            }
+        } catch (e) {
+            // ignore
+        }
+
+        // If spine still wasn't ready yet, listen for the spine-ready event and try again once
         if (!this.spine && this.scene && this.scene.events && typeof this.scene.events.once === 'function') {
             this.scene.events.once('spine-ready', () => {
                 try {
