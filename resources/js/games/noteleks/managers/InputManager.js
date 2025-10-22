@@ -62,8 +62,11 @@ export class InputManager {
     }
 
     handlePointerDown(pointer) {
+        // Determine runtime mobile state (prefer inputMode if present)
+        const runtimeIsMobile = this.inputMode ? this.inputMode.isMobileDevice() : this.isMobile;
+
         // On mobile, touch input component handles this
-        if (this.isMobile && this.touchInput) {
+        if (runtimeIsMobile && this.touchInput) {
             // Touch input component will handle the pointer events
             // But we still need to trigger attack for screen touches outside virtual controls
             const touchState = this.touchInput.getTouchState();
@@ -133,7 +136,8 @@ export class InputManager {
 
     // Movement input checks
     isMovingLeft() {
-        if (this.isMobile && this.touchInput) {
+        const runtimeIsMobile2 = this.inputMode ? this.inputMode.isMobileDevice() : this.isMobile;
+        if (runtimeIsMobile2 && this.touchInput) {
             const touchState = this.touchInput.getTouchState();
             return touchState.left;
         }
@@ -141,7 +145,8 @@ export class InputManager {
     }
 
     isMovingRight() {
-        if (this.isMobile && this.touchInput) {
+        const runtimeIsMobile3 = this.inputMode ? this.inputMode.isMobileDevice() : this.isMobile;
+        if (runtimeIsMobile3 && this.touchInput) {
             const touchState = this.touchInput.getTouchState();
             return touchState.right;
         }
@@ -149,7 +154,8 @@ export class InputManager {
     }
 
     isJumping() {
-        if (this.isMobile && this.touchInput) {
+        const runtimeIsMobile4 = this.inputMode ? this.inputMode.isMobileDevice() : this.isMobile;
+        if (runtimeIsMobile4 && this.touchInput) {
             const touchState = this.touchInput.getTouchState();
             // If joystick is active, only allow jump from the dedicated jump
             // button (touchState.up true) when joystick is not actively being used.
@@ -164,7 +170,8 @@ export class InputManager {
     // Action input checks
     isPausePressed() {
         // On mobile, pause might be implemented differently (UI button)
-        if (this.isMobile) {
+        const runtimeIsMobile5 = this.inputMode ? this.inputMode.isMobileDevice() : this.isMobile;
+        if (runtimeIsMobile5) {
             return false; // Implement pause button in UI for mobile
         }
         return Phaser.Input.Keyboard.JustDown(this.controls.wasd.P);
@@ -172,7 +179,8 @@ export class InputManager {
 
     isRestartPressed() {
         // On mobile, restart is typically via UI button
-        if (this.isMobile) {
+        const runtimeIsMobile6 = this.inputMode ? this.inputMode.isMobileDevice() : this.isMobile;
+        if (runtimeIsMobile6) {
             return false; // Implement restart button in UI for mobile
         }
         return Phaser.Input.Keyboard.JustDown(this.controls.wasd.R);
@@ -180,7 +188,8 @@ export class InputManager {
 
     isEscapePressed() {
         // On mobile, escape is typically via UI button
-        if (this.isMobile) {
+        const runtimeIsMobile7 = this.inputMode ? this.inputMode.isMobileDevice() : this.isMobile;
+        if (runtimeIsMobile7) {
             return false; // Implement back/menu button in UI for mobile
         }
         return Phaser.Input.Keyboard.JustDown(this.controls.wasd.ESC);
@@ -196,7 +205,8 @@ export class InputManager {
 
     // Create input state object
     getMovementInput() {
-        if (this.isMobile && this.touchInput) {
+        const runtimeIsMobile8 = this.inputMode ? this.inputMode.isMobileDevice() : this.isMobile;
+        if (runtimeIsMobile8 && this.touchInput) {
             const touchState = this.touchInput.getTouchState();
             // Debug: Log touch state only when something is active
             if (touchState.left || touchState.right || touchState.up || touchState.attack) {
