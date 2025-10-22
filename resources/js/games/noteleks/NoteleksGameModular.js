@@ -108,24 +108,11 @@ class NoteleksGame {
                 // If the scene doesn't have spine methods but the runtime exposes a SpinePlugin
                 // constructor, instantiate it and map its methods onto the scene to provide
                 // scene.add.spine and scene.load.spine at runtime.
-                try {
-                    if (typeof scene.load.spine !== 'function' && window.spine && typeof window.spine.SpinePlugin === 'function') {
-                        console.info('[NoteleksGame] Attempting to instantiate window.spine.SpinePlugin at runtime');
-                        // The ScenePlugin constructor typically expects the Scene Systems object
-                        const pluginInstance = new window.spine.SpinePlugin(scene.sys);
-
-                        // If the plugin provides add/load methods, bind them to the scene
-                        if (pluginInstance && typeof pluginInstance.add === 'function') {
-                            scene.add.spine = pluginInstance.add.bind(pluginInstance);
-                        }
-                        if (pluginInstance && typeof pluginInstance.load === 'function') {
-                            scene.load.spine = pluginInstance.load.bind(pluginInstance);
-                        }
-
-                        console.info('[NoteleksGame] SpinePlugin instance created and mapped to scene.add/scene.load where available');
-                    }
-                } catch (e) {
-                    console.warn('[NoteleksGame] Failed to instantiate SpinePlugin at runtime:', e);
+                // If a SpinePlugin constructor exists on window, do NOT attempt to instantiate it here.
+                // The Phaser ScenePlugin lifecycle expects the plugin to be registered via the
+                // PluginManager so direct construction will often fail (missing internal context).
+                if (window.spine && typeof window.spine.SpinePlugin === 'function') {
+                    console.info('[NoteleksGame] Detected window.spine.SpinePlugin but will not instantiate it directly (requires PluginManager). Using fallback adapter if needed.');
                 }
 
                 // If scene.add.spine is still not available, provide a lightweight adapter that
