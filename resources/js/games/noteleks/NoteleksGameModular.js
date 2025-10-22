@@ -208,6 +208,51 @@ class NoteleksGame {
 
                         return spineObj;
                     };
+                } else if (typeof scene.add.spine === 'function' && window.spine && typeof window.spine.SpineGameObject === 'function') {
+                    // If plugin provided scene.add.spine but assets were loaded manually into scene.cache.custom,
+                    // the plugin may expect its own cache. Wrap scene.add.spine so we prefer using the cached
+                    // skeleton/atlas when available to construct a SpineGameObject directly and avoid plugin cache errors.
+                    try {
+                        const originalAddSpine = scene.add.spine.bind(scene.add);
+                        scene.add.spine = function (x = 0, y = 0, keyOrSkeletonKey, initialAnim = 'idle', loop = true) {
+                            const cached = scene.cache.custom || {};
+                            const skeletonData = cached['spine-skeleton-data'];
+                            const atlas = cached['spine-atlas'];
+                            // If we have cached data, construct SpineGameObject directly
+                            if (skeletonData && atlas) {
+                                try {
+                                    const SpineGO = window.spine.SpineGameObject;
+                                    let spineObj = null;
+                                    try {
+                                        spineObj = new SpineGO(scene, x, y, skeletonData, atlas);
+                                    } catch (err) {
+                                        try {
+                                            spineObj = new SpineGO(scene, skeletonData, atlas);
+                                        } catch (err2) {
+                                            // fallback to original plugin add
+                                            return originalAddSpine(x, y, keyOrSkeletonKey, initialAnim, loop);
+                                        }
+                                    }
+                                    // Add to display list
+                                    try { scene.add.existing(spineObj); } catch (e) { try { scene.sys.displayList.add(spineObj); } catch (e2) {} }
+                                    // set animation
+                                    try {
+                                        if (typeof spineObj.setAnimation === 'function') spineObj.setAnimation(0, initialAnim, loop);
+                                        else if (spineObj.state && typeof spineObj.state.setAnimation === 'function') spineObj.state.setAnimation(0, initialAnim, loop);
+                                    } catch (e) {}
+                                    return spineObj;
+                                } catch (e) {
+                                    console.warn('[NoteleksGame] Direct SpineGameObject construction failed, falling back to plugin add:', e);
+                                    return originalAddSpine(x, y, keyOrSkeletonKey, initialAnim, loop);
+                                }
+                            }
+                            // Otherwise defer to plugin's add
+                            return originalAddSpine(x, y, keyOrSkeletonKey, initialAnim, loop);
+                        };
+                        console.info('[NoteleksGame] Wrapped scene.add.spine to use cached spine data when available');
+                    } catch (e) {
+                        console.warn('[NoteleksGame] Failed to wrap scene.add.spine:', e);
+                    }
                 }
             }
         });
