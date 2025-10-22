@@ -57,9 +57,12 @@ class TouchInputComponent extends Component {
         console.log('TouchInputComponent: Mobile device detected:', this.isMobile);
 
         if (!this.isMobile) {
+            // Hide mobile controls area when not mobile
+            this.setMobileAreaVisible(false);
             return false; // Not a mobile device, skip touch controls
         }
 
+        this.setMobileAreaVisible(true);
         this.createVirtualControls();
         this.isEnabled = true;
         console.log('TouchInputComponent: Touch controls initialized');
@@ -851,6 +854,19 @@ class TouchInputComponent extends Component {
     }
 
     /**
+     * Toggle the mobile-controls-area HTML container visibility
+     */
+    setMobileAreaVisible(visible) {
+        try {
+            const area = document.getElementById('mobile-controls-area');
+            if (!area) return;
+            area.style.display = visible ? '' : 'none';
+        } catch (e) {
+            // ignore in non-browser environments
+        }
+    }
+
+    /**
      * Cleanup
      */
     destroy() {
@@ -871,6 +887,8 @@ class TouchInputComponent extends Component {
         });
 
         this.isEnabled = false;
+        // Hide mobile area when destroyed
+        this.setMobileAreaVisible(false);
     }
 }
 

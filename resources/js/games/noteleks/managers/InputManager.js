@@ -110,6 +110,10 @@ export class InputManager {
             if (this.touchInput && !this.touchInput.isEnabled) {
                 this.touchInput.initialize();
             }
+            // Ensure mobile area is visible
+            if (this.touchInput && this.touchInput.setMobileAreaVisible) {
+                this.touchInput.setMobileAreaVisible(true);
+            }
             this.showTouchControls(true);
             console.log('InputManager: Switched to mobile input (first touch detected)');
         }
@@ -121,6 +125,10 @@ export class InputManager {
     _onFirstPointer() {
         if (this.isMobile) {
             this.isMobile = false;
+            // Hide the mobile area when a pointer/mouse is used
+            if (this.touchInput && this.touchInput.setMobileAreaVisible) {
+                this.touchInput.setMobileAreaVisible(false);
+            }
             this.showTouchControls(false);
             console.log('InputManager: Switched to desktop input (pointer detected)');
         }
