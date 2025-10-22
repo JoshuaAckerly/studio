@@ -99,10 +99,25 @@ export class InputManager {
         // Attack keys: Space, KeyZ, Enter
         if (code === 'Space' || code === 'KeyZ' || code === 'Enter') {
             const attackHandler = this.inputHandlers.get('attack');
+
+            // Space should behave like the on-screen fire button: fire without aiming
+            if (code === 'Space') {
+                // Simulate touch attack for UI feedback, but pass null to handler
+                if (this.touchInput && this.touchInput.simulatePointerAttack) {
+                    try {
+                        this.touchInput.simulatePointerAttack(null);
+                    } catch (e) {}
+                }
+
+                if (attackHandler) {
+                    attackHandler(null);
+                }
+                return;
+            }
+
+            // For other keys (KeyZ, Enter) preserve previous behavior (aimed attack)
             const ptr = { x: this.scene.scale.width / 2, y: this.scene.scale.height / 2 };
 
-            // On hybrid devices where touch UI exists but keyboard is used, mirror
-            // the input into the touch component so virtual UI reflects the action.
             if (this.touchInput && this.touchInput.simulatePointerAttack) {
                 try {
                     this.touchInput.simulatePointerAttack(ptr);
