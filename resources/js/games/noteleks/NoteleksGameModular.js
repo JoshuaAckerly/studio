@@ -127,6 +127,74 @@ class NoteleksGame {
                 } catch (e) {
                     console.warn('[NoteleksGame] Failed to instantiate SpinePlugin at runtime:', e);
                 }
+
+                // If scene.add.spine is still not available, provide a lightweight adapter that
+                // constructs a SpineGameObject from cached spine data (prepared by AssetManager.setupSpineData)
+                if (typeof scene.add.spine !== 'function' && window.spine && typeof window.spine.SpineGameObject === 'function') {
+                    console.info('[NoteleksGame] Installing fallback scene.add.spine adapter using window.spine.SpineGameObject');
+
+                    scene.add.spine = function (x = 0, y = 0, keyOrSkeletonKey, initialAnim = 'idle', loop = true) {
+                        // Use cached skeleton and atlas prepared by AssetManager.setupSpineData
+                        const cached = scene.cache.custom || {};
+                        const skeletonData = cached['spine-skeleton-data'];
+                        const atlas = cached['spine-atlas'];
+
+                        if (!skeletonData || !atlas) {
+                            console.warn('[NoteleksGame] No cached spine data available to create SpineGameObject');
+                            return null;
+                        }
+
+                        const SpineGO = window.spine.SpineGameObject;
+
+                        const constructorAttempts = [
+                            // (scene, x, y, skeletonData, atlas)
+                            (S) => new SpineGO(S, x, y, skeletonData, atlas),
+                            // (scene, x, y, skeletonData)
+                            (S) => new SpineGO(S, x, y, skeletonData),
+                            // (scene, skeletonData, atlas)
+                            (S) => new SpineGO(S, skeletonData, atlas),
+                            // (scene, x, y, keyOrSkeletonKey)
+                            (S) => new SpineGO(S, x, y, keyOrSkeletonKey)
+                        ];
+
+                        let spineObj = null;
+                        for (const attempt of constructorAttempts) {
+                            try {
+                                spineObj = attempt(scene);
+                                if (spineObj) break;
+                            } catch (err) {
+                                // ignore and try next
+                            }
+                        }
+
+                        if (!spineObj) {
+                            console.warn('[NoteleksGame] Unable to construct SpineGameObject with known signatures');
+                            return null;
+                        }
+
+                        // Add to the scene display list and update list
+                        try {
+                            scene.add.existing(spineObj);
+                        } catch (err) {
+                            // If add.existing fails, still try to attach to displayList
+                            try { scene.sys.displayList.add(spineObj); } catch (e) { /* ignore */ }
+                        }
+
+                        // Set origin/scale and initial animation when possible
+                        try {
+                            if (typeof spineObj.setOrigin === 'function') spineObj.setOrigin(0.5, 1);
+                            if (typeof spineObj.setAnimation === 'function') {
+                                spineObj.setAnimation(0, initialAnim, loop);
+                            } else if (spineObj.state && typeof spineObj.state.setAnimation === 'function') {
+                                spineObj.state.setAnimation(0, initialAnim, loop);
+                            }
+                        } catch (err) {
+                            // ignore animation errors
+                        }
+
+                        return spineObj;
+                    };
+                }
             }
         });
         // Add game event listeners
