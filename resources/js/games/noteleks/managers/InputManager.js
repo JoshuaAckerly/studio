@@ -1,5 +1,6 @@
 // import GameConfig from '../config/GameConfig.js';
 import TouchInputComponent from '../components/TouchInputComponent.js';
+import { InputUtils } from '../utils/GameUtils.js';
 
 /**
  * Input Manager
@@ -28,12 +29,7 @@ export class InputManager {
             console.log('InputManager: User agent:', navigator.userAgent);
 
             // Create control scheme (always create for desktop fallback)
-            this.controls = {
-                cursors: this.scene.input.keyboard.createCursorKeys(),
-                wasd: this.scene.input.keyboard.addKeys('W,S,A,D,P,R,ESC'),
-                space: this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE),
-                mouse: this.scene.input.activePointer,
-            };
+            this.controls = InputUtils.createControlScheme(this.scene);
 
             // Verify controls were created successfully
             if (!this.controls.cursors || !this.controls.wasd || !this.controls.space) {
