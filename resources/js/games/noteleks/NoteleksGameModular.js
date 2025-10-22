@@ -51,6 +51,8 @@ class NoteleksGame {
                     },
                 ],
             };
+            // Persist constructor so we can attempt to install it later if needed
+            this._spinePluginConstructor = pluginConstructor;
         } else if (possibleSpineGlobal) {
             console.info('[NoteleksGame] Detected spine global, but no plugin constructor found. Will not register as Phaser plugin.');
         } else {
@@ -98,6 +100,31 @@ class NoteleksGame {
             ...this.config,
             parent: containerId,
         });
+
+        // If the plugin mapping didn't register automatically, try to install it via
+        // Phaser's PluginManager which will correctly initialize plugin lifecycle.
+        try {
+            const scene = this.game.scene.getScene('GameScene');
+            // If scene not ready yet, we'll attempt installation once when ready
+            const tryInstall = () => {
+                if (this._spinePluginConstructor && scene && typeof scene.load.spine !== 'function') {
+                    if (this.game && this.game.plugins && typeof this.game.plugins.installScenePlugin === 'function') {
+                        try {
+                            console.info('[NoteleksGame] Installing Spine plugin via PluginManager.installScenePlugin');
+                            this.game.plugins.installScenePlugin('SpinePlugin', this._spinePluginConstructor, 'spine');
+                        } catch (e) {
+                            console.warn('[NoteleksGame] installScenePlugin failed:', e);
+                        }
+                    }
+                }
+            };
+
+            // Try immediately and again when the scene is ready
+            tryInstall();
+            this.game.events.once('ready', tryInstall);
+        } catch (e) {
+            // ignore
+        }
 
         // Log plugin registration status once a scene is booted
         this.game.events.once('ready', () => {
