@@ -20,9 +20,11 @@
         "prettier": "^3.4.2",
         "prettier-plugin-organize-imports": "^4.1.0",
         "prettier-plugin-tailwindcss": "^0.6.11",
+        "puppeteer": "^24.26.0",
         "typescript-eslint": "^8.23.0"
     },
     "dependencies": {
+        "@esotericsoftware/spine-phaser-v3": "^4.2.94",
         "@headlessui/react": "^2.2.0",
         "@heroicons/react": "^2.2.0",
         "@inertiajs/react": "^2.0.0",
