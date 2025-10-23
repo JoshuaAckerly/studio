@@ -1,0 +1,372 @@
+<!DOCTYPE html><html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Noteleks Heroes Beyond Light - GraveYardJokes_Studio</title>
+    
+    <!-- Google Analytics -->
+        <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-QBS3RHFDM4"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-QBS3RHFDM4');
+        
+        // Track game access
+        gtag('event', 'game_access', {
+            'event_category': 'games',
+            'event_label': 'noteleks',
+            'custom_parameter_subdomain': window.location.hostname
+        });
+
+        // Track visitor for email notifications
+        async function trackGameVisit() {
+            try {
+                const visitData = {
+                    referrer: window.location.href,
+                    subdomain: window.location.hostname,
+                    page_title: document.title,
+                    user_agent: navigator.userAgent,
+                    timestamp: new Date().toISOString()
+                };
+
+                console.log('🎮 Tracking game visit:', visitData);
+
+                const response = await fetch('/api/track-visit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(visitData)
+                });
+
+                const result = await response.json();
+                console.log('✅ Game visit tracked:', result.status);
+            } catch (error) {
+                console.error('❌ Game tracking failed:', error);
+            }
+        }
+
+        // Track the visit when page loads
+        trackGameVisit();
+    </script>
+        
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+    <script src="https://unpkg.com/@esotericsoftware/spine-phaser-v3@4.2.*/dist/iife/spine-phaser-v3.js"></script>
+    
+
+    
+    <link rel="modulepreload" as="script" href="https://studio.test/build/assets/main-modular-1O_tR_JL.js"><script type="module" src="https://studio.test/build/assets/main-modular-1O_tR_JL.js"></script>    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            font-family: Arial, sans-serif;
+            color: #fff;
+            /* Mobile optimizations */
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #game-ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+        }
+        
+        #phaser-game {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+        }
+
+        /* Mobile Game Boy Style Layout */
+        @media (max-width: 768px) and (orientation: portrait) {
+            body {
+                height: 100vh; /* Keep within viewport */
+                overflow: hidden; /* Prevent scrolling */
+                position: fixed;
+                width: 100%;
+            }
+
+            #game-container {
+                padding: 5px;
+                background: #2a2a2a;
+                height: 100vh; /* Fit exactly in viewport */
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-start;
+                overflow: hidden;
+            }
+
+            #phaser-game {
+                width: 100%;
+                height: 45vh; /* Smaller to leave room for controls */
+                max-height: 350px;
+                border: 3px solid #1a1a1a;
+                border-radius: 12px;
+                background: #000;
+                box-shadow: 
+                    inset 0 0 10px rgba(0,0,0,0.5),
+                    0 4px 15px rgba(0,0,0,0.3);
+                margin-bottom: 5px;
+                flex-shrink: 0; /* Prevent game from shrinking */
+            }
+
+            #phaser-game canvas {
+                border-radius: 8px;
+            }
+
+            #game-ui {
+                position: relative;
+                top: auto;
+                left: auto;
+                right: auto;
+                margin-bottom: 10px;
+                width: calc(100% - 20px);
+                background: rgba(0, 0, 0, 0.9);
+                border: 2px solid #333;
+                flex-shrink: 0;
+            }
+
+
+
+            /* Game Boy-style mobile controls underneath the game */
+            #mobile-controls-area {
+                flex: 1;
+                max-height: calc(100vh - 50vh - 60px); /* Remaining space after game and UI */
+                min-height: 200px;
+                background: linear-gradient(145deg, #333, #1a1a1a);
+                border: 3px solid #1a1a1a;
+                border-radius: 12px;
+                margin-top: 5px;
+                position: relative;
+                box-shadow: 
+                    inset 0 0 10px rgba(0,0,0,0.5),
+                    0 4px 15px rgba(0,0,0,0.3);
+                /* Game Boy controller styling */
+                background-image: 
+                    radial-gradient(circle at 25% 25%, rgba(255,255,255,0.1) 1px, transparent 1px),
+                    radial-gradient(circle at 75% 75%, rgba(255,255,255,0.1) 1px, transparent 1px);
+                background-size: 20px 20px;
+                overflow: hidden; /* Ensure controls stay within bounds */
+            }
+        }
+
+        @media (max-width: 768px) and (orientation: landscape) {
+            #game-container {
+                flex-direction: row;
+                padding: 5px;
+                background: #2a2a2a;
+            }
+
+            #phaser-game {
+                width: 65%;
+                height: 90vh;
+                border: 3px solid #1a1a1a;
+                border-radius: 8px;
+                margin-right: 10px;
+            }
+
+            #game-ui {
+                position: absolute;
+                top: 5px;
+                left: 5px;
+                width: 60%;
+                background: rgba(0, 0, 0, 0.9);
+                border: 2px solid #333;
+                border-radius: 8px;
+            }
+
+            #mobile-controls-area {
+                width: 35%;
+                height: 90vh;
+                background: #2a2a2a;
+                border-radius: 8px;
+            }
+
+
+        }
+        
+        #phaser-game canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+            /* Prevent mobile scrolling and selection */
+            touch-action: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        #game-controls {
+            position: absolute;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            display: flex;
+            gap: 15px;
+        }
+        
+        #game-controls button {
+            padding: 10px 20px;
+            background: rgba(74, 222, 128, 0.9);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            transition: background-color 0.2s;
+        }
+        
+        #game-controls button:hover {
+            background: rgba(74, 222, 128, 1);
+        }
+        
+        #game-info {
+            display: none; /* Hide info panel in fullscreen mode */
+        }
+        
+        /* Mobile Game Boy Styling */
+        @media (max-width: 768px) {
+            body {
+                background: #2a2a2a;
+            }
+
+            #game-ui {
+                font-size: 14px;
+                padding: 8px 15px;
+                background: linear-gradient(145deg, #333, #1a1a1a);
+                border: 2px solid #444;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            }
+            
+
+
+            #game-controls button:active {
+                transform: translateY(1px);
+                box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            }
+
+            /* Game Boy Screen Effect */
+            #phaser-game::after {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: 
+                    repeating-linear-gradient(
+                        0deg,
+                        transparent,
+                        transparent 2px,
+                        rgba(0,0,0,0.03) 2px,
+                        rgba(0,0,0,0.03) 4px
+                    );
+                pointer-events: none;
+                border-radius: 8px;
+            }
+        }
+    </style>
+<link rel="modulepreload" as="script" crossorigin="" href="/build/assets/spine-plugin-Dnia-IAF.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/Animation.js-CCt5usfG.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/attachments/Attachment.js-BuJahwTg.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/Utils.js-BxF4TXqy.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/attachments/Sequence.js-Bmr1N2vu.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/AnimationState.js-BpHiQO6g.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/AtlasAttachmentLoader.js-DHzgoCAM.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/attachments/BoundingBoxAttachment.js-DCK7xyeq.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/attachments/ClippingAttachment.js--vPUJ-XH.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/attachments/MeshAttachment.js-D4uA4rXk.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/TextureAtlas.js-Conwr0ig.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/Texture.js-hzZ37P7t.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/attachments/PathAttachment.js-CQne7zaP.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/attachments/PointAttachment.js-CEzRDf99.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/attachments/RegionAttachment.js-CjDHRYC6.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/BoneData.js-C2kVsMAc.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/PathConstraintData.js-ucQLAiPL.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/ConstraintData.js-cOSIUnDk.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/Skeleton.js-COF555Zc.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/Bone.js-BDmquBeq.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/IkConstraint.js-CT8H1AwZ.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/PathConstraint.js-DN8hoK54.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/PhysicsConstraint.js-C10jkcUr.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/Slot.js-B_5n-Z7W.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/TransformConstraint.js-CRcFoXjo.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/SkeletonBinary.js-fwzKVudX.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/Event.js-DH4ajgNE.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/EventData.js-BVkOAG-C.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/IkConstraintData.js-CnyYm41J.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/PhysicsConstraintData.js-DrTdnd2r.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/SkeletonData.js-fv1M9U-I.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/Skin.js-Bx9XFSnu.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/SlotData.js-CnWaGdmq.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/TransformConstraintData.js-BFmjefm0.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/SkeletonJson.js-BcqvL4ju.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/polyfills.js-Dxr7cp2-.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-canvas/dist/CanvasTexture.js-CaF8-Dbw.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-canvas/dist/SkeletonRenderer.js-CPCGHyFA.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-webgl/dist/GLTexture.js-CdIOyPET.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-webgl/dist/WebGL.js-jBfFu4Y3.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-webgl/dist/Matrix4.js-CVCNRyCY.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-webgl/dist/Vector3.js-BJlmlhq_.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-webgl/dist/SceneRenderer.js-jT7JvLPP.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-webgl/dist/Camera.js-03TVcAT1.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-webgl/dist/PolygonBatcher.js-CFl3L9Ld.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-webgl/dist/Mesh.js-Bu23BBIf.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-webgl/dist/Shader.js-DyFT4KN3.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-webgl/dist/ShapeRenderer.js-GgEogBwn.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-webgl/dist/SkeletonDebugRenderer.js-9c4RNLyo.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/SkeletonBounds.js-DhF4Bjcj.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-webgl/dist/SkeletonRenderer.js-DBN1tARW.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/SkeletonClipping.js-DbaaVk_S.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/Triangulator.js-pKlXgEuQ.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/AnimationStateData.js-DQiUXfo0.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-core/dist/AssetManagerBase.js-B02qclCm.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-webgl/dist/AssetManager.js-BsHLRFV2.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-webgl/dist/CameraController.js-Dw821UTw.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-webgl/dist/Input.js-DwrS5YgQ.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-webgl/dist/LoadingScreen.js-CSGf4uEE.js"><link rel="modulepreload" as="script" crossorigin="" href="/build/assets/npm.esotericsoftware_spine-webgl/dist/SpineCanvas.js-C-J8J3Xt.js"></head>
+<body>
+    <div id="game-container">
+        <div id="game-ui">
+            <div id="score">Score: <span id="score-value">0</span></div>
+        </div>
+        <div id="phaser-game"><canvas width="800" height="600" style="width: 800px; height: 600px; margin-left: 0px; margin-top: 0px;"></canvas></div>
+        <div id="mobile-controls-area"><div id="virtual-joystick" style="position: absolute; left: 30px; top: 50%; transform: translateY(-50%); width: 120px; height: 120px; background: radial-gradient(circle, rgba(51, 51, 51, 0.8) 0%, rgba(26, 26, 26, 0.8) 100%); border: 3px solid rgba(255, 255, 255, 0.3); border-radius: 50%; cursor: pointer; user-select: none; z-index: 10;"><div id="virtual-joystick-knob" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 50px; height: 50px; background: radial-gradient(circle, rgb(74, 222, 128) 0%, rgb(34, 197, 94) 100%); border: 2px solid rgba(255, 255, 255, 0.8); border-radius: 50%; transition: 0.1s;"></div></div><div style="position: absolute; right: 30px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 20px; z-index: 10;"><button id="virtual-jump-btn" style="width: 80px; height: 80px; background: linear-gradient(145deg, rgb(239, 68, 68), rgb(220, 38, 38)); border: 3px solid rgba(255, 255, 255, 0.3); border-radius: 50%; color: white; font-weight: bold; font-size: 12px; cursor: pointer; user-select: none; box-shadow: rgba(0, 0, 0, 0.3) 0px 4px 8px; transition: 0.1s;">JUMP</button><button id="virtual-attack-btn" style="width: 80px; height: 80px; background: linear-gradient(145deg, rgb(59, 130, 246), rgb(37, 99, 235)); border: 3px solid rgba(255, 255, 255, 0.3); border-radius: 50%; color: white; font-weight: bold; font-size: 12px; cursor: pointer; user-select: none; box-shadow: rgba(0, 0, 0, 0.3) 0px 4px 8px; transition: 0.1s;">ATTACK</button></div><div style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; z-index: 15;"></div></div>
+    </div>
+
+    <div id="game-info">
+        <h2 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem;">About Noteleks Heroes Beyond Light</h2>
+        <p style="margin-bottom: 1rem;">
+            A recreation of my original mobile game, now playable in your browser with advanced Spine 2D animations.
+            Control Noteleks as you battle through graveyard enemies with an arsenal of weapons.
+        </p>
+        <p><strong>Controls:</strong> WASD/Arrows to move, Space/Click to attack, Up/W to jump, P to pause, R to restart</p>
+        <p><strong>New Features:</strong> Modular codebase with separate classes for Player, Enemies, Weapons, and UI management!</p>
+    </div>
+
+    <script>
+        // Import tracking functions (if needed)
+        function trackGameEvent(action, label) {
+            if (typeof gtag !== 'undefined') {
+                gtag('event', action, {
+                    'event_category': 'game_interaction',
+                    'event_label': label,
+                    'custom_parameter_game': 'noteleks',
+                    'custom_parameter_subdomain': window.location.hostname
+                });
+                console.log('🎮 Game event:', action, label);
+            }
+        }
+
+        // Handle button clicks
+        document.getElementById('back-btn').addEventListener('click', function() {
+            trackGameEvent('game_exit', 'back_to_studio');
+            window.location.href = 'https://studio.test';
+        });
+
+        document.getElementById('pause-btn').addEventListener('click', function() {
+            if (window.noteleksGame) {
+                const scene = window.noteleksGame.getScene('GameScene');
+                if (scene) {
+                    if (scene.gameState === 'playing') {
+                        scene.pauseGame();
+                        this.textContent = 'Resume';
+                        trackGameEvent('game_pause', 'pause');
+                    } else if (scene.gameState === 'paused') {
+                        scene.resumeGame();
+                        this.textContent = 'Pause';
+                        trackGameEvent('game_resume', 'resume');
+                    }
+                }
+            }
+        });
+
+        document.getElementById('restart-btn').addEventListener('click', function() {
+            if (window.noteleksGame) {
+                const scene = window.noteleksGame.getScene('GameScene');
+                if (scene) {
+                    scene.restartGame();
+                    // Reset pause button text
+                    document.getElementById('pause-btn').textContent = 'Pause';
+                    trackGameEvent('game_restart', 'restart');
+                }
+            }
+        });
+    </script>
+
+<div id="noteleks-page-log" style="position: fixed; left: 12px; top: 12px; z-index: 1000000; max-width: 40vw; max-height: 40vh; overflow: auto; background: rgba(0, 0, 0, 0.7); color: rgb(255, 255, 255); font-size: 12px; padding: 8px; border-radius: 6px; box-shadow: rgba(0, 0, 0, 0.5) 0px 4px 12px; font-family: monospace;"><div style="font-weight: 700; margin-bottom: 6px;">Noteleks Logs</div><div id="noteleks-page-log-list"><div style="margin-bottom: 6px; white-space: pre-wrap;">[info] [NoteleksMain] entry script executing, document.readyState= interactive</div><div style="margin-bottom: 6px; white-space: pre-wrap;">[info] [NoteleksGame] Found spine plugin constructor at window.spine.%s SpinePlugin</div><div style="margin-bottom: 6px; white-space: pre-wrap;">[info] [NoteleksGame] initialize start, containerId=%s phaser-game</div><div style="margin-bottom: 6px; white-space: pre-wrap;">[info] [NoteleksGame] Could not import spine package, will fallback to window global detection</div><div style="margin-bottom: 6px; white-space: pre-wrap;">[info] [NoteleksGame] Creating Phaser.Game with final config (plugins may be registered by Phaser)</div><div style="margin-bottom: 6px; white-space: pre-wrap;">[log] %c %c %c %c %c Phaser v3.70.0 (WebGL | Web Audio) %c https://phaser.io background: #ff0000 background: #ffff00 background: #00ff00 background: #00ffff color: #ffffff; background: #000000 background: transparent</div><div style="margin-bottom: 6px; white-space: pre-wrap;">[info] [NoteleksGame] Phaser.Game instance created: true</div><div style="margin-bottom: 6px; white-space: pre-wrap;">[info] [NoteleksGame] Installing event listeners</div><div style="margin-bottom: 6px; white-space: pre-wrap;">[info] [AssetManager] Queuing raw spine assets (fallback safe): {"png":"/games/noteleks/spine/characters/Noteleks.png","atlas":"/games/noteleks/spine/characters/Noteleks.atlas","json":"/games/noteleks/spine/characters/Noteleks.json"}</div><div style="margin-bottom: 6px; white-space: pre-wrap;">[info] [AssetManager] Spine loader not detected at preload; relying on raw assets fallback</div><div style="margin-bottom: 6px; white-space: pre-wrap;">[info] [NoteleksGame] Scene ready. scene instance: GameScene</div><div style="margin-bottom: 6px; white-space: pre-wrap;">[info] [NoteleksGame] scene.load.spine available: false</div><div style="margin-bottom: 6px; white-space: pre-wrap;">[info] [NoteleksGame] Wrapped existing scene.add.spine to use plugin add with image fallback</div><div style="margin-bottom: 6px; white-space: pre-wrap;">[info] [AssetManager] setupSpineData diagnostics: textKeys= [] jsonKeys= [] textureKeys= ["__DEFAULT","__MISSING","__WHITE","noteleks-texture"]</div><div style="margin-bottom: 6px; white-space: pre-wrap;">[info] [AssetManager] setupSpineData: atlasText= true skeletonData= true texture= true</div><div style="margin-bottom: 6px; white-space: pre-wrap;">[info] [AssetManager] Spine data prepared and cached under scene.cache.custom ["esotericsoftware.spine.skeletonFile.cache","esotericsoftware.spine.atlas.cache","spine-atlas","spine-skeleton-data","spine-canvas-fallback"]</div><div style="margin-bottom: 6px; white-space: pre-wrap;">[log] InputManager: Mobile device detected: true</div><div style="margin-bottom: 6px; white-space: pre-wrap;">[log] InputManager: User agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/141.0.0.0 Safari/537.36</div><div style="margin-bottom: 6px; white-space: pre-wrap;">[log] InputManager: Initializing touch controls</div><div style="margin-bottom: 6px; white-space: pre-wrap;">[log] TouchInputComponent: Mobile device detected: true</div><div style="margin-bottom: 6px; white-space: pre-wrap;">[log] TouchInputComponent: Touch controls initialized</div><div style="margin-bottom: 6px; white-space: pre-wrap;">[warn] [NoteleksGame] scene.add.spine plugin add threw an error, using image fallback: {}</div><div style="margin-bottom: 6px; white-space: pre-wrap;">[info] [Player] Spine display created via scene.add.spine {"spine":true}</div><div style="margin-bottom: 6px; white-space: pre-wrap;">[info] [Player] Spine object APIs: {"setAnimation":"undefined","state":false,"stateSetAnimation":"n/a"}</div><div style="margin-bottom: 6px; white-space: pre-wrap;">[warn] [Player] No animation API found on spine object</div><div style="margin-bottom: 6px; white-space: pre-wrap;">[info] [Player] No skeleton animation data visible on display</div><div style="margin-bottom: 6px; white-space: pre-wrap;">[info] [Player] Debug handle available: window.noteleksPlayer</div><div style="margin-bottom: 6px; white-space: pre-wrap;">[info] [Player] You can inspect and manually call: window.noteleksPlayer.spine &amp;&amp; window.noteleksPlayer.spine.setAnimation(0, "idle", true)</div><div style="margin-bottom: 6px; white-space: pre-wrap;">[info] [GameScene] Spine skeleton data already present in cache</div><div style="margin-bottom: 6px; white-space: pre-wrap;">[log] ✅ Game visit tracked: success</div><div style="margin-bottom: 6px; white-space: pre-wrap;">[info] [Player] Debug overlay built with animations: ["attack","idle","jump","run"]</div></div><div style="display: flex; gap: 6px; margin-bottom: 6px;"><button style="padding: 2px 6px; border-radius: 4px; cursor: pointer;">Copy</button><button style="padding: 2px 6px; border-radius: 4px; cursor: pointer;">Download</button><button style="padding: 2px 6px; border-radius: 4px; cursor: pointer;">Clear</button></div><button title="Close logs" style="position: absolute; right: 6px; top: 6px; background: transparent; color: rgb(255, 255, 255); border: none; font-size: 16px; cursor: pointer;">×</button></div><div id="noteleks-debug-overlay" style="position: fixed; right: 12px; bottom: 12px; background: rgba(0, 0, 0, 0.65); color: rgb(255, 255, 255); padding: 8px; border-radius: 6px; font-size: 12px; font-family: Arial, sans-serif; z-index: 999999; max-width: 320px; box-shadow: rgba(0, 0, 0, 0.6) 0px 2px 8px;"><div style="font-weight: 700; margin-bottom: 6px;">Noteleks Debug</div><div style="margin-bottom: 6px;">Animations:</div><div style="display: flex; flex-wrap: wrap; gap: 6px; max-height: 160px; overflow: auto;"><button style="background: rgb(34, 34, 34); color: rgb(255, 255, 255); border: 1px solid rgba(255, 255, 255, 0.08); padding: 4px 8px; border-radius: 4px; cursor: pointer;">attack</button><button style="background: rgb(34, 34, 34); color: rgb(255, 255, 255); border: 1px solid rgba(255, 255, 255, 0.08); padding: 4px 8px; border-radius: 4px; cursor: pointer;">idle</button><button style="background: rgb(34, 34, 34); color: rgb(255, 255, 255); border: 1px solid rgba(255, 255, 255, 0.08); padding: 4px 8px; border-radius: 4px; cursor: pointer;">jump</button><button style="background: rgb(34, 34, 34); color: rgb(255, 255, 255); border: 1px solid rgba(255, 255, 255, 0.08); padding: 4px 8px; border-radius: 4px; cursor: pointer;">run</button></div><div style="display: flex; justify-content: space-between; margin-top: 8px;"><button style="background: transparent; color: rgb(255, 255, 255); border: 1px solid rgba(255, 255, 255, 0.12); padding: 4px 8px; border-radius: 4px; cursor: pointer;">Close</button></div></div></body></html>
