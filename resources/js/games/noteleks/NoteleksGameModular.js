@@ -2,6 +2,9 @@
 import GameConfig from './config/GameConfig.js';
 import GameScene from './scenes/GameScene.js';
 
+// Spine plugin is imported dynamically inside initialize() to keep the main
+// bundle smaller and allow code-splitting. Do not import it at top-level.
+
 /**
  * Noteleks Game - Main Game Class
  * Refactored for modularity and maintainability
@@ -12,7 +15,7 @@ class NoteleksGame {
         this.config = this.createGameConfig();
     }
 
-    createGameConfig() {
+    createGameConfig(passedPluginConstructor) {
         // Try to detect a Spine plugin exposed on window by the spine-phaser iife.
         // The IIFE commonly exposes a global namespace `window.spine` which may contain a plugin constructor
         // such as `SpinePlugin` or `SpineGameObject`. We prefer a real constructor function to register.
@@ -21,7 +24,8 @@ class NoteleksGame {
             possibleSpineGlobal = window.SpinePlugin || window.spinePlugin || window.Spine || window.spine || null;
         }
 
-        let pluginConstructor = null;
+    // Start with any constructor provided by the caller (e.g. imported package)
+    let pluginConstructor = passedPluginConstructor || null;
         // If the global itself is a constructor, use it
         if (possibleSpineGlobal && typeof possibleSpineGlobal === 'function') {
             pluginConstructor = possibleSpineGlobal;
@@ -41,7 +45,7 @@ class NoteleksGame {
         }
 
         let pluginsConfig = undefined;
-        if (pluginConstructor) {
+    if (pluginConstructor) {
             pluginsConfig = {
                 scene: [
                     {
@@ -88,175 +92,99 @@ class NoteleksGame {
         };
     }
 
-    initialize(containerId = 'phaser-game') {
+    async initialize(containerId = 'phaser-game') {
+        console.info('[NoteleksGame] initialize start, containerId=%s', containerId);
+
         // Check if container exists
         const container = document.getElementById(containerId);
         if (!container) {
+            console.warn('[NoteleksGame] initialize aborted: container not found:', containerId);
             return false;
         }
 
-        // Create the game
-        this.game = new Phaser.Game({
-            ...this.config,
-            parent: containerId,
-        });
-
-        // If the plugin mapping didn't register automatically, try to install it via
-        // Phaser's PluginManager which will correctly initialize plugin lifecycle.
+        // Try to dynamically import the spine-phaser plugin so we can pass its
+        // constructor into the Phaser config. If that fails, we fall back to
+        // detecting window.spine at runtime (existing behavior).
+        let spinePluginConstructor = null;
         try {
-            const scene = this.game.scene.getScene('GameScene');
-            // If scene not ready yet, we'll attempt installation once when ready
-            const tryInstall = () => {
-                if (this._spinePluginConstructor && scene && typeof scene.load.spine !== 'function') {
-                    if (this.game && this.game.plugins && typeof this.game.plugins.installScenePlugin === 'function') {
-                        try {
-                            console.info('[NoteleksGame] Installing Spine plugin via PluginManager.installScenePlugin');
-                            this.game.plugins.installScenePlugin('SpinePlugin', this._spinePluginConstructor, 'spine');
-                        } catch (e) {
-                            console.warn('[NoteleksGame] installScenePlugin failed:', e);
-                        }
-                    }
-                }
-            };
-
-            // Try immediately and again when the scene is ready
-            tryInstall();
-            this.game.events.once('ready', tryInstall);
+            const mod = await import('@esotericsoftware/spine-phaser-v3');
+            // The package exports a plugin; try common export names
+            spinePluginConstructor = mod?.default?.SpinePlugin || mod?.SpinePlugin || mod?.default || mod;
+            console.info('[NoteleksGame] Imported spine plugin via package');
         } catch (e) {
-            // ignore
+            console.info('[NoteleksGame] Could not import spine package, will fallback to window global detection');
         }
 
-        // Log plugin registration status once a scene is booted
+        // Build the actual config now, preferring the imported constructor if any
+        const finalConfig = this.createGameConfig(spinePluginConstructor || this._spinePluginConstructor);
+
+        console.info('[NoteleksGame] Creating Phaser.Game with final config (plugins may be registered by Phaser)');
+        this.game = new Phaser.Game({
+            ...finalConfig,
+            parent: containerId,
+        });
+        console.info('[NoteleksGame] Phaser.Game instance created:', !!this.game);
+        // Phaser will auto-add the scene(s) declared in config.scene and start them.
+
+        // After boot, verify plugin/loader presence and install fallback adapter if needed
         this.game.events.once('ready', () => {
             const scene = this.game.scene.getScene('GameScene');
-            if (scene) {
-                console.info('[NoteleksGame] Scene ready. scene.load.spine available:', typeof scene.load.spine === 'function');
+            if (!scene) return;
+            console.info('[NoteleksGame] Scene ready. scene instance:', scene && scene.sys && scene.sys.settings && scene.sys.settings.key);
+            console.info('[NoteleksGame] scene.load.spine available:', typeof (scene.load && scene.load.spine) === 'function');
 
-                // If the scene doesn't have spine methods but the runtime exposes a SpinePlugin
-                // constructor, instantiate it and map its methods onto the scene to provide
-                // scene.add.spine and scene.load.spine at runtime.
-                // If a SpinePlugin constructor exists on window, do NOT attempt to instantiate it here.
-                // The Phaser ScenePlugin lifecycle expects the plugin to be registered via the
-                // PluginManager so direct construction will often fail (missing internal context).
-                if (window.spine && typeof window.spine.SpinePlugin === 'function') {
-                    console.info('[NoteleksGame] Detected window.spine.SpinePlugin but will not instantiate it directly (requires PluginManager). Using fallback adapter if needed.');
-                }
+            // If the loader/plugin isn't available at this point we will keep our adapter
+            // wrapper in place below to prefer cached data or fall back to a safe image.
 
-                // If scene.add.spine is still not available, provide a lightweight adapter that
-                // constructs a SpineGameObject from cached spine data (prepared by AssetManager.setupSpineData)
-                if (typeof scene.add.spine !== 'function' && window.spine && typeof window.spine.SpineGameObject === 'function') {
-                    console.info('[NoteleksGame] Installing fallback scene.add.spine adapter using window.spine.SpineGameObject');
-
-                    scene.add.spine = function (x = 0, y = 0, keyOrSkeletonKey, initialAnim = 'idle', loop = true) {
-                        // Use cached skeleton and atlas prepared by AssetManager.setupSpineData
-                        const cached = scene.cache.custom || {};
-                        const skeletonData = cached['spine-skeleton-data'];
-                        const atlas = cached['spine-atlas'];
-
-                        if (!skeletonData || !atlas) {
-                            console.warn('[NoteleksGame] No cached spine data available to create SpineGameObject');
-                            return null;
-                        }
-
-                        const SpineGO = window.spine.SpineGameObject;
-
-                        const constructorAttempts = [
-                            // (scene, x, y, skeletonData, atlas)
-                            (S) => new SpineGO(S, x, y, skeletonData, atlas),
-                            // (scene, x, y, skeletonData)
-                            (S) => new SpineGO(S, x, y, skeletonData),
-                            // (scene, skeletonData, atlas)
-                            (S) => new SpineGO(S, skeletonData, atlas),
-                            // (scene, x, y, keyOrSkeletonKey)
-                            (S) => new SpineGO(S, x, y, keyOrSkeletonKey)
-                        ];
-
-                        let spineObj = null;
-                        for (const attempt of constructorAttempts) {
-                            try {
-                                spineObj = attempt(scene);
-                                if (spineObj) break;
-                            } catch (err) {
-                                // ignore and try next
-                            }
-                        }
-
-                        if (!spineObj) {
-                            console.warn('[NoteleksGame] Unable to construct SpineGameObject with known signatures');
-                            return null;
-                        }
-
-                        // Add to the scene display list and update list
+            // Install adapter/wrapper if loader/add are still missing
+            try {
+                if (typeof scene.add.spine !== 'function') {
+                    // Plugin add missing: install a simple fallback that creates a static image
+                    // from the preloaded noteleks texture. Avoid attempting to construct
+                    // SpineGameObject directly because it expects plugin internals.
+                    console.info('[NoteleksGame] scene.add.spine missing - installing safe image fallback');
+                    scene.add.spine = function(x = 0, y = 0, keyOrSkeletonKey, initialAnim = 'idle', loop = true) {
                         try {
-                            scene.add.existing(spineObj);
-                        } catch (err) {
-                            // If add.existing fails, still try to attach to displayList
-                            try { scene.sys.displayList.add(spineObj); } catch (e) { /* ignore */ }
-                        }
-
-                        // Set origin/scale and initial animation when possible
-                        try {
-                            if (typeof spineObj.setOrigin === 'function') spineObj.setOrigin(0.5, 1);
-                            if (typeof spineObj.setAnimation === 'function') {
-                                spineObj.setAnimation(0, initialAnim, loop);
-                            } else if (spineObj.state && typeof spineObj.state.setAnimation === 'function') {
-                                spineObj.state.setAnimation(0, initialAnim, loop);
+                            if (scene.textures.exists('noteleks-texture')) {
+                                const img = scene.add.image(x, y, 'noteleks-texture').setOrigin(0.5, 1);
+                                console.info('[NoteleksGame] Created image fallback for spine (plugin absent)');
+                                return img;
                             }
-                        } catch (err) {
-                            // ignore animation errors
+                        } catch (e) {
+                            console.warn('[NoteleksGame] Image fallback failed for scene.add.spine:', e);
                         }
-
-                        return spineObj;
+                        return null;
                     };
-                } else if (typeof scene.add.spine === 'function' && window.spine && typeof window.spine.SpineGameObject === 'function') {
-                    // If plugin provided scene.add.spine but assets were loaded manually into scene.cache.custom,
-                    // the plugin may expect its own cache. Wrap scene.add.spine so we prefer using the cached
-                    // skeleton/atlas when available to construct a SpineGameObject directly and avoid plugin cache errors.
-                    try {
-                        const originalAddSpine = scene.add.spine.bind(scene.add);
-                        scene.add.spine = function (x = 0, y = 0, keyOrSkeletonKey, initialAnim = 'idle', loop = true) {
-                            const cached = scene.cache.custom || {};
-                            const skeletonData = cached['spine-skeleton-data'];
-                            const atlas = cached['spine-atlas'];
-                            // If we have cached data, construct SpineGameObject directly
-                            if (skeletonData && atlas) {
-                                try {
-                                    const SpineGO = window.spine.SpineGameObject;
-                                    let spineObj = null;
-                                    try {
-                                        spineObj = new SpineGO(scene, x, y, skeletonData, atlas);
-                                    } catch (err) {
-                                        try {
-                                            spineObj = new SpineGO(scene, skeletonData, atlas);
-                                        } catch (err2) {
-                                            // fallback to original plugin add
-                                            return originalAddSpine(x, y, keyOrSkeletonKey, initialAnim, loop);
-                                        }
-                                    }
-                                    // Add to display list
-                                    try { scene.add.existing(spineObj); } catch (e) { try { scene.sys.displayList.add(spineObj); } catch (e2) {} }
-                                    // set animation
-                                    try {
-                                        if (typeof spineObj.setAnimation === 'function') spineObj.setAnimation(0, initialAnim, loop);
-                                        else if (spineObj.state && typeof spineObj.state.setAnimation === 'function') spineObj.state.setAnimation(0, initialAnim, loop);
-                                    } catch (e) {}
-                                    return spineObj;
-                                } catch (e) {
-                                    console.warn('[NoteleksGame] Direct SpineGameObject construction failed, falling back to plugin add:', e);
-                                    return originalAddSpine(x, y, keyOrSkeletonKey, initialAnim, loop);
+                    console.info('[NoteleksGame] Installed safe scene.add.spine fallback');
+                } else if (typeof scene.add.spine === 'function') {
+                    // Wrap existing plugin add to provide a safe fallback if the plugin add
+                    // throws due to missing loader cache or other initialization issues.
+                    const original = scene.add.spine;
+                    scene.add.spine = function(x = 0, y = 0, keyOrSkeletonKey, initialAnim = 'idle', loop = true) {
+                        try {
+                            return original.call(scene, x, y, keyOrSkeletonKey, initialAnim, loop);
+                        } catch (err) {
+                            console.warn('[NoteleksGame] scene.add.spine plugin add threw an error, using image fallback:', err);
+                            try {
+                                if (scene.textures.exists('noteleks-texture')) {
+                                    const img = scene.add.image(x, y, 'noteleks-texture').setOrigin(0.5, 1);
+                                    return img;
                                 }
+                            } catch (e) {
+                                console.warn('[NoteleksGame] Image fallback failed after plugin error:', e);
                             }
-                            // Otherwise defer to plugin's add
-                            return originalAddSpine(x, y, keyOrSkeletonKey, initialAnim, loop);
-                        };
-                        console.info('[NoteleksGame] Wrapped scene.add.spine to use cached spine data when available');
-                    } catch (e) {
-                        console.warn('[NoteleksGame] Failed to wrap scene.add.spine:', e);
-                    }
+                            return null;
+                        }
+                    };
+                    console.info('[NoteleksGame] Wrapped existing scene.add.spine to use plugin add with image fallback');
                 }
+            } catch (e) {
+                console.warn('[NoteleksGame] Failed to install spine adapter:', e);
             }
         });
+
         // Add game event listeners
+        console.info('[NoteleksGame] Installing event listeners');
         this.setupEventListeners();
 
         return true;
@@ -325,10 +253,15 @@ class NoteleksGame {
     }
 
     // Static factory method
-    static create(containerId) {
+    // Static factory method
+    static async create(containerId) {
         const game = new NoteleksGame();
-        const success = game.initialize(containerId);
-        return success ? game : null;
+        try {
+            const success = await game.initialize(containerId);
+            return success ? game : null;
+        } catch (e) {
+            return null;
+        }
     }
 }
 

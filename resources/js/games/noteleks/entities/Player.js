@@ -34,6 +34,45 @@ class Player extends GameObject {
                 // If the skeleton isn't loaded yet this may throw — catch and fallback silently.
                 this.spine = this.scene.add.spine(this.x, this.y, 'noteleks-data', 'idle', true);
                 console.info('[Player] Spine display created via scene.add.spine', { spine: !!this.spine });
+                try {
+                    // Diagnostics: report which animation APIs are present
+                    console.info('[Player] Spine object APIs:', {
+                        setAnimation: typeof this.spine.setAnimation,
+                        state: !!this.spine.state,
+                        stateSetAnimation: this.spine.state ? typeof this.spine.state.setAnimation : 'n/a',
+                    });
+                    // Force an initial animation robustly
+                    try {
+                        if (typeof this.spine.setAnimation === 'function') {
+                            this.spine.setAnimation(0, 'idle', true);
+                            console.info('[Player] Called spine.setAnimation(0, "idle", true)');
+                        } else if (this.spine.state && typeof this.spine.state.setAnimation === 'function') {
+                            this.spine.state.setAnimation(0, 'idle', true);
+                            console.info('[Player] Called spine.state.setAnimation(0, "idle", true)');
+                        } else {
+                            console.warn('[Player] No animation API found on spine object');
+                        }
+                    } catch (err) {
+                        console.warn('[Player] setAnimation threw:', err && err.message);
+                    }
+
+                    // Print available animation names from the skeleton (if accessible)
+                    try {
+                        const skel = this.spine && this.spine.spine && this.spine.spine.skeleton || (this.spine && this.spine.skeleton) || null;
+                        if (skel && skel.data && skel.data.animations) {
+                            const names = skel.data.animations.map(a => a.name);
+                            console.info('[Player] Spine skeleton animations:', names);
+                        } else if (this.spine && this.spine.state && this.spine.state.tracks) {
+                            console.info('[Player] Spine state tracks present (could be runtime plugin variation)');
+                        } else {
+                            console.info('[Player] No skeleton animation data visible on display');
+                        }
+                    } catch (e) {
+                        console.warn('[Player] Failed to read skeleton animations:', e && e.message);
+                    }
+                } catch (e) {
+                    console.warn('[Player] Error while forcing initial spine animation:', e);
+                }
                 // Slight tuning for origin/scale so it sits on the physics body
                 if (typeof this.spine.setOrigin === 'function') {
                     this.spine.setOrigin(0.5, 1);
@@ -80,6 +119,192 @@ class Player extends GameObject {
                     console.warn('[Player] Failed to create spine display on spine-ready:', e);
                 }
             });
+        }
+
+        // Final fallback: if no spine created, but AssetManager prepared a canvas fallback,
+        // create a Phaser Image from it so the player is visible.
+        if (!this.spine) {
+            try {
+                const cached = this.scene && this.scene.cache && this.scene.cache.custom ? this.scene.cache.custom : null;
+                const fallback = cached && cached['spine-canvas-fallback'];
+                if (fallback) {
+                    // Use the preloaded noteleks texture as a safe static fallback (no Spine runtime calls)
+                    this.spine = this.scene.add.image(this.x, this.y, 'noteleks-texture').setOrigin(0.5, 1);
+                    if (this.spine && this.spine.setDepth) this.spine.setDepth(10);
+                    console.info('[Player] Spine canvas fallback image created as final fallback');
+                }
+            } catch (e) {
+                // ignore
+            }
+        }
+
+        // Small bob animation state for static fallback to make character feel alive
+        this._fallbackBob = { t: 0 };
+
+        // Expose a debug handle for easier inspection from the browser console
+        try {
+            if (typeof window !== 'undefined') {
+                window.noteleksPlayer = this;
+                console.info('[Player] Debug handle available: window.noteleksPlayer');
+                console.info('[Player] You can inspect and manually call: window.noteleksPlayer.spine && window.noteleksPlayer.spine.setAnimation(0, "idle", true)');
+            }
+        } catch (e) {
+            // ignore
+        }
+
+        // Start a small debug UI overlay that appears when skeleton animation data is available.
+        // It will list animation names and let you click buttons to play them.
+        try {
+            this._debugOverlayStarted = false;
+            this._startDebugOverlayPolling = () => {
+                if (this._debugOverlayStarted) return;
+                this._debugOverlayStarted = true;
+                let attempts = 0;
+                const maxAttempts = 12; // ~6 seconds
+                const iv = setInterval(() => {
+                    attempts += 1;
+                    const names = this._gatherAnimationNames();
+                    if (names && names.length) {
+                        clearInterval(iv);
+                        this._buildDebugOverlay(names);
+                    } else if (attempts >= maxAttempts) {
+                        clearInterval(iv);
+                        console.info('[Player] Debug overlay: no skeleton animation data found, stopping poll');
+                    }
+                }, 500);
+            };
+
+            this._gatherAnimationNames = () => {
+                try {
+                    const spineObj = this.spine;
+                    const skel = (spineObj && spineObj.spine && spineObj.spine.skeleton) || (spineObj && spineObj.skeleton) || null;
+                    if (skel && skel.data && Array.isArray(skel.data.animations)) {
+                        return skel.data.animations.map(a => a.name);
+                    }
+                    // Fallback: check for prepared runtime skeleton data in scene.cache.custom
+                    try {
+                        const cached = this.scene && this.scene.cache && this.scene.cache.custom ? this.scene.cache.custom : null;
+                        if (cached && cached['spine-skeleton-data'] && cached['spine-skeleton-data'].animations) {
+                            return cached['spine-skeleton-data'].animations.map(a => a.name);
+                        }
+                    } catch (e) {
+                        // ignore
+                    }
+                    // Fallback: parse raw skeleton JSON loaded into cache.json
+                    try {
+                        const raw = this.scene && this.scene.cache && this.scene.cache.json ? this.scene.cache.json.get('noteleks-skeleton-data') : null;
+                        if (raw && raw.animations && Array.isArray(raw.animations)) {
+                            return raw.animations.map(a => a.name);
+                        }
+                        // Some skeleton JSON formats store animations under 'animations' object map
+                        if (raw && raw.animations && typeof raw.animations === 'object') {
+                            return Object.keys(raw.animations || {});
+                        }
+                    } catch (e) {
+                        // ignore
+                    }
+                } catch (e) {
+                    // ignore
+                }
+                return null;
+            };
+
+            this._buildDebugOverlay = (names) => {
+                try {
+                    // Remove existing overlay if present
+                    const existing = document.getElementById('noteleks-debug-overlay');
+                    if (existing) existing.remove();
+
+                    const container = document.createElement('div');
+                    container.id = 'noteleks-debug-overlay';
+                    container.style.position = 'fixed';
+                    container.style.right = '12px';
+                    container.style.bottom = '12px';
+                    container.style.background = 'rgba(0,0,0,0.65)';
+                    container.style.color = '#fff';
+                    container.style.padding = '8px';
+                    container.style.borderRadius = '6px';
+                    container.style.fontSize = '12px';
+                    container.style.fontFamily = 'Arial, sans-serif';
+                    container.style.zIndex = 999999;
+                    container.style.maxWidth = '320px';
+                    container.style.boxShadow = '0 2px 8px rgba(0,0,0,0.6)';
+
+                    const title = document.createElement('div');
+                    title.textContent = 'Noteleks Debug';
+                    title.style.fontWeight = '700';
+                    title.style.marginBottom = '6px';
+                    container.appendChild(title);
+
+                    const info = document.createElement('div');
+                    info.textContent = 'Animations:';
+                    info.style.marginBottom = '6px';
+                    container.appendChild(info);
+
+                    const list = document.createElement('div');
+                    list.style.display = 'flex';
+                    list.style.flexWrap = 'wrap';
+                    list.style.gap = '6px';
+                    list.style.maxHeight = '160px';
+                    list.style.overflow = 'auto';
+
+                    names.forEach((n) => {
+                        const btn = document.createElement('button');
+                        btn.textContent = n;
+                        btn.style.background = '#222';
+                        btn.style.color = '#fff';
+                        btn.style.border = '1px solid rgba(255,255,255,0.08)';
+                        btn.style.padding = '4px 8px';
+                        btn.style.borderRadius = '4px';
+                        btn.style.cursor = 'pointer';
+                        btn.onclick = (ev) => {
+                            ev.preventDefault();
+                            try {
+                                if (this._setSpineAnimation) this._setSpineAnimation(n, true);
+                                else if (this.spine && this.spine.state && typeof this.spine.state.setAnimation === 'function') {
+                                    this.spine.state.setAnimation(0, n, true);
+                                }
+                                console.info('[Player] Debug: triggered animation', n);
+                            } catch (e) {
+                                console.warn('[Player] Debug: failed to trigger animation', n, e && e.message);
+                            }
+                        };
+                        list.appendChild(btn);
+                    });
+                    container.appendChild(list);
+
+                    const controls = document.createElement('div');
+                    controls.style.display = 'flex';
+                    controls.style.justifyContent = 'space-between';
+                    controls.style.marginTop = '8px';
+
+                    const closeBtn = document.createElement('button');
+                    closeBtn.textContent = 'Close';
+                    closeBtn.style.background = 'transparent';
+                    closeBtn.style.color = '#fff';
+                    closeBtn.style.border = '1px solid rgba(255,255,255,0.12)';
+                    closeBtn.style.padding = '4px 8px';
+                    closeBtn.style.borderRadius = '4px';
+                    closeBtn.style.cursor = 'pointer';
+                    closeBtn.onclick = () => container.remove();
+
+                    controls.appendChild(closeBtn);
+                    container.appendChild(controls);
+
+                    document.body.appendChild(container);
+                    console.info('[Player] Debug overlay built with animations:', names);
+                } catch (e) {
+                    console.warn('[Player] Failed to build debug overlay:', e && e.message);
+                }
+            };
+
+            // Kick off polling for animation names (overlay will appear automatically)
+            if (typeof window !== 'undefined') {
+                // Start soon but allow the scene to finish loading
+                setTimeout(() => this._startDebugOverlayPolling(), 300);
+            }
+        } catch (e) {
+            // ignore overlay failures
         }
     }
 
@@ -167,23 +392,8 @@ class Player extends GameObject {
         }
 
         // Sync spine position/flip if available
-        if (this.spine) {
-            try {
-                // Spine display may be a Phaser Spine Game Object with x/y properties
-                this.spine.x = this.sprite.x;
-                this.spine.y = this.sprite.y + (this.sprite.displayHeight / 2) - 4; // tuck into the sprite
-                // Flip spine horizontally to match sprite
-                if (this.sprite.flipX) {
-                    if (this.spine.scaleX && this.spine.scaleX > 0) this.spine.scaleX = -Math.abs(this.spine.scaleX || 1);
-                    else this.spine.scaleX = -1;
-                } else {
-                    if (this.spine.scaleX && this.spine.scaleX < 0) this.spine.scaleX = Math.abs(this.spine.scaleX || 1);
-                    else this.spine.scaleX = 1;
-                }
-            } catch (e) {
-                // ignore sync errors
-            }
-        }
+        // Sync visual each frame (separate method to allow mobile path to call it)
+        this._syncSpineVisual();
     }
 
     updateWithInputState(inputState) {
@@ -198,6 +408,52 @@ class Player extends GameObject {
 
         if (inputComponent && movementComponent && inputState) {
             this.processInputState(inputState, inputComponent, movementComponent);
+        }
+        // Also sync the visual to ensure spine animations advance on mobile
+        this._syncSpineVisual();
+    }
+
+    _syncSpineVisual() {
+        if (!this.spine) return;
+        try {
+            // Spine display may be a Phaser Spine Game Object with x/y properties
+            // Handle Image fallback bob animation
+            if (this.spine.texture && this.spine.texture.key === 'noteleks-texture') {
+                this._fallbackBob.t += 0.1;
+                const bobOffset = Math.sin(this._fallbackBob.t) * 2;
+                this.spine.x = this.sprite.x;
+                this.spine.y = this.sprite.y + (this.sprite.displayHeight / 2) - 4 + bobOffset;
+            } else {
+                this.spine.x = this.sprite.x;
+                this.spine.y = this.sprite.y + (this.sprite.displayHeight / 2) - 4; // tuck into the sprite
+            }
+            // Flip spine horizontally to match sprite
+            if (this.sprite.flipX) {
+                if (this.spine.scaleX && this.spine.scaleX > 0) this.spine.scaleX = -Math.abs(this.spine.scaleX || 1);
+                else this.spine.scaleX = -1;
+            } else {
+                if (this.spine.scaleX && this.spine.scaleX < 0) this.spine.scaleX = Math.abs(this.spine.scaleX || 1);
+                else this.spine.scaleX = 1;
+            }
+            // Manual spine AnimationState advance (guarded). Some plugin builds
+            // may not auto-update the AnimationState in our environment; this
+            // ensures animation time progresses.
+            try {
+                if (!this._spineManualAdvanceLogged && this.spine.state && typeof this.spine.state.update === 'function') {
+                    console.info('[Player] Manual spine animation advancement is enabled');
+                    this._spineManualAdvanceLogged = true;
+                }
+                if (this.spine.state && typeof this.spine.state.update === 'function' && this.scene && this.scene.game && this.scene.game.loop) {
+                    const dt = (this.scene.game.loop.delta || 16) / 1000;
+                    this.spine.state.update(dt);
+                    this.spine.state.apply(this.spine.skeleton);
+                    if (typeof this.spine.skeleton.updateWorldTransform === 'function') this.spine.skeleton.updateWorldTransform();
+                }
+            } catch (e) {
+                // Ignore manual update errors
+            }
+        } catch (e) {
+            // ignore sync errors
         }
     }
 

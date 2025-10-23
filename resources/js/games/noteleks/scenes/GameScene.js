@@ -64,6 +64,27 @@ class GameScene extends Phaser.Scene {
 
         // Start game systems
         this.startGame();
+
+        // Defensive retry: if AssetManager.setupSpineData didn't run or the
+        // spine cache wasn't prepared during preload (race), try again shortly
+        // after create to ensure skeleton data is available for the Player.
+        try {
+            setTimeout(() => {
+                try {
+                    const hasCache = this.cache && this.cache.custom && this.cache.custom['spine-skeleton-data'];
+                    if (!hasCache) {
+                        const ok = AssetManager.setupSpineData(this);
+                        console.info('[GameScene] Retried AssetManager.setupSpineData, success=', !!ok);
+                    } else {
+                        console.info('[GameScene] Spine skeleton data already present in cache');
+                    }
+                } catch (e) {
+                    console.warn('[GameScene] Retry setupSpineData failed:', e && e.message);
+                }
+            }, 500);
+        } catch (e) {
+            // ignore
+        }
     }
 
     initializeManagers() {
