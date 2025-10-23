@@ -52,13 +52,13 @@ class GameScene extends Phaser.Scene {
         });
     }
 
-    create() {
+    async create() {
         this.gameState = GameStateUtils.STATES.PLAYING;
 
         // Initialize core systems in the correct order
         this.initializeManagers(); // Creates managers, initializes input only
         this.createGameWorld(); // Creates textures, then initializes platform & enemy managers
-        this.setupGameObjects(); // Creates player and other game objects
+    await this.setupGameObjects(); // Creates player and other game objects (waits for spine data)
         this.setupCollisions(); // Sets up physics collisions
         this.registerInputHandlers(); // Registers input event handlers
 
@@ -127,7 +127,48 @@ class GameScene extends Phaser.Scene {
         this.enemyManager.initialize();
     }
 
-    setupGameObjects() {
+    async setupGameObjects() {
+        // Wait for spine skeleton data to be available to avoid the player
+        // creating a sprite fallback due to a race with the loader/plugin.
+        const maxWaitMs = 2000;
+        const pollInterval = 50;
+        let waited = 0;
+        let ready = false;
+
+        while (waited < maxWaitMs) {
+            try {
+                const hasCache = this.cache && this.cache.custom && this.cache.custom['spine-skeleton-data'];
+                if (hasCache) {
+                    ready = true;
+                    break;
+                }
+
+                // Try to (re)build the spine data from raw assets if possible
+                try {
+                    const ok = AssetManager.setupSpineData(this);
+                    if (ok) {
+                        ready = true;
+                        break;
+                    }
+                } catch (e) {
+                    // ignore and continue polling
+                }
+            } catch (e) {
+                // ignore and continue polling
+            }
+
+            // Sleep
+            // eslint-disable-next-line no-await-in-loop
+            await new Promise((r) => setTimeout(r, pollInterval));
+            waited += pollInterval;
+        }
+
+        if (!ready) {
+            console.warn('[GameScene] Spine skeleton data not ready after wait — proceeding to create Player (may fallback)');
+        } else {
+            console.info('[GameScene] Spine skeleton data available before Player creation');
+        }
+
         // Create player
         const playerConfig = GameConfig.player;
         this.player = new Player(this, playerConfig.startPosition.x, playerConfig.startPosition.y);
