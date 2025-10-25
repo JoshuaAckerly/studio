@@ -103,8 +103,8 @@ class NoteleksGame {
         }
 
         // Try to dynamically import the spine-phaser plugin so we can pass its
-        // constructor into the Phaser config. If that fails, we fall back to
-        // detecting window.spine at runtime (existing behavior).
+        // constructor into the Phaser config. If that fails, fall back to
+        // detecting window globals (IIFE) and prefer any constructor we find.
         let spinePluginConstructor = null;
         try {
             const mod = await import('@esotericsoftware/spine-phaser-v3');
@@ -112,10 +112,30 @@ class NoteleksGame {
             spinePluginConstructor = mod?.default?.SpinePlugin || mod?.SpinePlugin || mod?.default || mod;
             console.info('[NoteleksGame] Imported spine plugin via package');
         } catch (e) {
-            console.info('[NoteleksGame] Could not import spine package, will fallback to window global detection');
+            console.info('[NoteleksGame] Could not import spine package, will try window globals');
+            // Try to detect common global placements of the IIFE export
+            try {
+                const possible = (typeof window !== 'undefined') ? (window.SpinePlugin || window.spine?.SpinePlugin || window['spine.SpinePlugin'] || window.spine || null) : null;
+                if (possible && typeof possible === 'function') {
+                    spinePluginConstructor = possible;
+                    console.info('[NoteleksGame] Found spine plugin constructor on window during initialize');
+                } else if (possible && typeof possible === 'object') {
+                    const candidateKeys = ['SpinePlugin', 'SpineGameObject', 'Spine', 'plugin', 'default'];
+                    for (const k of candidateKeys) {
+                        if (typeof possible[k] === 'function') {
+                            spinePluginConstructor = possible[k];
+                            console.info('[NoteleksGame] Found spine plugin constructor at window.spine.%s during initialize', k);
+                            break;
+                        }
+                    }
+                }
+            } catch (gErr) {
+                // ignore
+            }
         }
 
-        // Build the actual config now, preferring the imported constructor if any
+        // Build the actual config now, preferring the imported or detected constructor
+        // so Phaser will register the plugin at game creation time (recommended).
         const finalConfig = this.createGameConfig(spinePluginConstructor || this._spinePluginConstructor);
 
         console.info('[NoteleksGame] Creating Phaser.Game with final config (plugins may be registered by Phaser)');
@@ -133,53 +153,90 @@ class NoteleksGame {
             console.info('[NoteleksGame] Scene ready. scene instance:', scene && scene.sys && scene.sys.settings && scene.sys.settings.key);
             console.info('[NoteleksGame] scene.load.spine available:', typeof (scene.load && scene.load.spine) === 'function');
 
-            // If the loader/plugin isn't available at this point we will keep our adapter
-            // wrapper in place below to prefer cached data or fall back to a safe image.
+            // If the config already registered a Spine plugin (we passed a constructor
+            // into createGameConfig), prefer the plugin-installed game object and do
+            // not install our adapter/wrapper. This keeps Phaser's normal plugin
+            // initialization semantics authoritative and avoids double-wrapping.
+            const pluginRegisteredInConfig = !!finalConfig && !!finalConfig.plugins;
 
-            // Install adapter/wrapper if loader/add are still missing
-            try {
-                if (typeof scene.add.spine !== 'function') {
-                    // Plugin add missing: install a simple fallback that creates a static image
-                    // from the preloaded noteleks texture. Avoid attempting to construct
-                    // SpineGameObject directly because it expects plugin internals.
-                    console.info('[NoteleksGame] scene.add.spine missing - installing safe image fallback');
-                    scene.add.spine = function(x = 0, y = 0, keyOrSkeletonKey, initialAnim = 'idle', loop = true) {
-                        try {
-                            if (scene.textures.exists('noteleks-texture')) {
-                                const img = scene.add.image(x, y, 'noteleks-texture').setOrigin(0.5, 1);
-                                console.info('[NoteleksGame] Created image fallback for spine (plugin absent)');
-                                return img;
-                            }
-                        } catch (e) {
-                            console.warn('[NoteleksGame] Image fallback failed for scene.add.spine:', e);
-                        }
-                        return null;
-                    };
-                    console.info('[NoteleksGame] Installed safe scene.add.spine fallback');
-                } else if (typeof scene.add.spine === 'function') {
-                    // Wrap existing plugin add to provide a safe fallback if the plugin add
-                    // throws due to missing loader cache or other initialization issues.
-                    const original = scene.add.spine;
-                    scene.add.spine = function(x = 0, y = 0, keyOrSkeletonKey, initialAnim = 'idle', loop = true) {
-                        try {
-                            return original.call(scene, x, y, keyOrSkeletonKey, initialAnim, loop);
-                        } catch (err) {
-                            console.warn('[NoteleksGame] scene.add.spine plugin add threw an error, using image fallback:', err);
+            if (!pluginRegisteredInConfig) {
+                // Install adapter/wrapper if loader/add are still missing
+                try {
+                    if (typeof scene.add.spine !== 'function') {
+                        // Plugin add missing: install a simple fallback that creates a static image
+                        // from the preloaded noteleks texture. Avoid attempting to construct
+                        // SpineGameObject directly because it expects plugin internals.
+                        console.info('[NoteleksGame] scene.add.spine missing - installing safe image fallback');
+                        scene.add.spine = function(x = 0, y = 0, keyOrSkeletonKey, initialAnim = 'idle', loop = true) {
                             try {
                                 if (scene.textures.exists('noteleks-texture')) {
                                     const img = scene.add.image(x, y, 'noteleks-texture').setOrigin(0.5, 1);
+                                    console.info('[NoteleksGame] Created image fallback for spine (plugin absent)');
                                     return img;
                                 }
                             } catch (e) {
-                                console.warn('[NoteleksGame] Image fallback failed after plugin error:', e);
+                                console.warn('[NoteleksGame] Image fallback failed for scene.add.spine:', e);
                             }
                             return null;
-                        }
-                    };
-                    console.info('[NoteleksGame] Wrapped existing scene.add.spine to use plugin add with image fallback');
+                        };
+                        console.info('[NoteleksGame] Installed safe scene.add.spine fallback');
+                    } else if (typeof scene.add.spine === 'function') {
+                        // Wrap existing plugin add to provide a safe fallback if the plugin add
+                        // throws due to missing loader cache or other initialization issues.
+                        const original = scene.add.spine;
+                        scene.add.spine = function(x = 0, y = 0, keyOrSkeletonKey, initialAnim = 'idle', loop = true) {
+                            // Prefer to call the real plugin add only when the plugin/loader has
+                            // the cache entries it expects. If the plugin hasn't been fully
+                            // initialized (common when it's loaded after preload), calling the
+                            // original may throw. Avoid that by checking readiness first.
+
+                            const pluginReady = (typeof scene.load === 'object' && typeof scene.load.spine === 'function'
+                                && scene.cache && scene.cache.json && scene.cache.json.get && scene.cache.json.get('noteleks-data'));
+
+                            if (pluginReady) {
+                                try {
+                                    return original.call(scene.add, x, y, keyOrSkeletonKey, initialAnim, loop);
+                                } catch (err) {
+                                    // If it still fails, log details and fall back to canvas/image
+                                    try { console.warn('[NoteleksGame] scene.add.spine plugin add threw an error despite readiness:', err && (err.stack || err.message || err)); } catch (e) {}
+                                }
+                            }
+
+                            // If plugin is not ready or failed, use the prepared runtime/canvas
+                            // fallback (if available) to render to a texture and return an image.
+                            try {
+                                if (scene.cache && scene.cache.custom && scene.cache.custom['spine-canvas-fallback']) {
+                                    const fallback = scene.cache.custom['spine-canvas-fallback'];
+                                    const texKey = 'noteleks-spine-canvas';
+                                    try {
+                                        fallback.drawToTexture(scene, texKey);
+                                        const img = scene.add.image(x, y, texKey).setOrigin(0.5, 1);
+                                        console.info('[NoteleksGame] Created canvas-fallback image for spine (plugin not ready)');
+                                        return img;
+                                    } catch (e) {
+                                        // if draw fails, continue to image fallback below
+                                    }
+                                }
+
+                                // As a last resort, fall back to the preloaded static texture.
+                                if (scene.textures.exists('noteleks-texture')) {
+                                    const img = scene.add.image(x, y, 'noteleks-texture').setOrigin(0.5, 1);
+                                    console.info('[NoteleksGame] Created image fallback for spine (plugin absent)');
+                                    return img;
+                                }
+                            } catch (e) {
+                                console.warn('[NoteleksGame] Fallback creation for scene.add.spine failed:', e && (e.stack || e.message || e));
+                            }
+
+                            return null;
+                        };
+                        console.info('[NoteleksGame] Wrapped existing scene.add.spine to use plugin add with image fallback');
+                    }
+                } catch (e) {
+                    console.warn('[NoteleksGame] Failed to install spine adapter:', e);
                 }
-            } catch (e) {
-                console.warn('[NoteleksGame] Failed to install spine adapter:', e);
+            } else {
+                console.info('[NoteleksGame] Spine plugin registered in Phaser config; skipping adapter/wrapper install');
             }
         });
 

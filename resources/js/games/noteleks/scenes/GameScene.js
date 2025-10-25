@@ -65,6 +65,37 @@ class GameScene extends Phaser.Scene {
         // Start game systems
         this.startGame();
 
+        // Emit a tiny diagnostic event so external devices (or probes)
+        // can detect that the Noteleks scene has been created and is ready.
+        // This helps triage devices that report the scene is never found.
+        try {
+            console.info('[Noteleks] scene-ready');
+            this.events.emit('noteleks:scene-ready');
+        } catch (e) {
+            console.warn('[GameScene] Failed to emit noteleks:scene-ready', e && e.message);
+        }
+
+        // Also set a global flag and dispatch a window-level CustomEvent so
+        // external probes (or devices where `window.game` isn't discoverable)
+        // can still detect that the Noteleks scene has been created.
+        try {
+            if (typeof window !== 'undefined') {
+                try {
+                    window.noteleksSceneReady = true;
+                    window.noteleksSceneReadyAt = new Date().toISOString();
+                    // Provide minimal detail so listeners can identify the scene
+                    const detail = { key: 'GameScene', at: window.noteleksSceneReadyAt };
+                    window.dispatchEvent(new CustomEvent('noteleks:scene-ready', { detail }));
+                    console.info('[Noteleks] window.noteleksSceneReady set and event dispatched', detail);
+                } catch (we) {
+                    // Some strict environments may block CustomEvent or window writes
+                    console.warn('[Noteleks] Failed to set global scene-ready flag or dispatch event', we && we.message);
+                }
+            }
+        } catch (e) {
+            // ignore
+        }
+
         // Defensive retry: if AssetManager.setupSpineData didn't run or the
         // spine cache wasn't prepared during preload (race), try again shortly
         // after create to ensure skeleton data is available for the Player.
@@ -84,6 +115,49 @@ class GameScene extends Phaser.Scene {
             }, 500);
         } catch (e) {
             // ignore
+        }
+
+        // Watch for spine plugin registration: some environments register the
+        // spine plugin after scene `create()` runs which can cause a timing
+        // race where Player is created before the plugin has populated its
+        // internal caches. Poll for the plugin for a short window and call
+        // setupSpineData when it's detected so caches are populated.
+        try {
+            const watchMaxMs = 5000;
+            const watchIntervalMs = 100;
+            let elapsed = 0;
+
+            if (this.sys && this.sys.spine) {
+                // Already present — ensure setup run
+                try {
+                    console.info('[GameScene] spine plugin already present at create() — running setupSpineData');
+                } catch (e) {}
+                AssetManager.setupSpineData(this);
+            } else if (this.sys) {
+                const handle = setInterval(() => {
+                    elapsed += watchIntervalMs;
+                    try {
+                        if (this.sys && this.sys.spine) {
+                            clearInterval(handle);
+                            try {
+                                console.info('[GameScene] Detected spine plugin registration; calling setupSpineData');
+                                if (typeof window !== 'undefined') window.noteleksSpinePluginReady = new Date().toISOString();
+                            } catch (e) {}
+                            AssetManager.setupSpineData(this);
+                            return;
+                        }
+                    } catch (e) {
+                        // ignore transient errors while polling
+                    }
+
+                    if (elapsed >= watchMaxMs) {
+                        clearInterval(handle);
+                        try { console.info('[GameScene] Spine plugin did not register within watch window'); } catch (e) {}
+                    }
+                }, watchIntervalMs);
+            }
+        } catch (e) {
+            // ignore watcher failures
         }
     }
 
@@ -130,48 +204,78 @@ class GameScene extends Phaser.Scene {
     async setupGameObjects() {
         // Wait for spine skeleton data to be available to avoid the player
         // creating a sprite fallback due to a race with the loader/plugin.
+        // Prefer the explicit 'spine-ready' event emitted by AssetManager.setupSpineData,
+        // but fall back to the previous polling/rebuild strategy if the event
+        // doesn't arrive within timeout.
         const maxWaitMs = 2000;
-        const pollInterval = 50;
-        let waited = 0;
         let ready = false;
 
-        while (waited < maxWaitMs) {
-            try {
-                const hasCache = this.cache && this.cache.custom && this.cache.custom['spine-skeleton-data'];
-                if (hasCache) {
-                    ready = true;
-                    break;
-                }
+        try {
+            // If cache already present, proceed immediately
+            const hasCache = this.cache && this.cache.custom && this.cache.custom['spine-skeleton-data'];
+            if (hasCache) {
+                ready = true;
+                console.info('[GameScene] Spine skeleton data already present in cache');
+            } else {
+                // Wait for 'spine-ready' event with timeout
+                await new Promise((resolve) => {
+                    let resolved = false;
+                    const onReady = () => {
+                        if (resolved) return;
+                        resolved = true;
+                        resolve(true);
+                    };
 
-                // Try to (re)build the spine data from raw assets if possible
-                try {
-                    const ok = AssetManager.setupSpineData(this);
-                    if (ok) {
+                    this.events.once('spine-ready', onReady);
+
+                    // If event doesn't fire within maxWaitMs, try the rebuild/poll fallback
+                    setTimeout(() => {
+                        if (resolved) return;
+                        resolved = true;
+                        resolve(false);
+                    }, maxWaitMs);
+                }).then((eventFired) => {
+                    if (eventFired) {
                         ready = true;
-                        break;
+                        console.info('[GameScene] Received spine-ready before Player creation');
+                    } else {
+                        // Event did not fire in time; try to (re)build the spine data from raw assets
+                        try {
+                            const ok = AssetManager.setupSpineData(this);
+                            if (ok) {
+                                ready = true;
+                                console.info('[GameScene] setupSpineData succeeded in fallback after timeout');
+                            }
+                        } catch (e) {
+                            // ignore; ready remains false and we'll log below
+                        }
                     }
-                } catch (e) {
-                    // ignore and continue polling
-                }
-            } catch (e) {
-                // ignore and continue polling
+                });
             }
-
-            // Sleep
-            // eslint-disable-next-line no-await-in-loop
-            await new Promise((r) => setTimeout(r, pollInterval));
-            waited += pollInterval;
+        } catch (e) {
+            // ignore and continue to player creation (may fallback)
+            console.warn('[GameScene] Error while waiting for spine-ready:', e && e.message);
         }
 
         if (!ready) {
             console.warn('[GameScene] Spine skeleton data not ready after wait — proceeding to create Player (may fallback)');
-        } else {
-            console.info('[GameScene] Spine skeleton data available before Player creation');
         }
 
         // Create player
         const playerConfig = GameConfig.player;
         this.player = new Player(this, playerConfig.startPosition.x, playerConfig.startPosition.y);
+        // Ensure the camera is centered on the player so it is visible on first frame
+        try {
+            const cam = this.cameras && this.cameras.main ? this.cameras.main : null;
+            if (cam && this.player && this.player.sprite) {
+                // Center immediately and start following the player for gameplay
+                cam.centerOn(this.player.sprite.x, this.player.sprite.y);
+                try { cam.startFollow(this.player.sprite); } catch (e) { /* ignore follow errors */ }
+                console.info('[GameScene] Camera centered on player at', this.player.sprite.x, this.player.sprite.y);
+            }
+        } catch (e) {
+            // ignore camera centering failures
+        }
         // Player is updated manually in GameScene, not through SystemManager
 
         // Initialize UI with player's starting health
@@ -223,6 +327,16 @@ class GameScene extends Phaser.Scene {
         if (this.inputManager.isPausePressed()) {
             this.pauseGame();
             return;
+        }
+        // Diagnostic: log input mode and control availability to help trace left/right failures
+        try {
+            const im = this.inputManager;
+            const modeReported = typeof im.isMobileDevice === 'function' ? im.isMobileDevice() : im.isMobile;
+            const modeController = im.inputMode ? im.inputMode.isMobileDevice() : (im.inputMode || null);
+            const controls = (typeof im.getControls === 'function') ? im.getControls() : null;
+            console.info('[GameScene] Input diagnostics: inputManager.isMobileDevice()=', modeReported, 'inputModeController=', modeController, 'controls=', !!controls, controls ? Object.keys(controls) : null);
+        } catch (e) {
+            // ignore diagnostics errors
         }
 
         // Update core systems

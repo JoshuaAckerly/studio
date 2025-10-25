@@ -3,6 +3,9 @@ const puppeteer = require('puppeteer');
 
 (async () => {
   const url = process.argv[2] || 'https://studio.test/noteleks';
+  // Optional third argument: user-agent string to use for the headless page.
+  // If provided, this lets us emulate desktop vs mobile UA to exercise different input paths.
+  const forcedUA = process.argv[3] || null;
   const out = [];
 
   const browser = await puppeteer.launch({
@@ -13,6 +16,44 @@ const puppeteer = require('puppeteer');
 
   const page = await browser.newPage();
   page.setDefaultNavigationTimeout(30000);
+
+  // If a UA was provided, set it and force a desktop-like environment to avoid mobile input detection.
+  // We set a desktop viewport with touch disabled and inject overrides for navigator.maxTouchPoints
+  // and window.ontouchstart so the page's device-detection sees a non-touch desktop device.
+  if (forcedUA) {
+    try {
+      // Ensure overrides are applied before any scripts run on the page
+      await page.evaluateOnNewDocument((ua) => {
+        try {
+          // Override maxTouchPoints to 0
+          Object.defineProperty(navigator, 'maxTouchPoints', { get: () => 0, configurable: true });
+        } catch (e) {
+          // ignore
+        }
+        try {
+          // Remove any conventional touch event hints
+          delete window.ontouchstart;
+          delete window.ontouchmove;
+          delete window.ontouchend;
+        } catch (e) {
+          // ignore
+        }
+        try {
+          // Optionally override platform to a desktop value
+          Object.defineProperty(navigator, 'platform', { get: () => 'Win32', configurable: true });
+        } catch (e) {
+          // ignore
+        }
+      }, forcedUA);
+
+      await page.setUserAgent(forcedUA);
+      // Set desktop viewport and explicitly disable touch emulation
+      await page.setViewport({ width: 1280, height: 800, isMobile: false, hasTouch: false });
+      console.log('Using forced User-Agent and forcing desktop environment for capture');
+    } catch (e) {
+      console.warn('Failed to set forced UA/desktop viewport/overrides:', e && e.message);
+    }
+  }
 
   page.on('console', msg => {
     try {
