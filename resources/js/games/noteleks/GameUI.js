@@ -10,40 +10,48 @@ class GameUI {
         this.health = 100;
         this.maxHealth = 100;
 
+        // Internal flags: whether we fell back to DOM-based UI to avoid canvas->texture work
+        this._usingDOMUI = false;
+        this._textCache = Object.create(null);
+
         this.initializeUI();
     }
 
     initializeUI() {
-        // Score display
-        this.scoreText = this.scene.add.text(16, 16, 'Score: 0', {
-            fontSize: '24px',
-            fill: '#4ade80',
-            fontFamily: 'Arial',
-            stroke: '#000000',
-            strokeThickness: 2,
-        });
-        this.scoreText.setScrollFactor(0); // Fixed position
-        this.scoreText.setDepth(1000); // Ensure UI is on top
+        // Try to create in-canvas UI. If any canvas-backed text creation fails
+        // (WebGL/createTexture edge-case), fall back to DOM-based UI and avoid
+        // further canvas texture work.
+        try {
+            // Score display
+            this.scoreText = this.scene.add.text(16, 16, 'Score: 0', {
+                fontSize: '24px',
+                fill: '#4ade80',
+                fontFamily: 'Arial',
+                stroke: '#000000',
+                strokeThickness: 2,
+            });
+            this.scoreText.setScrollFactor(0); // Fixed position
+            this.scoreText.setDepth(1000); // Ensure UI is on top
 
-        // Health label
-        this.healthLabel = this.scene.add.text(16, 50, 'Health', {
-            fontSize: '16px',
-            fill: '#ffffff',
-            fontFamily: 'Arial',
-            stroke: '#000000',
-            strokeThickness: 1,
-        });
-        this.healthLabel.setScrollFactor(0);
-        this.healthLabel.setDepth(1000);
+            // Health label
+            this.healthLabel = this.scene.add.text(16, 50, 'Health', {
+                fontSize: '16px',
+                fill: '#ffffff',
+                fontFamily: 'Arial',
+                stroke: '#000000',
+                strokeThickness: 1,
+            });
+            this.healthLabel.setScrollFactor(0);
+            this.healthLabel.setDepth(1000);
 
-        // Health bar background (moved down to make room for label)
-        this.healthBarBg = this.scene.add.graphics();
-        this.healthBarBg.fillStyle(0x333333); // Darker gray for better visibility
-        this.healthBarBg.fillRect(16, 70, 204, 20); // Adjusted position and made thinner
-        this.healthBarBg.lineStyle(2, 0xffffff); // White border
-        this.healthBarBg.strokeRect(16, 70, 204, 20);
-        this.healthBarBg.setScrollFactor(0);
-        this.healthBarBg.setDepth(1000); // Ensure it's on top
+            // Health bar background (moved down to make room for label)
+            this.healthBarBg = this.scene.add.graphics();
+            this.healthBarBg.fillStyle(0x333333); // Darker gray for better visibility
+            this.healthBarBg.fillRect(16, 70, 204, 20); // Adjusted position and made thinner
+            this.healthBarBg.lineStyle(2, 0xffffff); // White border
+            this.healthBarBg.strokeRect(16, 70, 204, 20);
+            this.healthBarBg.setScrollFactor(0);
+            this.healthBarBg.setDepth(1000); // Ensure it's on top
 
         // Health bar
         this.healthBar = this.scene.add.graphics();
@@ -51,32 +59,41 @@ class GameUI {
         this.healthBar.setDepth(1001); // Higher than background
         this.updateHealthBar(); // Update after setting scroll factor
 
-        // Weapon indicator
-        this.weaponText = this.scene.add.text(16, 100, 'Weapon: Dagger', {
-            fontSize: '18px',
-            fill: '#ffffff',
-            fontFamily: 'Arial',
-            stroke: '#000000',
-            strokeThickness: 2,
-        });
-        this.weaponText.setScrollFactor(0);
-        this.weaponText.setDepth(1000);
+            // Weapon indicator
+            this.weaponText = this.scene.add.text(16, 100, 'Weapon: Dagger', {
+                fontSize: '18px',
+                fill: '#ffffff',
+                fontFamily: 'Arial',
+                stroke: '#000000',
+                strokeThickness: 2,
+            });
+            this.weaponText.setScrollFactor(0);
+            this.weaponText.setDepth(1000);
 
-        // Game over screen (initially hidden)
-    this.gameOverContainer = this.scene.add.container(400, 300);
+            // Game over screen (initially hidden)
+            this.gameOverContainer = this.scene.add.container(400, 300);
     // Ensure Game Over UI is on top of all other UI and game objects
     // UI elements use depth ~1000; set the container higher so it always renders above.
     this.gameOverContainer.setDepth(2000);
     this.gameOverContainer.setScrollFactor(0);
     this.gameOverContainer.setVisible(false);
 
-        this.createGameOverScreen();
+            this.createGameOverScreen();
 
-        // Update DOM elements as well
-        this.updateDOMElements();
+            // Update DOM elements as well
+            this.updateDOMElements();
 
-        // Create mobile UI elements if needed
-        this.createMobileUIElements();
+            // Create mobile UI elements if needed
+            this.createMobileUIElements();
+        } catch (e) {
+            // If any canvas/text/texture creation fails, fall back to DOM-only UI.
+            // This will avoid repeated WebGL createTexture / bindTexture errors
+            // in environments where the GL context is in a transient/bad state.
+            // eslint-disable-next-line no-console
+            console.warn('Canvas-backed UI initialization failed; switching to DOM fallback.', e && e.message ? e.message : e);
+            this._usingDOMUI = true;
+            this._createDOMUI();
+        }
     }
 
     createMobileUIElements() {
@@ -84,6 +101,30 @@ class GameUI {
         const isMobile = this.detectMobile();
 
         if (isMobile) {
+            // If we're using the DOM fallback, create mobile UI elements in DOM instead
+            if (this._usingDOMUI) {
+                // create a simple DOM pause button if needed
+                try {
+                    if (!this._domMobilePauseEl) {
+                        const btn = document.createElement('button');
+                        btn.id = 'noteleks-mobile-pause';
+                        btn.textContent = 'Pause';
+                        btn.style.position = 'fixed';
+                        btn.style.right = '12px';
+                        btn.style.top = '12px';
+                        btn.style.zIndex = 99999;
+                        document.body.appendChild(btn);
+                        btn.addEventListener('click', () => {
+                            if (this.scene.gameState === 'playing') this.scene.pauseGame();
+                            else if (this.scene.gameState === 'paused') this.scene.resumeGame();
+                        });
+                        this._domMobilePauseEl = btn;
+                    }
+                } catch (err) {
+                    // ignore DOM fallback errors
+                }
+                return;
+            }
             // Create pause button for mobile
             this.mobilePauseButton = this.scene.add.graphics();
             this.mobilePauseButton.fillStyle(0x333333, 0.8);
@@ -127,72 +168,144 @@ class GameUI {
     }
 
     createGameOverScreen() {
-        // Background
-        const gameOverBg = this.scene.add.graphics();
-        gameOverBg.fillStyle(0x000000, 0.8);
-        gameOverBg.fillRect(-300, -200, 600, 400);
-        this.gameOverContainer.add(gameOverBg);
+        // Most game over UI is canvas-backed. Guard it so we can fall back to DOM
+        // if canvas text creation fails for any reason.
+        try {
+            // Background
+            const gameOverBg = this.scene.add.graphics();
+            gameOverBg.fillStyle(0x000000, 0.8);
+            gameOverBg.fillRect(-300, -200, 600, 400);
+            this.gameOverContainer.add(gameOverBg);
 
-        // Game Over text
-        const gameOverText = this.scene.add.text(0, -100, 'GAME OVER', {
-            fontSize: '48px',
-            fill: '#ff0000',
-            fontFamily: 'Arial',
-            stroke: '#000000',
-            strokeThickness: 3,
-        });
-        gameOverText.setOrigin(0.5);
-        this.gameOverContainer.add(gameOverText);
+            // Game Over text
+            const gameOverText = this.scene.add.text(0, -100, 'GAME OVER', {
+                fontSize: '48px',
+                fill: '#ff0000',
+                fontFamily: 'Arial',
+                stroke: '#000000',
+                strokeThickness: 3,
+            });
+            gameOverText.setOrigin(0.5);
+            this.gameOverContainer.add(gameOverText);
 
-        // Final score text
-        this.finalScoreText = this.scene.add.text(0, -30, 'Final Score: 0', {
-            fontSize: '24px',
-            fill: '#ffffff',
-            fontFamily: 'Arial',
-            stroke: '#000000',
-            strokeThickness: 2,
-        });
-        this.finalScoreText.setOrigin(0.5);
-        this.gameOverContainer.add(this.finalScoreText);
-
-        // Instructions
-        const isMobile = this.detectMobile();
-        const instructionText = isMobile ? 'Tap to restart or use browser back to quit' : 'Press R to restart or ESC to quit';
-
-        const instructionsText = this.scene.add.text(0, 30, instructionText, {
-            fontSize: '18px',
-            fill: '#4ade80',
-            fontFamily: 'Arial',
-            stroke: '#000000',
-            strokeThickness: 2,
-            align: 'center',
-        });
-        instructionsText.setOrigin(0.5);
-        this.gameOverContainer.add(instructionsText);
-
-        // Add mobile restart button
-        if (isMobile) {
-            const restartButton = this.scene.add.graphics();
-            restartButton.fillStyle(0x4ade80, 0.8);
-            restartButton.fillRoundedRect(-80, 60, 160, 40, 10);
-            restartButton.lineStyle(2, 0xffffff, 1);
-            restartButton.strokeRoundedRect(-80, 60, 160, 40, 10);
-            this.gameOverContainer.add(restartButton);
-
-            const restartText = this.scene.add.text(0, 80, 'RESTART', {
-                fontSize: '18px',
+            // Final score text
+            this.finalScoreText = this.scene.add.text(0, -30, 'Final Score: 0', {
+                fontSize: '24px',
                 fill: '#ffffff',
-                fontFamily: 'Arial Bold',
+                fontFamily: 'Arial',
+                stroke: '#000000',
+                strokeThickness: 2,
+            });
+            this.finalScoreText.setOrigin(0.5);
+            this.gameOverContainer.add(this.finalScoreText);
+
+            // Instructions
+            const isMobile = this.detectMobile();
+            const instructionText = isMobile ? 'Tap to restart or use browser back to quit' : 'Press R to restart or ESC to quit';
+
+            const instructionsText = this.scene.add.text(0, 30, instructionText, {
+                fontSize: '18px',
+                fill: '#4ade80',
+                fontFamily: 'Arial',
+                stroke: '#000000',
+                strokeThickness: 2,
                 align: 'center',
             });
-            restartText.setOrigin(0.5);
-            this.gameOverContainer.add(restartText);
+            instructionsText.setOrigin(0.5);
+            this.gameOverContainer.add(instructionsText);
 
-            // Make button interactive
-            restartButton.setInteractive(new Phaser.Geom.Rectangle(-80, 60, 160, 40), Phaser.Geom.Rectangle.Contains);
-            restartButton.on('pointerdown', () => {
-                this.scene.restartGame();
-            });
+            // Add mobile restart button
+            if (isMobile) {
+                const restartButton = this.scene.add.graphics();
+                restartButton.fillStyle(0x4ade80, 0.8);
+                restartButton.fillRoundedRect(-80, 60, 160, 40, 10);
+                restartButton.lineStyle(2, 0xffffff, 1);
+                restartButton.strokeRoundedRect(-80, 60, 160, 40, 10);
+                this.gameOverContainer.add(restartButton);
+
+                const restartText = this.scene.add.text(0, 80, 'RESTART', {
+                    fontSize: '18px',
+                    fill: '#ffffff',
+                    fontFamily: 'Arial Bold',
+                    align: 'center',
+                });
+                restartText.setOrigin(0.5);
+                this.gameOverContainer.add(restartText);
+
+                // Make button interactive
+                restartButton.setInteractive(new Phaser.Geom.Rectangle(-80, 60, 160, 40), Phaser.Geom.Rectangle.Contains);
+                restartButton.on('pointerdown', () => {
+                    this.scene.restartGame();
+                });
+            }
+        } catch (err) {
+            // Canvas-backed game over UI failed; create a DOM-based fallback
+            // so the game still presents the end state without causing GL errors.
+            // eslint-disable-next-line no-console
+            console.warn('GameOver UI creation failed, falling back to DOM UI:', err && err.message ? err.message : err);
+            this._usingDOMUI = true;
+            this._createDOMUI(true);
+        }
+    }
+
+    // Create a minimal DOM-based UI fallback when canvas-backed UI cannot be used.
+    _createDOMUI(isGameOver = false) {
+        try {
+            // Score
+            if (!this._domScoreEl) {
+                const scoreEl = document.createElement('div');
+                scoreEl.id = 'noteleks-score';
+                scoreEl.style.position = 'fixed';
+                scoreEl.style.left = '12px';
+                scoreEl.style.top = '12px';
+                scoreEl.style.zIndex = 99998;
+                scoreEl.style.color = '#4ade80';
+                scoreEl.style.fontFamily = 'Arial, sans-serif';
+                scoreEl.style.fontSize = '18px';
+                scoreEl.textContent = `Score: ${this.score}`;
+                document.body.appendChild(scoreEl);
+                this._domScoreEl = scoreEl;
+            }
+
+            // Health
+            if (!this._domHealthEl) {
+                const healthEl = document.createElement('div');
+                healthEl.id = 'noteleks-health';
+                healthEl.style.position = 'fixed';
+                healthEl.style.left = '12px';
+                healthEl.style.top = '40px';
+                healthEl.style.zIndex = 99998;
+                healthEl.style.color = '#ffffff';
+                healthEl.style.fontFamily = 'Arial, sans-serif';
+                healthEl.style.fontSize = '14px';
+                healthEl.textContent = `Health: ${this.health}`;
+                document.body.appendChild(healthEl);
+                this._domHealthEl = healthEl;
+            }
+
+            // Optionally show game over overlay
+            if (isGameOver) {
+                if (!this._domGameOverEl) {
+                    const go = document.createElement('div');
+                    go.id = 'noteleks-gameover';
+                    go.style.position = 'fixed';
+                    go.style.left = '50%';
+                    go.style.top = '50%';
+                    go.style.transform = 'translate(-50%, -50%)';
+                    go.style.zIndex = 99999;
+                    go.style.textAlign = 'center';
+                    go.style.padding = '16px 24px';
+                    go.style.background = 'rgba(0,0,0,0.85)';
+                    go.style.color = '#fff';
+                    go.style.fontFamily = 'Arial, sans-serif';
+                    go.style.display = 'none';
+                    go.innerHTML = `<div style="font-size:32px;color:#ff6666;font-weight:bold;margin-bottom:8px;">GAME OVER</div><div id="noteleks-final-score">Final Score: ${this.score}</div>`;
+                    document.body.appendChild(go);
+                    this._domGameOverEl = go;
+                }
+            }
+        } catch (e) {
+            // best-effort DOM fallback; ignore failures
         }
     }
 
@@ -278,22 +391,44 @@ class GameUI {
 
     showPauseScreen() {
         // Simple pause indicator
-        if (!this.pauseText) {
+        if (!this.pauseText && !this._pauseDOMOverlayCreated) {
             const isMobile = this.detectMobile();
             const pauseMessage = isMobile ? 'PAUSED\nTap pause button to resume' : 'PAUSED\nPress P to resume';
 
-            this.pauseText = this.scene.add.text(400, 300, pauseMessage, {
-                fontSize: '36px',
-                fill: '#ffffff',
-                fontFamily: 'Arial',
-                align: 'center',
-                stroke: '#000000',
-                strokeThickness: 3,
-            });
-            this.pauseText.setOrigin(0.5);
-            this.pauseText.setScrollFactor(0);
+            // Defensive: ensure renderer and GL context exist before creating canvas-backed text,
+            // which triggers createTexture / canvasToTexture calls that can fail in edge cases.
+            const renderer = this.scene && this.scene.sys && this.scene.sys.game && this.scene.sys.game.renderer;
+            try {
+                if (renderer && renderer.gl) {
+                    this.pauseText = this.scene.add.text(400, 300, pauseMessage, {
+                        fontSize: '36px',
+                        fill: '#ffffff',
+                        fontFamily: 'Arial',
+                        align: 'center',
+                        stroke: '#000000',
+                        strokeThickness: 3,
+                    });
+                    this.pauseText.setOrigin(0.5);
+                    this.pauseText.setScrollFactor(0);
+                } else {
+                    // Renderer or gl not available: create a lightweight DOM fallback overlay instead
+                    this._createPauseDOMOverlay(pauseMessage);
+                }
+            } catch (e) {
+                // Swallow texture creation errors and fall back to DOM overlay.
+                // This prevents WebGL createTexture exceptions from bubbling into the app logs.
+                // Preserve a console warning to aid future debugging.
+                // eslint-disable-next-line no-console
+                console.warn('Pause text creation failed, using DOM fallback:', e && e.message ? e.message : e);
+                this._createPauseDOMOverlay(pauseMessage);
+            }
         }
-        this.pauseText.setVisible(true);
+
+        if (this.pauseText) {
+            this.pauseText.setVisible(true);
+        } else if (this._pauseDOMOverlayCreated) {
+            this._showPauseDOMOverlay();
+        }
 
         // Hide touch controls when paused
         if (this.scene.inputManager && this.scene.inputManager.isMobileDevice()) {
@@ -304,6 +439,10 @@ class GameUI {
     hidePauseScreen() {
         if (this.pauseText) {
             this.pauseText.setVisible(false);
+        }
+
+        if (this._pauseDOMOverlayCreated) {
+            this._hidePauseDOMOverlay();
         }
 
         // Show touch controls when unpaused
@@ -333,6 +472,49 @@ class GameUI {
         this.updateHealth(this.maxHealth);
         this.hideGameOver();
         this.hidePauseScreen();
+    }
+
+    // Lightweight DOM overlay fallback for pause indicator (used when renderer.gl isn't available)
+    _createPauseDOMOverlay(message) {
+        try {
+            const root = document.body || document.documentElement;
+            const overlay = document.createElement('div');
+            overlay.id = 'noteleks-pause-overlay';
+            overlay.style.position = 'fixed';
+            overlay.style.left = '50%';
+            overlay.style.top = '50%';
+            overlay.style.transform = 'translate(-50%, -50%)';
+            overlay.style.zIndex = 99999;
+            overlay.style.pointerEvents = 'none';
+            overlay.style.textAlign = 'center';
+            overlay.style.whiteSpace = 'pre-line';
+            overlay.style.fontFamily = 'Arial, sans-serif';
+            overlay.style.fontSize = '32px';
+            overlay.style.color = '#ffffff';
+            overlay.style.textShadow = '0 0 4px rgba(0,0,0,0.85)';
+            overlay.style.background = 'rgba(0,0,0,0.35)';
+            overlay.style.padding = '12px 20px';
+            overlay.style.borderRadius = '8px';
+            overlay.style.display = 'none';
+            overlay.textContent = message;
+            root.appendChild(overlay);
+            this._pauseDOMOverlayCreated = true;
+            this._pauseDOMOverlayEl = overlay;
+        } catch (e) {
+            // If DOM overlay creation fails, don't block the game — just mark as not created.
+            // eslint-disable-next-line no-console
+            console.warn('Failed to create pause DOM overlay:', e && e.message ? e.message : e);
+            this._pauseDOMOverlayCreated = false;
+            this._pauseDOMOverlayEl = null;
+        }
+    }
+
+    _showPauseDOMOverlay() {
+        if (this._pauseDOMOverlayEl) this._pauseDOMOverlayEl.style.display = 'block';
+    }
+
+    _hidePauseDOMOverlay() {
+        if (this._pauseDOMOverlayEl) this._pauseDOMOverlayEl.style.display = 'none';
     }
 
     getScore() {

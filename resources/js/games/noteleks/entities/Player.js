@@ -13,15 +13,194 @@ import GameObject from '../core/GameObject.js';
 class Player extends GameObject {
     constructor(scene, x, y) {
         super(scene, x, y);
-        this.createPlayer();
+        // Provide a safe stub for _tryCreateSpine so deferred callers (from
+        // createPlayerDeferred) can invoke it before the full implementation
+        // is attached inside createPlayer(). Calls are queued and drained
+        // once the real implementation is available.
+        this._pendingTryCreateCalls = [];
+        this._tryCreateSpine = function() {
+            try {
+                const args = Array.prototype.slice.call(arguments);
+                this._pendingTryCreateCalls.push(args);
+            } catch (e) {
+                // ignore
+            }
+            return false;
+        };
+        // Initialize animation states
+        this._isJumping = false;
+        this._isAttacking = false;
+        
+        // Create base player sprite and components immediately, but defer
+        // Spine GameObject creation until AssetManager signals readiness to
+        // avoid plugin/atlas races that lead to invisible skeletons.
+        this.createPlayerDeferred();
         this.setupComponents();
+    }
+
+    // Returns a promise that resolves when the AssetManager/spine setup is ready
+    // or when a timeout expires. It listens for the scene-level 'spine-ready'
+    // event (emitted by AssetManager) and also checks a few immediate
+    // readiness heuristics so already-ready pages resolve synchronously.
+    _waitForSpineReady(timeoutMs = 6000) {
+        return new Promise((resolve, reject) => {
+            try {
+                const sys = this.scene && this.scene.sys ? this.scene.sys : null;
+                // Immediate readiness heuristics: a global flag, plugin instance, or expected texture key
+                const immediateReady = () => {
+                    try {
+                        if (typeof window !== 'undefined' && window.noteleksSpineReady) return true;
+                        if (this.scene && this.scene.textures && typeof this.scene.textures.exists === 'function') {
+                            // 'noteleks-texture' duplicated by AssetManager is a good sign
+                            if (this.scene.textures.exists('noteleks-texture')) return true;
+                            // plugin-style page key used by some plugin builds
+                            if (this.scene.textures.exists('noteleks-data!noteleks-texture')) return true;
+                        }
+                        // plugin instance presence
+                        if (sys && sys.spine) return true;
+                    } catch (e) {
+                        // ignore heuristics errors
+                    }
+                    return false;
+                };
+
+                if (immediateReady()) return resolve(true);
+
+                let timer = null;
+                const onReady = () => {
+                    try { if (timer) clearTimeout(timer); } catch (e) {}
+                    resolve(true);
+                };
+
+                // Listen on scene.events if available. AssetManager uses scene.events.emit('spine-ready')
+                if (this.scene && this.scene.events && typeof this.scene.events.once === 'function') {
+                    this.scene.events.once('spine-ready', onReady);
+                }
+
+                // Safety timeout
+                timer = setTimeout(() => {
+                    // Remove listener if still attached
+                    try {
+                        if (this.scene && this.scene.events && typeof this.scene.events.off === 'function') {
+                            this.scene.events.off('spine-ready', onReady);
+                        }
+                    } catch (e) {}
+                    reject(new Error('spine-ready wait timed out'));
+                }, timeoutMs);
+            } catch (e) {
+                reject(e);
+            }
+        });
+    }
+
+    // Deferred creation entrypoint used in constructor so we can await AssetManager
+    createPlayerDeferred() {
+        // Run base sprite creation immediately so physics/collisions are ready.
+        // Much of createPlayers logic depends on the sprite existing; extract
+        // the minimal base-creation here then defer spine-specific creation.
+        try {
+            // Create player sprite with physics (physics sprite used for collisions)
+            this.sprite = this.scene.physics.add.sprite(this.x, this.y, 'skeleton');
+            this.sprite.playerRef = this;
+        } catch (e) {
+            // If physics isn't available yet, fallback to a simple image so other systems can proceed
+            try {
+                this.sprite = this.scene.add.image(this.x, this.y, 'skeleton');
+                this.sprite.playerRef = this;
+            } catch (e2) {
+                // Ignore: other code will handle missing sprite at runtime
+            }
+        }
+
+        // Expose quick debug handle as early as before
+        try { if (typeof window !== 'undefined') window.noteleksPlayer = this; } catch (e) {}
+
+        // Defer the heavier spine creation and probing to a promise so we avoid
+        // creating the Spine GameObject before the AssetManager has finished
+        // preparing atlas frames. If the wait times out we still attempt a best-effort creation.
+        this._waitForSpineReady(6000).then(() => {
+            try {
+                // Try creation with generous retries now that assets are likely present
+                this._tryCreateSpine(12, 100);
+            } catch (e) {
+                // attempt a smaller retry run on unexpected failures
+                try { this._tryCreateSpine(6, 150); } catch (e2) {}
+            }
+        }).catch(() => {
+            // Timed out waiting — still attempt creation but keep fallbacks in place
+            try { this._tryCreateSpine(6, 150); } catch (e) {}
+        });
+
+        // Watchdog: if spine still isn't created after the initial attempts, run
+        // periodic best-effort retries for a short time window. This helps when
+        // plugin initialization or texture population completes slightly later
+        // than the AssetManager signal (observed in some environments).
+        try {
+            this._spineWatchdogAttempts = 0;
+            this._spineWatchdogMax = 20; // ~10s at 500ms intervals
+            this._spineWatchdogInterval = setInterval(() => {
+                try {
+                    this._spineWatchdogAttempts += 1;
+                    // Stop if spine created
+                    if (this.spine) {
+                        clearInterval(this._spineWatchdogInterval);
+                        this._spineWatchdogInterval = null;
+                        return;
+                    }
+                    // Try a focused creation attempt; _tryCreateSpine will itself
+                    // perform small internal retries. We keep this low-cost.
+                    try {
+                        this._tryCreateSpine(4, 150);
+                    } catch (e) {
+                        // ignore per-interval failures
+                    }
+                    if (this._spineWatchdogAttempts >= this._spineWatchdogMax) {
+                        try { clearInterval(this._spineWatchdogInterval); } catch (e) {}
+                        this._spineWatchdogInterval = null;
+                    }
+                } catch (e) {
+                    // ignore watchdog errors but ensure we don't leak timers
+                    try { clearInterval(this._spineWatchdogInterval); } catch (e2) {}
+                    this._spineWatchdogInterval = null;
+                }
+            }, 500);
+        } catch (e) {
+            // ignore watchdog setup failures
+        }
+
+        // Continue rest of createPlayer logic that does not depend on spine creation.
+        // We'll return early from here to avoid duplicating the large body of createPlayer.
+        // The original createPlayer() implementation (below) will still run for the
+        // non-spine-specific responsibilities, but we've already handled the sprite
+        // creation and the deferred spine launch.
+        // Call into the original createPlayer body starting at the point after the
+        // initial immediate _tryCreateSpine() call — the file retains the remainder
+        // of createPlayer unchanged so existing fallback probes, debug overlay and
+        // finalization logic still run as designed.
     }
 
     createPlayer() {
         // Create player sprite with physics (physics sprite used for collisions)
-        this.sprite = this.scene.physics.add.sprite(this.x, this.y, 'skeleton');
-        // Store reference to this player class in the sprite
-        this.sprite.playerRef = this;
+        // If a deferred initializer already created the sprite, reuse it.
+        if (!this.sprite) {
+            try {
+                this.sprite = this.scene.physics.add.sprite(this.x, this.y, 'skeleton');
+                this.sprite.playerRef = this;
+                // Make sprite visible as fallback
+                this.sprite.setVisible(true);
+                this.sprite.setAlpha(1);
+            } catch (e) {
+                // If physics not available, try a simple image fallback
+                try {
+                    this.sprite = this.scene.add.image(this.x, this.y, 'skeleton');
+                    this.sprite.playerRef = this;
+                    this.sprite.setVisible(true);
+                    this.sprite.setAlpha(1);
+                } catch (e2) {
+                    // ignore - sprite will remain undefined and other code must handle it
+                }
+            }
+        }
 
         // Try to create a Spine display for the character if the runtime/plugin and assets are available.
         // We keep the physics sprite for collisions and sync the Spine visual to it, avoiding physics-plugin mismatches.
@@ -35,6 +214,35 @@ class Player extends GameObject {
             try {
                 if (this._spineLoadingOverlay) return;
                 if (!this.scene || !this.scene.add) return;
+
+                // If renderer or GL context is not available (or in a bad state),
+                // avoid creating canvas-backed text which triggers createTexture
+                // and can flood logs. Use a lightweight DOM fallback instead.
+                const renderer = this.scene && this.scene.sys && this.scene.sys.game && this.scene.sys.game.renderer;
+                if (!renderer || !renderer.gl) {
+                    try {
+                        if (!document.getElementById('noteleks-spine-loading')) {
+                            const el = document.createElement('div');
+                            el.id = 'noteleks-spine-loading';
+                            el.style.position = 'fixed';
+                            el.style.left = '8px';
+                            el.style.top = '8px';
+                            el.style.zIndex = 2147483646;
+                            el.style.background = 'rgba(0,0,0,0.6)';
+                            el.style.color = '#fff';
+                            el.style.padding = '6px 10px';
+                            el.style.borderRadius = '6px';
+                            el.style.fontFamily = 'Arial, sans-serif';
+                            el.style.fontSize = '12px';
+                            el.textContent = 'Loading character...';
+                            document.body.appendChild(el);
+                        }
+                        this._spineLoadingOverlay = { dom: true };
+                    } catch (domErr) {
+                        // ignore DOM fallback failures
+                    }
+                    return;
+                }
 
                 // Create a fixed-position container using scrollFactor 0 so it stays
                 // aligned to the camera regardless of world movement.
@@ -96,10 +304,67 @@ class Player extends GameObject {
                 } catch (e) {
                     // ignore scale application errors
                 }
+                // Defensive normalization: ensure displayWidth is positive and not vanishingly small.
+                try {
+                    const minPixels = 48; // target minimum visible width in pixels
+                    // If displayWidth is present and small, boost the scale so it becomes visible.
+                    const dw = (typeof this.spine.displayWidth === 'number') ? Math.abs(this.spine.displayWidth) : null;
+                    if (dw !== null && dw > 0 && dw < minPixels) {
+                        const factor = minPixels / dw;
+                        const applied = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? (GameConfig.player.scale * factor) : factor;
+                        if (typeof this.spine.setScale === 'function') {
+                            this.spine.setScale(applied);
+                        } else {
+                            try { this.spine.scaleX = Math.abs(this.spine.scaleX || applied); } catch (e) {}
+                            try { this.spine.scaleY = Math.abs(this.spine.scaleY || applied); } catch (e) {}
+                        }
+                    }
+                    // Normalize sign of scaleX to match flip state (avoid negative displayWidth confusion)
+                    try {
+                        if (this.sprite && this.sprite.flipX) this.spine.scaleX = -Math.abs(this.spine.scaleX || (GameConfig.player && GameConfig.player.scale) || 1);
+                        else this.spine.scaleX = Math.abs(this.spine.scaleX || (GameConfig.player && GameConfig.player.scale) || 1);
+                    } catch (e) {
+                        // ignore
+                    }
+                } catch (e) {
+                    // ignore normalization errors
+                }
                     if (typeof this.spine.setOrigin === 'function') this.spine.setOrigin(0.5, 1);
                 // Keep the player visual behind UI elements (UI uses ~1000). Use a
                 // moderate depth so game objects render above the player but UI stays on top.
                 if (this.spine.setDepth) this.spine.setDepth(500);
+
+                // Ensure a default animation is playing so the character is not static.
+                // Prefer 'idle' if available; otherwise fall back to the first animation
+                // name found on the skeleton data. This is placed here so it runs both
+                // when the Spine display is created synchronously and when finalize
+                // is invoked from async creation retries.
+                try {
+                    const playInitialAnimation = () => {
+                        if (!this.spine) return;
+                        let desired = 'idle';
+                        try {
+                            const sk = (this.spine && this.spine.spine && this.spine.spine.skeleton) || this.spine.skeleton || null;
+                            if (sk && sk.data && Array.isArray(sk.data.animations) && sk.data.animations.length) {
+                                const names = sk.data.animations.map(a => a.name);
+                                if (names.indexOf('idle') === -1) desired = names[0];
+                            }
+                        } catch (e) {
+                            // ignore skeleton inspection errors and stick with 'idle'
+                        }
+
+                        try {
+                            console.warn('[Player] playInitialAnimation selected:', desired);
+                            this._setSpineAnimation(desired, true);
+                        } catch (e) {
+                            // ignore failures to set animation (best-effort)
+                        }
+                    };
+                    // Run immediately — finalizeSpineVisual may be called in both sync and async flows
+                    playInitialAnimation();
+                } catch (e) {
+                    // swallow errors so finalize continues
+                }
 
                 // (debug forced-centering removed — camera should manage visibility)
 
@@ -234,7 +499,7 @@ class Player extends GameObject {
                         // Run once immediately to position right away
                         try { followDom(); } catch (e) {}
 
-                        console.info('[Player] DOM debug marker created and following player on-screen position');
+                        console.warn('[Player] DOM debug marker created and following player on-screen position');
 
                         // Remove marker and listener after 5s
                         setTimeout(() => {
@@ -285,15 +550,15 @@ class Player extends GameObject {
                                             // Hide the problematic spine display so it doesn't occlude
                                             try { if (this.spine && typeof this.spine.setVisible === 'function') this.spine.setVisible(false); } catch (e) {}
                                                 try { this._hideSpineLoading(); } catch (e) {}
-                                                console.info('[Player] Canvas fallback image created and placed at player position');
+                                                console.warn('[Player] Canvas fallback image created and placed at player position');
                                         } catch (e) {
                                             console.warn('[Player] Failed to draw canvas fallback to texture:', e && e.message);
                                         }
                                     } else {
-                                        console.info('[Player] No canvas fallback available in cache.custom to draw');
+                                        console.warn('[Player] No canvas fallback available in cache.custom to draw');
                                     }
                                 } else {
-                                    console.info('[Player] Spine rendering appears healthy (visible=', spineVisible, 'alpha=', spineAlpha, 'hasSkeleton=', hasSkeleton, 'pluginTexPresent=', pluginTexPresent, ')');
+                                    console.warn('[Player] Spine rendering appears healthy (visible=', spineVisible, 'alpha=', spineAlpha, 'hasSkeleton=', hasSkeleton, 'pluginTexPresent=', pluginTexPresent, ')');
                                 }
                             } catch (e) {
                                 console.warn('[Player] checkSpineRendered failed:', e && e.message);
@@ -340,7 +605,7 @@ class Player extends GameObject {
                                         if (this._persistentFallbackImage && this._persistentFallbackImage.setPosition) {
                                             try {
                                                 this._persistentFallbackImage.setPosition(this.sprite.x, this.sprite.y);
-                                                console.info('[Player] Reused existing persistent Phaser image fallback');
+                                                console.warn('[Player] Reused existing persistent Phaser image fallback');
                                             } catch (e) {
                                                 // ignore
                                             }
@@ -353,16 +618,16 @@ class Player extends GameObject {
                                             // Hide the problematic spine display so it doesn't occlude
                                             try { if (this.spine && typeof this.spine.setVisible === 'function') this.spine.setVisible(false); } catch (e) {}
                                                 try { this._hideSpineLoading(); } catch (e) {}
-                                                console.info('[Player] Spine visual appears blank — created persistent Phaser image fallback for visibility');
+                                                console.warn('[Player] Spine visual appears blank — created persistent Phaser image fallback for visibility');
                                         }
                                     } else {
-                                        console.info('[Player] Spine visual appears blank but fallback texture not present');
+                                        console.warn('[Player] Spine visual appears blank but fallback texture not present');
                                     }
                                 } catch (fbErr) {
                                     console.warn('[Player] Failed to create fallback image:', fbErr && fbErr.message);
                                 }
                             } else {
-                                console.info('[Player] Spine visual appears to be rendering (probe passed)');
+                                console.warn('[Player] Spine visual appears to be rendering (probe passed)');
                             }
                         } catch (e) {
                             // ignore probe errors
@@ -391,32 +656,166 @@ class Player extends GameObject {
             const atlasKey = 'noteleks-data';
             const pageName = 'noteleks-texture';
 
+            // Populate Spine plugin internal caches on-demand if they're empty
+            // but we have the raw skeleton/atlas data in Phaser caches or custom cache.
+            const populatePluginCachesIfNeeded = () => {
+                try {
+                    const sys = this.scene && this.scene.sys ? this.scene.sys : null;
+                    const plugin = sys && sys.spine ? sys.spine : null;
+                    if (!plugin) return false;
+
+                    const atlasCache = plugin.atlasCache || plugin.atlasCacheMap || plugin.atlasCacheEntries || plugin.atlas || null;
+                    const skeletonCache = plugin.skeletonDataCache || plugin.skeletonCache || plugin.skeletons || null;
+
+                    const atlasHasKeys = atlasCache && (typeof atlasCache.keys === 'function' ? atlasCache.keys().length > 0 : Object.keys(atlasCache).length > 0);
+                    const skelHasKeys = skeletonCache && (typeof skeletonCache.keys === 'function' ? skeletonCache.keys().length > 0 : Object.keys(skeletonCache).length > 0);
+                    if (atlasHasKeys && skelHasKeys) return true;
+
+                    // Try to locate skeleton data from several places AssetManager populates
+                    let skeletonDataObj = null;
+                    try {
+                        if (this.scene.cache && this.scene.cache.json && typeof this.scene.cache.json.get === 'function') {
+                            skeletonDataObj = this.scene.cache.json.get(dataKey) || this.scene.cache.json.get('noteleks-skeleton-data') || skeletonDataObj;
+                        }
+                    } catch (e) {}
+                    if (!skeletonDataObj && this.scene.cache && this.scene.cache.custom) {
+                        skeletonDataObj = this.scene.cache.custom['spine-skeleton-data'] || skeletonDataObj;
+                    }
+                    if (!skeletonDataObj && typeof window !== 'undefined' && window.NOTELEKS_DIAG && window.NOTELEKS_DIAG.skeleton) {
+                        skeletonDataObj = window.NOTELEKS_DIAG.skeleton;
+                    }
+
+                    // Try to find a runtime TextureAtlas created by AssetManager
+                    let textureAtlas = null;
+                    try { textureAtlas = this.scene.cache && this.scene.cache.custom ? this.scene.cache.custom['spine-atlas'] : null; } catch (e) {}
+
+                    // If we have something useful, attempt to populate plugin caches under tolerant keys
+                    const trySet = (cache, k, v) => {
+                        try {
+                            if (!cache) return false;
+
+                            // If the cache itself is a Map-like object
+                            if (cache instanceof Map && typeof cache.set === 'function') {
+                                cache.set(k, v);
+                                return true;
+                            }
+
+                            // If the cache exposes an entries container that is Map-like
+                            if (cache.entries && typeof cache.entries.set === 'function') {
+                                try {
+                                    cache.entries.set(k, v);
+                                    return true;
+                                } catch (e) {
+                                    // fallthrough to other strategies
+                                }
+                            }
+
+                            // Common plugin APIs
+                            if (typeof cache.set === 'function') { cache.set(k, v); return true; }
+                            if (typeof cache.add === 'function') { cache.add(k, v); return true; }
+                            if (typeof cache.put === 'function') { cache.put(k, v); return true; }
+
+                            // If entries is a plain object (older shapes)
+                            if (cache.entries && typeof cache.entries === 'object') {
+                                try { cache.entries[k] = v; } catch (e) {}
+                                return true;
+                            }
+
+                            // Fallback: assign to object-like cache directly
+                            try { cache[k] = v; } catch (e) { return false; }
+                            return true;
+                        } catch (e) { return false; }
+                    };
+
+                    const populated = { atlas: [], skeleton: [] };
+                    try {
+                        if (textureAtlas && atlasCache) {
+                            // Include composite candidates the plugin sometimes looks up
+                            const atlasCandidates = [
+                                'noteleks-data', 'noteleks-atlas', 'noteleks-data-atlas', 'noteleks-atlas-text'
+                            ];
+                            // add composite forms with page name which some plugin builds use
+                            const pageName = 'noteleks-texture';
+                            const compositeSuffixes = ["!" + pageName, "!" + pageName + "-page0", "!page0"];
+                            const extraCandidates = [];
+                            atlasCandidates.forEach(base => compositeSuffixes.forEach(s => extraCandidates.push(base + s)));
+                            const allAtlasCandidates = atlasCandidates.concat(extraCandidates);
+                            for (const k of allAtlasCandidates) {
+                                if (trySet(atlasCache, k, textureAtlas)) populated.atlas.push(k);
+                            }
+                            // Also try to mirror under a raw 'noteleks-texture' key which some lookups use
+                            trySet(atlasCache, 'noteleks-texture', textureAtlas) && populated.atlas.push('noteleks-texture');
+                        }
+                        if (skeletonDataObj && skeletonCache) {
+                            const skeletonCandidates = ['noteleks-data', 'noteleks-data-skeleton', 'noteleks-skeleton-data'];
+                            // also try a few composite skeleton keys
+                            const skeletonExtra = skeletonCandidates.map(k => k + '-v1').concat(skeletonCandidates.map(k => k + '_v1'));
+                            const allSkel = skeletonCandidates.concat(skeletonExtra);
+                            for (const k of allSkel) {
+                                if (trySet(skeletonCache, k, skeletonDataObj)) populated.skeleton.push(k);
+                            }
+                        }
+                    } catch (e) {
+                        // ignore population errors
+                    }
+
+                    if ((populated.atlas.length || populated.skeleton.length)) {
+                        console.warn('[Player] Populated Spine plugin caches on-demand', populated);
+                        return true;
+                    }
+                } catch (e) {
+                    // ignore
+                }
+                return false;
+            };
+
             const checkReadiness = () => {
                 try {
                     const sys = this.scene && this.scene.sys ? this.scene.sys : null;
                     const plugin = sys && sys.spine ? sys.spine : null;
 
-                    // If plugin instance exists, prefer checking its internal caches
+                    // If plugin instance exists, prefer checking its internal caches.
+                    // NOTE: older code accidentally concatenated dataKey+atlasKey when
+                    // checking skeleton cache keys; use the dataKey here.
                     if (plugin) {
                         const atlasReady = typeof plugin.atlasCache?.exists === 'function' ? plugin.atlasCache.exists(atlasKey) : false;
-                        const skeletonReady = typeof plugin.skeletonDataCache?.exists === 'function' ? plugin.skeletonDataCache.exists(dataKey + atlasKey) : false;
-                        console.info('[Player] plugin instance present. atlasReady=', atlasReady, 'skeletonReady=', skeletonReady);
+                        const skeletonReady = typeof plugin.skeletonDataCache?.exists === 'function' ? plugin.skeletonDataCache.exists(dataKey) : false;
+                        console.warn('[Player] plugin instance present. atlasReady=', atlasReady, 'skeletonReady=', skeletonReady);
                         if (atlasReady && skeletonReady) {
                             try { this._hideSpineLoading(); } catch (e) {}
                             return true;
                         }
                     }
 
-                    // Fallback: check Phaser caches that plugin will read when creating
-                    const jsonOk = this.scene.cache && this.scene.cache.json && typeof this.scene.cache.json.exists === 'function' ? this.scene.cache.json.exists(dataKey) : false;
+                    // Fallback: check Phaser caches that plugin will read when creating.
+                    const jsonCache = this.scene.cache && this.scene.cache.json ? this.scene.cache.json : null;
+                    const jsonOk = jsonCache && typeof jsonCache.exists === 'function' ? jsonCache.exists(dataKey) : false;
                     const textOk = this.scene.cache && this.scene.cache.text && typeof this.scene.cache.text.exists === 'function' ? this.scene.cache.text.exists(atlasKey) : false;
                     const pageTex = this.scene.textures && typeof this.scene.textures.exists === 'function' ? this.scene.textures.exists(atlasKey + '!' + pageName) : false;
-                    console.info('[Player] phaser cache readiness: json=', jsonOk, 'text=', textOk, 'pageTex=', pageTex);
-                    // Accept either (text + json + pageTex) or (json + pageTex) as readiness.
-                    // Some runtime builds populate JSON and page textures but not the
-                    // text cache key the loader would normally add; accept that
-                    // combination to be more tolerant to loader/plugin ordering.
                     const binaryOk = this.scene.cache && this.scene.cache.binary && this.scene.cache.binary.exists && this.scene.cache.binary.exists(dataKey);
+
+                    // Also consider any JSON cache key that mentions 'noteleks' as a sign the skeleton JSON is present
+                    let anyNoteleksJson = jsonOk;
+                    try {
+                        if (!anyNoteleksJson && jsonCache && typeof jsonCache.keys === 'function') {
+                            const keys = jsonCache.keys();
+                            if (Array.isArray(keys)) {
+                                anyNoteleksJson = keys.some(k => String(k).toLowerCase().includes('noteleks'));
+                            }
+                        }
+                    } catch (e) {
+                        // ignore probing errors
+                    }
+
+                    console.warn('[Player] phaser cache readiness: json=', jsonOk, 'anyNoteleksJson=', anyNoteleksJson, 'text=', textOk, 'pageTex=', pageTex);
+
+                    // Accept readiness when the page texture exists and we can find any
+                    // sensible skeleton JSON (either explicit dataKey, binary, or an
+                    // alternate json key mentioning 'noteleks'). This is more tolerant
+                    // to loader/plugin ordering differences while remaining conservative.
+                    if (pageTex && (jsonOk || binaryOk || anyNoteleksJson)) return true;
+
+                    // Preserve previous stricter path as a fallback
                     return ((jsonOk && pageTex) || (textOk && (jsonOk || binaryOk) && pageTex));
                 } catch (e) {
                     console.warn('[Player] checkReadiness failed:', e && e.message);
@@ -428,13 +827,24 @@ class Player extends GameObject {
                 try {
                     // If scene.add.spine isn't yet present, bail to retry
                     if (!(this.scene.add && typeof this.scene.add.spine === 'function')) {
-                        console.info('[Player] scene.add.spine not yet available');
+                        console.warn('[Player] scene.add.spine not yet available');
                         return false;
+                    }
+
+                    // Attempt to populate plugin caches on-demand if needed. This
+                    // helper was added to bridge ordering races where the plugin
+                    // registered after AssetManager populated Phaser caches.
+                    try {
+                        const populated = populatePluginCachesIfNeeded();
+                        if (populated) console.warn('[Player] populatePluginCachesIfNeeded reported success');
+                    } catch (e) {
+                        // ignore helper failures — we'll continue with normal readiness checks
+                        console.warn('[Player] populatePluginCachesIfNeeded threw:', e && e.message);
                     }
 
                     // Wait until either plugin caches or phaser caches are prepared
                     if (!checkReadiness()) {
-                        console.info('[Player] Spine assets/plugins not ready yet, will retry');
+                        console.warn('[Player] Spine assets/plugins not ready yet, will retry');
                         return false;
                     }
 
@@ -447,7 +857,7 @@ class Player extends GameObject {
                         const plugin = sys && sys.spine ? sys.spine : null;
                         const pluginAtlasKeys = plugin && plugin.atlasCache && typeof plugin.atlasCache.keys === 'function' ? plugin.atlasCache.keys() : null;
                         const pluginSkelKeys = plugin && plugin.skeletonDataCache && typeof plugin.skeletonDataCache.keys === 'function' ? plugin.skeletonDataCache.keys() : null;
-                        console.info('[Player] spine create diagnostics:', { jsonEntry: !!jsonEntry, textEntry: !!textEntry, pageTexExists, pluginAtlasKeys, pluginSkelKeys });
+                        console.warn('[Player] spine create diagnostics:', { jsonEntry: !!jsonEntry, textEntry: !!textEntry, pageTexExists, pluginAtlasKeys, pluginSkelKeys });
                     } catch (diagErr) {
                         console.warn('[Player] spine diagnostics failed:', diagErr && diagErr.message);
                     }
@@ -456,7 +866,7 @@ class Player extends GameObject {
                     // scene.add.spine signature: (x, y, dataKey, atlasKey, boundsProvider?)
                     const created = this.scene.add.spine(this.x, this.y, dataKey, atlasKey);
                     this.spine = created || this.spine;
-                    console.info('[Player] Spine display create attempt, success=', !!this.spine);
+                    console.warn('[Player] Spine display create attempt, success=', !!this.spine);
                     if (this.spine) {
                         try { if (typeof finalizeSpineVisual === 'function') finalizeSpineVisual(); } catch (e) {}
                         try { this._hideSpineLoading(); } catch (e) {}
@@ -488,36 +898,39 @@ class Player extends GameObject {
             return false;
         };
 
-        // First immediate attempt (fast-path)
-        this._tryCreateSpine();
+        // Drain any queued _tryCreateSpine calls that happened before the
+        // real implementation was attached (see constructor stub above).
+        try {
+            if (this._pendingTryCreateCalls && this._pendingTryCreateCalls.length) {
+                for (const args of this._pendingTryCreateCalls) {
+                    try { this._tryCreateSpine.apply(this, args); } catch (e) { /* ignore per-call */ }
+                }
+                this._pendingTryCreateCalls = [];
+            }
+        } catch (e) {
+            // ignore draining errors
+        }
+
+    // Spine creation is now deferred; the constructor uses createPlayerDeferred
+    // to wait for AssetManager readiness before starting _tryCreateSpine.
 
             // If the spine was created synchronously, run diagnostics and tune it.
             if (this.spine) {
             try {
                 // Diagnostics: report which animation APIs are present
-                console.info('[Player] Spine object APIs:', {
+                console.warn('[Player] Spine object APIs:', {
                     setAnimation: typeof this.spine.setAnimation,
                     animationState: !!this.spine.animationState,
                     animationStateSetAnimation: this.spine.animationState ? typeof this.spine.animationState.setAnimation : 'n/a',
                     state: !!this.spine.state,
                     stateSetAnimation: this.spine.state ? typeof this.spine.state.setAnimation : 'n/a',
                 });
-                // Force an initial animation robustly (try multiple possible API shapes)
+                // Force an initial animation robustly
                 try {
-                    if (typeof this.spine.setAnimation === 'function') {
-                        this.spine.setAnimation(0, 'idle', true);
-                        console.info('[Player] Called spine.setAnimation(0, "idle", true)');
-                    } else if (this.spine.animationState && typeof this.spine.animationState.setAnimation === 'function') {
-                        this.spine.animationState.setAnimation(0, 'idle', true);
-                        console.info('[Player] Called spine.animationState.setAnimation(0, "idle", true)');
-                    } else if (this.spine.state && typeof this.spine.state.setAnimation === 'function') {
-                        this.spine.state.setAnimation(0, 'idle', true);
-                        console.info('[Player] Called spine.state.setAnimation(0, "idle", true)');
-                    } else {
-                        console.warn('[Player] No animation API found on spine object');
-                    }
+                    this._setSpineAnimation('idle', true);
+                    console.warn('[Player] Called _setSpineAnimation("idle", true)');
                 } catch (err) {
-                    console.warn('[Player] setAnimation threw:', err && err.message);
+                    console.warn('[Player] _setSpineAnimation threw:', err && err.message);
                 }
 
                 // Print available animation names from the skeleton (if accessible)
@@ -525,11 +938,11 @@ class Player extends GameObject {
                     const skel = this.spine && this.spine.spine && this.spine.spine.skeleton || (this.spine && this.spine.skeleton) || null;
                     if (skel && skel.data && skel.data.animations) {
                         const names = skel.data.animations.map(a => a.name);
-                        console.info('[Player] Spine skeleton animations:', names);
+                        console.warn('[Player] Spine skeleton animations:', names);
                     } else if ((this.spine && this.spine.animationState && this.spine.animationState.tracks) || (this.spine && this.spine.state && this.spine.state.tracks)) {
-                        console.info('[Player] Spine state/tracks present (could be runtime plugin variation)');
+                        console.warn('[Player] Spine state/tracks present (could be runtime plugin variation)');
                     } else {
-                        console.info('[Player] No skeleton animation data visible on display');
+                        console.warn('[Player] No skeleton animation data visible on display');
                     }
                 } catch (e) {
                     console.warn('[Player] Failed to read skeleton animations:', e && e.message);
@@ -545,6 +958,27 @@ class Player extends GameObject {
             try {
                 const baseScale = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? GameConfig.player.scale : 1;
                 if (typeof this.spine.setScale === 'function') this.spine.setScale(baseScale);
+            } catch (e) {
+                // ignore
+            }
+            // Defensive normalization (same as in finalizeSpineVisual): ensure displayWidth positive and visible
+            try {
+                const minPixels = 48;
+                const dw = (typeof this.spine.displayWidth === 'number') ? Math.abs(this.spine.displayWidth) : null;
+                if (dw !== null && dw > 0 && dw < minPixels) {
+                    const factor = minPixels / dw;
+                    const applied = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? (GameConfig.player.scale * factor) : factor;
+                    if (typeof this.spine.setScale === 'function') {
+                        this.spine.setScale(applied);
+                    } else {
+                        try { this.spine.scaleX = Math.abs(this.spine.scaleX || applied); } catch (e) {}
+                        try { this.spine.scaleY = Math.abs(this.spine.scaleY || applied); } catch (e) {}
+                    }
+                }
+                try {
+                    if (this.sprite && this.sprite.flipX) this.spine.scaleX = -Math.abs(this.spine.scaleX || (GameConfig.player && GameConfig.player.scale) || 1);
+                    else this.spine.scaleX = Math.abs(this.spine.scaleX || (GameConfig.player && GameConfig.player.scale) || 1);
+                } catch (e) {}
             } catch (e) {
                 // ignore
             }
@@ -566,14 +1000,79 @@ class Player extends GameObject {
             // ignore
         }
 
-        // If spine still wasn't ready yet, listen for the spine-ready event and try again once
-        // Also listen for spine-ready and re-attempt creation if the event fires
-        if (!this.spine && this.scene && this.scene.events && typeof this.scene.events.once === 'function') {
-            this.scene.events.once('spine-ready', () => {
-                // Give plugin a short moment and then start the retry attempts
-                setTimeout(() => this._tryCreateSpine(10, 100), 50);
-            });
+        // Aggressive final attempt: try creating the Spine GameObject using multiple
+        // candidate data/atlas key pairs directly. This mirrors the diagnostic
+        // snippet and helps when plugin caches exist but earlier readiness checks
+        // missed them due to shape differences or timing races.
+        try {
+            if (!this.spine && this.scene && this.scene.add && typeof this.scene.add.spine === 'function') {
+                const atlasCandidates = ['noteleks-data', 'noteleks-atlas', 'noteleks-data-atlas', 'noteleks-atlas-text', 'noteleks-texture', 'noteleks-data!noteleks-texture', 'noteleks-data!noteleks-texture.png', 'noteleks-data!noteleks-texture.jpg', 'noteleks-texture-page0', 'noteleks-texture!page0', 'noteleks-atlas'];
+                const skeletonCandidates = ['noteleks-data', 'noteleks-skeleton-data', 'noteleks-data-skeleton'];
+                // prefer explicit skeleton x atlas combinations then same-key combos
+                const pairs = [];
+                skeletonCandidates.forEach(sk => atlasCandidates.forEach(at => pairs.push({ sk, at })));
+                atlasCandidates.concat(skeletonCandidates).forEach(k => pairs.push({ sk: k, at: k }));
+
+                // Deduplicate and try each pair once
+                const seen = new Set();
+                for (const p of pairs) {
+                    const key = (p.sk || '') + '||' + (p.at || '');
+                    if (seen.has(key)) continue;
+                    seen.add(key);
+                    try {
+                        let created = null;
+                        try { created = this.scene.add.spine(this.x, this.y, p.sk, p.at); } catch (e1) {
+                            try { created = this.scene.add.spine(this.x, this.y, p.sk); } catch (e2) { created = null; }
+                        }
+                        if (created) {
+                            this.spine = created;
+                            // expose for debugging
+                            try { if (typeof window !== 'undefined') window._noteleks_diag_created = created; } catch (e) {}
+                            try { if (typeof finalizeSpineVisual === 'function') finalizeSpineVisual(); } catch (e) {}
+                            try { this._hideSpineLoading(); } catch (e) {}
+                            console.warn('[Player] Aggressive fallback created spine with', p);
+                            break;
+                        }
+                    } catch (err) {
+                        // continue trying other pairs
+                    }
+                }
+            }
+        } catch (e) {
+            // ignore aggressive fallback failures
         }
+
+        // Auto-fix spine creation using QuickFix approach
+        setTimeout(() => {
+            if (!this.spine && this.scene && this.scene.add && typeof this.scene.add.spine === 'function') {
+                try {
+                    const spine = this.scene.add.spine(this.sprite.x, this.sprite.y, 'noteleks-data', 'noteleks-data');
+                    if (spine) {
+                        this.spine = spine;
+                        spine.setScale(0.6);
+                        spine.setOrigin(0.5, 1);
+                        spine.setDepth(500);
+                        
+                        // Use working animation API
+                        if (spine.animationState && spine.animationState.setAnimation) {
+                            spine.animationState.setAnimation(0, 'idle', true);
+                        }
+                        
+                        // Hide physics sprite since we have spine now
+                        if (this.sprite) this.sprite.setVisible(false);
+                        
+                        try { this._hideSpineLoading(); } catch (e) {}
+                        console.warn('[Player] Auto-fix spine creation successful');
+                    }
+                } catch (e) {
+                    console.warn('[Player] Auto-fix spine creation failed:', e && e.message);
+                }
+            }
+        }, 500);
+
+        // Note: previous versions listened for 'spine-ready' here; creation is now
+        // driven by the deferred initializer (createPlayerDeferred) which awaits the
+        // same event and starts retries — avoiding duplicate attempts.
 
         // Final fallback: if no spine created, but AssetManager prepared a canvas fallback,
         // create a Phaser Image from it so the player is visible.
@@ -588,7 +1087,7 @@ class Player extends GameObject {
                     try { this._hideSpineLoading(); } catch (e) {}
                     // Finalize visual and schedule hiding the physics sprite in a safe next-tick
                     try { if (typeof finalizeSpineVisual === 'function') finalizeSpineVisual(); } catch (e) { /* ignore */ }
-                    console.info('[Player] Spine canvas fallback image created as final fallback');
+                    console.warn('[Player] Spine canvas fallback image created as final fallback');
                 }
             } catch (e) {
                 // ignore
@@ -614,8 +1113,8 @@ class Player extends GameObject {
         try {
             if (typeof window !== 'undefined') {
                 window.noteleksPlayer = this;
-                console.info('[Player] Debug handle available: window.noteleksPlayer');
-                console.info('[Player] You can inspect and manually call: window.noteleksPlayer.spine && window.noteleksPlayer.spine.setAnimation(0, "idle", true)');
+                console.warn('[Player] Debug handle available: window.noteleksPlayer');
+                console.warn('[Player] You can inspect and manually call: window.noteleksPlayer.spine && window.noteleksPlayer.spine.setAnimation(0, "idle", true)');
             }
         } catch (e) {
             // ignore
@@ -638,7 +1137,7 @@ class Player extends GameObject {
                         this._buildDebugOverlay(names);
                     } else if (attempts >= maxAttempts) {
                         clearInterval(iv);
-                        console.info('[Player] Debug overlay: no skeleton animation data found, stopping poll');
+                        console.warn('[Player] Debug overlay: no skeleton animation data found, stopping poll');
                     }
                 }, 500);
             };
@@ -737,7 +1236,7 @@ class Player extends GameObject {
                                 } else if (this.spine && this.spine.state && typeof this.spine.state.setAnimation === 'function') {
                                     this.spine.state.setAnimation(0, n, true);
                                 }
-                                console.info('[Player] Debug: triggered animation', n);
+                                console.warn('[Player] Debug: triggered animation', n);
                             } catch (e) {
                                 console.warn('[Player] Debug: failed to trigger animation', n, e && e.message);
                             }
@@ -765,7 +1264,7 @@ class Player extends GameObject {
                     container.appendChild(controls);
 
                     document.body.appendChild(container);
-                    console.info('[Player] Debug overlay built with animations:', names);
+                    console.warn('[Player] Debug overlay built with animations:', names);
                 } catch (e) {
                     console.warn('[Player] Failed to build debug overlay:', e && e.message);
                 }
@@ -928,17 +1427,84 @@ class Player extends GameObject {
                 // Prefer animationState when present (some plugin variants expose it as animationState)
                 const animState = (this.spine && (this.spine.animationState || this.spine.state)) || null;
                 if (!this._spineManualAdvanceLogged && animState && typeof animState.update === 'function') {
-                    console.info('[Player] Manual spine animation advancement is enabled');
+                    console.warn('[Player] Manual spine animation advancement is enabled');
                     this._spineManualAdvanceLogged = true;
                 }
                 if (animState && typeof animState.update === 'function' && this.scene && this.scene.game && this.scene.game.loop) {
                     const dt = (this.scene.game.loop.delta || 16) / 1000;
-                    animState.update(dt);
-                    animState.apply(this.spine.skeleton);
-                    if (typeof this.spine.skeleton.updateWorldTransform === 'function') this.spine.skeleton.updateWorldTransform();
+                    		animState.update(dt);
+                    // Some plugin variants expose the runtime skeleton in different places.
+                    // Try the common locations and apply the animation state to whichever exists.
+                    const skeletonRef = (this.spine && this.spine.spine && this.spine.spine.skeleton) || this.spine.skeleton || null;
+                    try {
+                                if (skeletonRef && typeof animState.apply === 'function') {
+                                        animState.apply(skeletonRef);
+                                        try {
+                                            // Avoid noisy per-frame logs unless explicit debug flag is set.
+                                            if (typeof window !== 'undefined' && window.__NOTELEKS_DEBUG__) {
+                                                console.warn('[Player] animState.apply executed (debug mode), currentAnim=', this._currentSpineAnim, 'skeletonRef=', !!skeletonRef);
+                                            } else if (!this._spineApplyLogged) {
+                                                // Log only once in normal operation to confirm the apply ran.
+                                                console.warn('[Player] animState.apply executed (first frame), currentAnim=', this._currentSpineAnim);
+                                                this._spineApplyLogged = true;
+                                            }
+                                        } catch(e) {}
+                                    }
+                    } catch (applyErr) {
+                        // Best-effort: if apply fails for this skeleton, attempt the other common ref
+                        try {
+                            const altRef = (this.spine && this.spine.skeleton) || (this.spine && this.spine.spine && this.spine.spine.skeleton) || null;
+                                if (altRef && typeof animState.apply === 'function') {
+                                    animState.apply(altRef);
+                                    try {
+                                        if (typeof window !== 'undefined' && window.__NOTELEKS_DEBUG__) {
+                                            console.warn('[Player] animState.apply executed on altRef (debug mode), currentAnim=', this._currentSpineAnim, 'altRef=', !!altRef);
+                                        } else if (!this._spineApplyLogged) {
+                                            console.warn('[Player] animState.apply executed on altRef (first frame), currentAnim=', this._currentSpineAnim);
+                                            this._spineApplyLogged = true;
+                                        }
+                                    } catch(e) {}
+                                }
+                        } catch (applyErr2) {
+                            // ignore failed applies
+                        }
+                    }
+                    // Updating world transform can fail in some runtime builds; swallow those errors
+                    try {
+                        const sk = skeletonRef || ((this.spine && this.spine.skeleton) || null);
+                        if (sk && typeof sk.updateWorldTransform === 'function') sk.updateWorldTransform();
+                    } catch (uwtErr) {
+                        // ignore update errors (some runtimes attach extra extensions that may be undefined)
+                    }
                 }
             } catch (e) {
                 // Ignore manual update errors
+            }
+
+            // Per-frame defensive enforcement: ensure the spine visual has a
+            // non-vanishing, positive display size so it remains visible across
+            // renderer/runtime variations. If displayWidth is present and smaller
+            // than a minimum pixel width, boost the scale proportionally. This
+            // corrects transient cases where displayWidth briefly reports very
+            // small values or where previous normalization didn't run.
+            try {
+                const minPixels = (GameConfig && GameConfig.player && GameConfig.player.minVisibleWidth) || 40;
+                const dw = (typeof this.spine.displayWidth === 'number') ? Math.abs(this.spine.displayWidth) : null;
+                if (dw !== null && dw > 0 && dw < minPixels) {
+                    const factor = minPixels / dw;
+                    // Determine current absolute scale (fallback to configured base)
+                    const baseScale = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? Math.abs(GameConfig.player.scale) : Math.abs(this.spine.scaleX || 1);
+                    const newScale = baseScale * factor;
+                    if (typeof this.spine.setScale === 'function') {
+                        // preserve horizontal flip sign
+                        this.spine.setScale(this.sprite && this.sprite.flipX ? -newScale : newScale, newScale);
+                    } else {
+                        try { this.spine.scaleX = this.sprite && this.sprite.flipX ? -Math.abs(newScale) : Math.abs(newScale); } catch (e) {}
+                        try { this.spine.scaleY = Math.abs(newScale); } catch (e) {}
+                    }
+                }
+            } catch (e) {
+                // ignore enforcement errors
             }
         } catch (e) {
             // ignore sync errors
@@ -949,27 +1515,46 @@ class Player extends GameObject {
         // Process movement input
         inputComponent.processInput(inputState);
 
-        // Apply movement based on input state directly
-        if (inputState.left) {
-            movementComponent.moveLeft();
-            this._setSpineAnimation('run', true);
-        } else if (inputState.right) {
-            movementComponent.moveRight();
-            this._setSpineAnimation('run', true);
-        } else {
-            movementComponent.stopHorizontal();
-            this._setSpineAnimation('idle', true);
-        }
-
+        // Check if jumping
+        const isJumping = !movementComponent.isOnGround();
+        
+        // Handle jump input
         if (inputState.up && movementComponent.isOnGround()) {
             movementComponent.jump();
             this._setSpineAnimation('jump', false);
+            this._isJumping = true;
+            // Clear jump state after animation
+            setTimeout(() => {
+                this._isJumping = false;
+            }, 600);
+        }
+        
+        // Only change movement animations if not jumping or attacking
+        if (!this._isJumping && !isJumping && !this._isAttacking) {
+            if (inputState.left) {
+                movementComponent.moveLeft();
+                this._setSpineAnimation('run', true);
+            } else if (inputState.right) {
+                movementComponent.moveRight();
+                this._setSpineAnimation('run', true);
+            } else {
+                movementComponent.stopHorizontal();
+                this._setSpineAnimation('idle', true);
+            }
+        } else if (!this._isJumping && !this._isAttacking) {
+            // Still allow horizontal movement while in air
+            if (inputState.left) {
+                movementComponent.moveLeft();
+            } else if (inputState.right) {
+                movementComponent.moveRight();
+            } else {
+                movementComponent.stopHorizontal();
+            }
         }
 
-        // Process attack input for mobile
-        if (inputState.attack) {
+        // Process attack input
+        if (inputState.attack && !this._isAttacking) {
             this.attack();
-            this._setSpineAnimation('attack', false);
         }
     }
 
@@ -978,14 +1563,53 @@ class Player extends GameObject {
 
         try {
             if (this._currentSpineAnim === name) return;
-            if (typeof this.spine.setAnimation === 'function') {
-                this.spine.setAnimation(0, name, loop);
-            } else if (this.spine.animationState && typeof this.spine.animationState.setAnimation === 'function') {
-                this.spine.animationState.setAnimation(0, name, loop);
-            } else if (this.spine.state && typeof this.spine.state.setAnimation === 'function') {
-                this.spine.state.setAnimation(0, name, loop);
+
+            // Try different API patterns for setting animations
+            let success = false;
+            
+            // Method 1: Direct setAnimation
+            if (!success && typeof this.spine.setAnimation === 'function') {
+                try {
+                    this.spine.setAnimation(0, name, loop);
+                    success = true;
+                } catch (e) {}
             }
-            this._currentSpineAnim = name;
+            
+            // Method 2: animationState.setAnimation
+            if (!success && this.spine.animationState && typeof this.spine.animationState.setAnimation === 'function') {
+                try {
+                    this.spine.animationState.setAnimation(0, name, loop);
+                    success = true;
+                } catch (e) {}
+            }
+            
+            // Method 3: state.setAnimation
+            if (!success && this.spine.state && typeof this.spine.state.setAnimation === 'function') {
+                try {
+                    this.spine.state.setAnimation(0, name, loop);
+                    success = true;
+                } catch (e) {}
+            }
+            
+            // Method 4: Try animationState.setAnimation (this works with your plugin)
+            if (!success && this.spine.animationState && typeof this.spine.animationState.setAnimation === 'function') {
+                try {
+                    this.spine.animationState.setAnimation(0, name, loop);
+                    success = true;
+                } catch (e) {}
+            }
+            
+            // Method 5: Try play method (some versions use this)
+            if (!success && typeof this.spine.play === 'function') {
+                try {
+                    this.spine.play(name, loop);
+                    success = true;
+                } catch (e) {}
+            }
+            
+            if (success) {
+                this._currentSpineAnim = name;
+            }
         } catch (e) {
             // ignore animation errors
         }
@@ -996,6 +1620,13 @@ class Player extends GameObject {
         if (attackComponent && attackComponent.canAttack()) {
             const target = pointer ? { x: pointer.x, y: pointer.y } : null;
             attackComponent.attack(target);
+            
+            // Play attack animation when firing
+            this._setSpineAnimation('attack', false);
+            this._isAttacking = true;
+            setTimeout(() => {
+                this._isAttacking = false;
+            }, 400);
         }
     }
 

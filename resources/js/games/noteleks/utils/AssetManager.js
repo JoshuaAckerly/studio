@@ -107,6 +107,106 @@ export class AssetManager {
                 return false;
             }
 
+            // Parse Spine atlas text to extract region rectangles so we can create
+            // Phaser texture frames for each named region. Some loader/plugin
+            // races result in the atlas image being present but no Phaser frame
+            // entries being created for the individual regions; creating them
+            // from the atlas text prevents missing-frame rendering.
+            try {
+                const parseAtlasRegions = (text) => {
+                    const lines = String(text).split(/\r?\n/).map(l => l.replace(/\t/g, ''));
+                    const regions = [];
+                    let page = null;
+                    let i = 0;
+
+                    const isPageHeader = (ln) => {
+                        // Page header is a non-indented line that is a filename (e.g., Noteleks.png)
+                        return ln && ln.length && ln.indexOf(':') === -1 && !ln.startsWith(' ') && !ln.startsWith('\t');
+                    };
+
+                    while (i < lines.length) {
+                        let line = lines[i].trim();
+                        if (!line) { i++; continue; }
+
+                        // If this looks like a page header and we don't yet have a page, set it
+                        if (isPageHeader(lines[i])) {
+                            if (!page) {
+                                page = line;
+                                i++;
+                                continue;
+                            }
+                            // If page already set, this may actually be a region name
+                        }
+
+                        // Treat the current non-empty trimmed line as a region name
+                        const regionName = line;
+                        // Read following key: value pairs until blank line or next non-indented token
+                        let x = null, y = null, w = null, h = null;
+                        i++;
+                        while (i < lines.length && lines[i].trim()) {
+                            const raw = lines[i].trim();
+                            // Support different atlas formats: 'xy: x,y' & 'size: w,h' or 'bounds: x,y,w,h'
+                            const kv = raw.split(':');
+                            const key = kv[0] ? kv[0].trim() : '';
+                            const rest = kv.length > 1 ? kv.slice(1).join(':').trim() : '';
+
+                            if (key === 'xy' && rest) {
+                                const parts = rest.split(',').map(s => parseInt(s.trim(), 10));
+                                if (parts.length >= 2) { x = parts[0]; y = parts[1]; }
+                            } else if (key === 'size' && rest) {
+                                const parts = rest.split(',').map(s => parseInt(s.trim(), 10));
+                                if (parts.length >= 2) { w = parts[0]; h = parts[1]; }
+                            } else if (key === 'bounds' && rest) {
+                                // bounds: x,y,w,h
+                                const parts = rest.split(',').map(s => parseInt(s.trim(), 10));
+                                if (parts.length >= 4) { x = parts[0]; y = parts[1]; w = parts[2]; h = parts[3]; }
+                            } else if (key === 'rotate' || key === 'offsets' || key === 'format' || key === 'filter' || key === 'pma') {
+                                // ignore these entries for region rect parsing
+                            } else {
+                                // Some atlas variants write 'offsets' or other keys without colon on the same line;
+                                // ignore unknown keys safely.
+                            }
+                            i++;
+                        }
+
+                        if (regionName && x !== null && y !== null && w !== null && h !== null) {
+                            regions.push({ name: regionName, page: page || 'page', x, y, width: w, height: h });
+                        } else if (regionName) {
+                            // If we could not parse a rect, still include the region name so
+                            // callers can at least create a full-image fallback frame.
+                            regions.push({ name: regionName, page: page || 'page', x: 0, y: 0, width: 0, height: 0, fallback: true });
+                        }
+                        // continue (i already at next blank or next entry)
+                    }
+                    return regions;
+                };
+
+                const regions = parseAtlasRegions(modifiedAtlasText || '');
+                if (regions && regions.length && texture && texture.source && texture.source[0] && texture.source[0].image) {
+                    const srcImg = texture.source[0].image;
+                    for (const r of regions) {
+                        try {
+                            // Only create frame if it doesn't already exist
+                            if (!scene.textures.exists(r.name)) {
+                                // Create an offscreen canvas for the sub-image
+                                const cvs = document.createElement('canvas');
+                                cvs.width = Math.max(1, r.width);
+                                cvs.height = Math.max(1, r.height);
+                                const ctx = cvs.getContext && cvs.getContext('2d');
+                                if (!ctx) continue;
+                                ctx.drawImage(srcImg, r.x, r.y, r.width, r.height, 0, 0, r.width, r.height);
+                                scene.textures.addImage(r.name, cvs);
+                                console.info('[AssetManager] Created texture frame for atlas region', r.name, 'size=', r.width + 'x' + r.height);
+                            }
+                        } catch (e) {
+                            // ignore individual region failures
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('[AssetManager] Failed to parse/create atlas region frames:', e && e.message);
+            }
+
             // Unconditionally populate conventional Phaser cache keys and
             // duplicate texture entries so Player or the SpinePlugin can find
             // them even if the official loader/plugin registered late. This
@@ -422,51 +522,145 @@ export class AssetManager {
                     const pluginInstance = scene.sys && scene.sys.spine ? scene.sys.spine : null;
                     if (pluginInstance) {
                         try {
-                                const atlasCache = pluginInstance.atlasCache || pluginInstance.atlasCacheMap || null;
-                                const skeletonCache = pluginInstance.skeletonDataCache || pluginInstance.skeletonCache || null;
-                                const atlasKey = 'noteleks-data';
+                            const atlasCache = pluginInstance.atlasCache || pluginInstance.atlasCacheMap || null;
+                            const skeletonCache = pluginInstance.skeletonDataCache || pluginInstance.skeletonCache || null;
 
-                                // Build several plausible plugin cache keys to cover different
-                                // plugin implementations and loader behaviours.
-                                const atlasKeyCandidates = [atlasKey, 'noteleks-atlas', 'noteleks-data-atlas', 'noteleks-atlas-text'];
-                                const skeletonKeyCandidates = [atlasKey, atlasKey + '-skeleton', 'noteleks-skeleton-data'];
+                            // Helper: attempt to set a key/value into a plugin cache
+                            // supporting multiple shapes: Map-like (.set), object-like
+                            // (assignment), nested containers (cache.entries, cache.entries.entries)
+                            const setDeepCache = (cacheRoot, key, value, seen = new WeakSet(), depth = 0) => {
+                                try {
+                                    if (!cacheRoot || depth > 4) return false;
+                                    if (seen.has(cacheRoot)) return false;
+                                    seen.add(cacheRoot);
 
-                                const trySetAtlas = (k, value) => {
-                                    try {
-                                        if (!atlasCache) return false;
-                                        if (typeof atlasCache.set === 'function') { atlasCache.set(k, value); return true; }
-                                        if (typeof atlasCache.add === 'function') { atlasCache.add(k, value); return true; }
-                                        if (typeof atlasCache.put === 'function') { atlasCache.put(k, value); return true; }
-                                        if (atlasCache.entries && typeof atlasCache.entries === 'object') { atlasCache.entries[k] = value; return true; }
-                                        // fallback assignment
-                                        atlasCache[k] = value;
-                                        return true;
-                                    } catch (e) { return false; }
-                                };
+                                    // Direct Map-like APIs
+                                    if (typeof cacheRoot.set === 'function') { try { cacheRoot.set(key, value); return true; } catch (e) {} }
+                                    if (typeof cacheRoot.add === 'function') { try { cacheRoot.add(key, value); return true; } catch (e) {} }
+                                    if (typeof cacheRoot.put === 'function') { try { cacheRoot.put(key, value); return true; } catch (e) {} }
 
-                                const trySetSkeleton = (k, value) => {
-                                    try {
-                                        if (!skeletonCache) return false;
-                                        if (typeof skeletonCache.set === 'function') { skeletonCache.set(k, value); return true; }
-                                        if (typeof skeletonCache.add === 'function') { skeletonCache.add(k, value); return true; }
-                                        if (typeof skeletonCache.put === 'function') { skeletonCache.put(k, value); return true; }
-                                        if (skeletonCache.entries && typeof skeletonCache.entries === 'object') { skeletonCache.entries[k] = value; return true; }
-                                        skeletonCache[k] = value;
-                                        return true;
-                                    } catch (e) { return false; }
-                                };
+                                    // If it exposes a numeric-size / entries object, try to set there
+                                    if (cacheRoot.entries && typeof cacheRoot.entries === 'object') {
+                                        // entries may itself be Map-like
+                                        const entries = cacheRoot.entries;
+                                        if (typeof entries.set === 'function') { try { entries.set(key, value); return true; } catch (e) {} }
+                                        try { entries[key] = value; return true; } catch (e) {}
+                                        // if entries has nested entries (some implementations), recurse
+                                        if (entries.entries && typeof entries.entries === 'object') {
+                                            if (setDeepCache(entries.entries, key, value, seen, depth + 1)) return true;
+                                        }
+                                    }
 
-                                for (const k of atlasKeyCandidates) {
-                                    trySetAtlas(k, textureAtlas) && console.info('[AssetManager] Populated SpinePlugin.atlasCache with', k);
+                                    // Object-like assignment directly on cacheRoot
+                                    try { cacheRoot[key] = value; return true; } catch (e) {}
+
+                                    // If cacheRoot has nested properties that may hold maps, attempt to recurse
+                                    const candidateProps = ['entries', 'map', 'store', 'data'];
+                                    for (const p of candidateProps) {
+                                        try {
+                                            if (cacheRoot[p] && typeof cacheRoot[p] === 'object') {
+                                                if (setDeepCache(cacheRoot[p], key, value, seen, depth + 1)) return true;
+                                            }
+                                        } catch (e) { /* ignore property-level failures */ }
+                                    }
+                                } catch (e) {
+                                    // swallow — best-effort only
                                 }
+                                return false;
+                            };
 
-                                for (const k of skeletonKeyCandidates) {
-                                    trySetSkeleton(k, skeletonDataObj) && console.info('[AssetManager] Populated SpinePlugin.skeletonDataCache with', k);
+                            // Build a broad set of candidate keys for atlas and skeleton
+                            // caches. Some Spine plugin implementations store atlas entries
+                            // under composite keys like `noteleks-data!PageName.png` or
+                            // lowercase variants, so generate page-based candidates
+                            // from the runtime textureAtlas pages when available.
+                            const atlasKeyCandidates = new Set(['noteleks-data', 'noteleks-atlas', 'noteleks-data-atlas', 'noteleks-atlas-text', 'noteleks-skeleton-data']);
+                            const skeletonKeyCandidates = new Set(['noteleks-data', 'noteleks-skeleton-data', 'noteleks-data-skeleton']);
+
+                            try {
+                                const pages = (textureAtlas && textureAtlas.pages) ? textureAtlas.pages : [];
+                                for (const p of pages) {
+                                    try {
+                                        const pageName = p && p.name ? String(p.name) : null;
+                                        if (!pageName) continue;
+                                        const basename = pageName.replace(/\.(png|jpg|jpeg)$/i, '');
+                                        // Add several common variants
+                                        atlasKeyCandidates.add(`${'noteleks-data'}!${pageName}`);
+                                        atlasKeyCandidates.add(`${'noteleks-data'}!${basename}`);
+                                        atlasKeyCandidates.add(`${'noteleks-data'}!${pageName.toLowerCase()}`);
+                                        atlasKeyCandidates.add(`${'noteleks-data'}!${basename.toLowerCase()}`);
+                                        atlasKeyCandidates.add(pageName);
+                                        atlasKeyCandidates.add(basename);
+                                        atlasKeyCandidates.add(pageName.toLowerCase());
+                                        atlasKeyCandidates.add(basename.toLowerCase());
+                                    } catch (e) { /* ignore per-page errors */ }
                                 }
-                            } catch (pErr) {
-                                // Non-fatal: continue — plugin will try to read from Phaser caches
-                                console.warn('[AssetManager] Failed to populate plugin internal caches:', pErr && pErr.message);
+                            } catch (e) { /* ignore */ }
+
+                            // Also include texture duplication candidates we used earlier
+                            const fallbackTextureCandidates = ['noteleks-data!noteleks-texture', 'noteleks-data!noteleks-texture.png', 'noteleks-texture'];
+                            for (const c of fallbackTextureCandidates) atlasKeyCandidates.add(c);
+
+                            // Attempt to populate atlas cache broadly (best-effort).
+                            for (const k of atlasKeyCandidates) {
+                                if (setDeepCache(atlasCache, k, textureAtlas)) console.info('[AssetManager] Populated SpinePlugin atlasCache (deep) with', k);
                             }
+
+                            // Populate skeleton cache with conventional and fallback names
+                            for (const k of skeletonKeyCandidates) {
+                                if (setDeepCache(skeletonCache, k, skeletonDataObj)) console.info('[AssetManager] Populated SpinePlugin skeletonCache (deep) with', k);
+                            }
+
+                            // Some Spine plugin builds expose a wrapper object with an
+                            // `entries` Map-like container instead of top-level Map APIs.
+                            // In those cases, explicitly mirror our candidates into that
+                            // Map and provide small accessor shims so plugin code that
+                            // expects `cache.get()` or `cache.keys()` will succeed.
+                            try {
+                                // Mirror into atlasCache.entries (Map) when present
+                                if (atlasCache && atlasCache.entries && typeof atlasCache.entries.set === 'function') {
+                                    for (const k of atlasKeyCandidates) {
+                                        try {
+                                            atlasCache.entries.set(k, textureAtlas);
+                                            console.info('[AssetManager] Mirrored atlas entry into atlasCache.entries Map for', k);
+                                        } catch (e) {
+                                            // ignore per-key failures
+                                        }
+                                    }
+                                    // Provide get/keys helpers if missing
+                                    if (typeof atlasCache.get !== 'function' && typeof atlasCache.entries.get === 'function') {
+                                        try { atlasCache.get = (kk) => atlasCache.entries.get(kk); } catch (e) { /* ignore */ }
+                                    }
+                                    if (typeof atlasCache.keys !== 'function' && typeof atlasCache.entries.keys === 'function') {
+                                        try { atlasCache.keys = () => Array.from(atlasCache.entries.keys()); } catch (e) { /* ignore */ }
+                                    }
+                                }
+
+                                // Mirror into skeletonCache.entries (Map) when present
+                                if (skeletonCache && skeletonCache.entries && typeof skeletonCache.entries.set === 'function') {
+                                    for (const k of skeletonKeyCandidates) {
+                                        try {
+                                            skeletonCache.entries.set(k, skeletonDataObj);
+                                            console.info('[AssetManager] Mirrored skeleton entry into skeletonCache.entries Map for', k);
+                                        } catch (e) {
+                                            // ignore per-key failures
+                                        }
+                                    }
+                                    // Provide get/keys helpers if missing
+                                    if (typeof skeletonCache.get !== 'function' && typeof skeletonCache.entries.get === 'function') {
+                                        try { skeletonCache.get = (kk) => skeletonCache.entries.get(kk); } catch (e) { /* ignore */ }
+                                    }
+                                    if (typeof skeletonCache.keys !== 'function' && typeof skeletonCache.entries.keys === 'function') {
+                                        try { skeletonCache.keys = () => Array.from(skeletonCache.entries.keys()); } catch (e) { /* ignore */ }
+                                    }
+                                }
+                            } catch (mirrorErr) {
+                                console.warn('[AssetManager] Explicit plugin.entries mirroring failed:', mirrorErr && mirrorErr.message);
+                            }
+
+                        } catch (pErr) {
+                            console.warn('[AssetManager] Failed to populate plugin internal caches (deep):', pErr && pErr.message);
+                        }
                     }
                 } catch (e) {
                     // ignore
@@ -561,12 +755,12 @@ export class AssetManager {
                 console.info('[AssetManager] Spine data prepared and cached under scene.cache.custom', Object.keys(scene.cache.custom));
 
                 // --- WebGL instrumentation (debug only) ---
-                // Provide a guarded instrumentation layer that wraps WebGL texture
-                // creation/bind calls so we can observe when the Spine renderer
-                // uploads or binds textures. This is intentionally lightweight and
-                // guarded behind a window flag to avoid double-patching.
+                // Instrumentation can be noisy; only enable when the explicit
+                // runtime debug flag is set (window.__NOTELEKS_DEBUG__ === true).
+                // This prevents spurious logs in production and avoids double-patching
+                // unless an operator intentionally enables the debug flag.
                 try {
-                    if (typeof window !== 'undefined' && !window.__noteleks_spine_webgl_instrumented) {
+                    if (typeof window !== 'undefined' && window.__NOTELEKS_DEBUG__ && !window.__noteleks_spine_webgl_instrumented) {
                         window.__noteleks_spine_webgl_instrumented = true;
                         try {
                             const gl = (scene && scene.game && scene.game.renderer && scene.game.renderer.gl) || (document && document.createElement('canvas').getContext && document.createElement('canvas').getContext('webgl'));
@@ -609,10 +803,7 @@ export class AssetManager {
                                         return bindTextureOrig.apply(this, arguments);
                                     };
 
-                                    // Also try to map known Phaser texture objects to GL textures when available
-                                    // by periodically scanning Phaser texture sources and linking their GL texture
-                                    // objects (if present) to the createdMap. This helps correlate a GL texture
-                                    // with our 'noteleks' keys.
+                                    // Try to map known Phaser texture objects to GL textures when available
                                     try {
                                         const mapPhaserTextures = () => {
                                             try {
@@ -632,7 +823,6 @@ export class AssetManager {
                                                 }
                                             } catch (e) { /* ignore */ }
                                         };
-                                        // Run immediate mapping and again after a short delay to catch late uploads
                                         mapPhaserTextures();
                                         setTimeout(mapPhaserTextures, 300);
                                     } catch (e) {
@@ -658,6 +848,15 @@ export class AssetManager {
             return false;
         }
     }
+}
+
+// Expose for quick runtime debugging in the browser console (non-breaking)
+try {
+    if (typeof window !== 'undefined') {
+        window.AssetManager = AssetManager;
+    }
+} catch (e) {
+    // ignore; this is only a developer-facing convenience
 }
 
 export default AssetManager;

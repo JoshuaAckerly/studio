@@ -73,7 +73,14 @@
     <script src="https://unpkg.com/@esotericsoftware/spine-phaser-v3@4.2.*/dist/iife/spine-phaser-v3.js"></script>
     
 
-    
+    <!-- Enable Noteleks in-page debug hooks when present so we can see
+         the on-page logger and diagnostic overlays during troubleshooting. -->
+    <script>
+        // Set before the Vite entry so main-modular picks this up and
+        // installs the in-page logger / debug overlays.
+
+    </script>
+
     @vite('resources/js/games/noteleks/main-modular.js')
     <style>
         * {
@@ -107,19 +114,7 @@
             flex-direction: column;
         }
         
-        #game-ui {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            right: 10px;
-            z-index: 100;
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 20px;
-            background: rgba(0, 0, 0, 0.8);
-            border-radius: 10px;
-            backdrop-filter: blur(5px);
-        }
+
         
         #phaser-game {
             width: 100vw;
@@ -148,56 +143,22 @@
 
             #phaser-game {
                 width: 100%;
-                height: 45vh; /* Smaller to leave room for controls */
-                max-height: 350px;
-                border: 3px solid #1a1a1a;
-                border-radius: 12px;
+                height: 100vh; /* Full screen now */
+                border: none;
+                border-radius: 0;
                 background: #000;
-                box-shadow: 
-                    inset 0 0 10px rgba(0,0,0,0.5),
-                    0 4px 15px rgba(0,0,0,0.3);
-                margin-bottom: 5px;
-                flex-shrink: 0; /* Prevent game from shrinking */
+                margin: 0;
             }
 
             #phaser-game canvas {
                 border-radius: 8px;
             }
 
-            #game-ui {
-                position: relative;
-                top: auto;
-                left: auto;
-                right: auto;
-                margin-bottom: 10px;
-                width: calc(100% - 20px);
-                background: rgba(0, 0, 0, 0.9);
-                border: 2px solid #333;
-                flex-shrink: 0;
-            }
 
 
 
-            /* Game Boy-style mobile controls underneath the game */
-            #mobile-controls-area {
-                flex: 1;
-                max-height: calc(100vh - 50vh - 60px); /* Remaining space after game and UI */
-                min-height: 200px;
-                background: linear-gradient(145deg, #333, #1a1a1a);
-                border: 3px solid #1a1a1a;
-                border-radius: 12px;
-                margin-top: 5px;
-                position: relative;
-                box-shadow: 
-                    inset 0 0 10px rgba(0,0,0,0.5),
-                    0 4px 15px rgba(0,0,0,0.3);
-                /* Game Boy controller styling */
-                background-image: 
-                    radial-gradient(circle at 25% 25%, rgba(255,255,255,0.1) 1px, transparent 1px),
-                    radial-gradient(circle at 75% 75%, rgba(255,255,255,0.1) 1px, transparent 1px);
-                background-size: 20px 20px;
-                overflow: hidden; /* Ensure controls stay within bounds */
-            }
+
+
         }
 
         @media (max-width: 768px) and (orientation: landscape) {
@@ -208,29 +169,16 @@
             }
 
             #phaser-game {
-                width: 65%;
-                height: 90vh;
-                border: 3px solid #1a1a1a;
-                border-radius: 8px;
-                margin-right: 10px;
+                width: 100%;
+                height: 100vh;
+                border: none;
+                border-radius: 0;
+                margin: 0;
             }
 
-            #game-ui {
-                position: absolute;
-                top: 5px;
-                left: 5px;
-                width: 60%;
-                background: rgba(0, 0, 0, 0.9);
-                border: 2px solid #333;
-                border-radius: 8px;
-            }
 
-            #mobile-controls-area {
-                width: 35%;
-                height: 90vh;
-                background: #2a2a2a;
-                border-radius: 8px;
-            }
+
+
 
 
         }
@@ -282,13 +230,7 @@
                 background: #2a2a2a;
             }
 
-            #game-ui {
-                font-size: 14px;
-                padding: 8px 15px;
-                background: linear-gradient(145deg, #333, #1a1a1a);
-                border: 2px solid #444;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            }
+
             
 
 
@@ -321,18 +263,9 @@
 </head>
 <body>
     <div id="game-container">
-        <div id="game-ui">
-            <!-- In-canvas score display (Phaser) is used; removed duplicated DOM score element -->
-        </div>
+
         <div id="phaser-game"></div>
-        <div id="mobile-controls-area">
-            <!-- Game control buttons will be added here by TouchInputComponent -->
-            <div id="game-controls" style="display: none;">
-                <button id="pause-btn">Pause</button>
-                <button id="restart-btn">Restart</button>
-                <button id="back-btn">Back to Studio</button>
-            </div>
-        </div>
+
     </div>
 
     <div id="game-info">

@@ -3,6 +3,9 @@ import GameConfig from '../config/GameConfig.js';
 import Player from '../entities/Player.js';
 import AssetManager from '../utils/AssetManager.js';
 import { GameStateUtils } from '../utils/GameUtils.js';
+import { QuickFix } from '../debug/QuickFix.js';
+import { createSimpleSpine } from '../debug/SimpleSpineFix.js';
+import { ultimateFix } from '../debug/UltimateFix.js';
 
 // Managers
 import EnemyManager from '../managers/EnemyManager.js';
@@ -46,14 +49,54 @@ class GameScene extends Phaser.Scene {
         // Load assets using AssetManager
         AssetManager.loadSpineAssets(this, GameConfig);
 
-        // Handle spine loading completion
-        this.load.on('complete', () => {
-            AssetManager.setupSpineData(this);
+        // Handle spine loading completion: use `once` to avoid duplicate handlers
+        // and run setup to populate caches/frames as soon as the loader finishes.
+        this.load.once('complete', () => {
+            try {
+                AssetManager.setupSpineData(this);
+            } catch (e) {
+                console.warn('[GameScene] AssetManager.setupSpineData in preload complete threw:', e && e.message);
+            }
         });
     }
 
     async create() {
+
         this.gameState = GameStateUtils.STATES.PLAYING;
+
+        // Expose the active scene globally for short-term debugging so
+        // DevTools snippets can easily find the scene and inspect caches.
+        // This is intentionally lightweight and temporary.
+        try {
+            if (typeof window !== 'undefined') {
+                window.NOTELEKS_LAST_SCENE = this;
+                try {
+                    const cache = this.cache || {};
+                    const js = cache.json ? Object.keys(cache.json) : [];
+                    const txt = cache.text ? Object.keys(cache.text) : [];
+                    const img = cache.image ? Object.keys(cache.image) : [];
+                    console.info('[Noteleks-debug] window.NOTELEKS_LAST_SCENE set — cache samples:', {
+                        json: js.slice(0, 40),
+                        text: txt.slice(0, 40),
+                        image: img.slice(0, 40),
+                    });
+                } catch (inner) {
+                    console.info('[Noteleks-debug] window.NOTELEKS_LAST_SCENE set');
+                }
+            }
+        } catch (e) {
+            // Do not allow debug wiring to break scene creation
+        }
+
+        // Defensive: ensure spine data and atlas frames are prepared early in create
+        // Some runtime/plugin orderings cause the loader-complete handler to fire
+        // before plugin caches are fully consumable; calling setup here reduces
+        // the race window prior to Player creation.
+        try {
+            AssetManager.setupSpineData(this);
+        } catch (e) {
+            console.warn('[GameScene] Early setupSpineData call threw:', e && e.message);
+        }
 
         // Initialize core systems in the correct order
         this.initializeManagers(); // Creates managers, initializes input only
@@ -64,6 +107,8 @@ class GameScene extends Phaser.Scene {
 
         // Start game systems
         this.startGame();
+        
+
 
         // Emit a tiny diagnostic event so external devices (or probes)
         // can detect that the Noteleks scene has been created and is ready.
@@ -264,6 +309,34 @@ class GameScene extends Phaser.Scene {
         // Create player
         const playerConfig = GameConfig.player;
         this.player = new Player(this, playerConfig.startPosition.x, playerConfig.startPosition.y);
+        
+        // Auto-fix spine creation after player is created
+        setTimeout(() => {
+            if (this.player && !this.player.spine) {
+                try {
+                    const spine = this.add.spine(this.player.sprite.x, this.player.sprite.y, 'noteleks-data', 'noteleks-data');
+                    if (spine) {
+                        this.player.spine = spine;
+                        spine.setScale(0.3);
+                        spine.setOrigin(0.5, 1);
+                        spine.setDepth(500);
+                        
+                        // Use working animation API
+                        if (spine.animationState && spine.animationState.setAnimation) {
+                            spine.animationState.setAnimation(0, 'idle', true);
+                        }
+                        
+                        // Hide physics sprite since we have spine now
+                        if (this.player.sprite) this.player.sprite.setVisible(false);
+                        
+                        console.log('[GameScene] Auto-created spine for player');
+                    }
+                } catch (e) {
+                    console.warn('[GameScene] Auto spine creation failed:', e.message);
+                }
+            }
+        }, 1000);
+        
         // Ensure the camera is centered on the player so it is visible on first frame
         try {
             const cam = this.cameras && this.cameras.main ? this.cameras.main : null;

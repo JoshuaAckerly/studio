@@ -11,7 +11,8 @@
  * - Cleaner architecture
  */
 
-import NoteleksGame from './NoteleksGameModular.js';
+// NoteleksGame is imported dynamically during bootstrap so that modules which
+// reference the global `Phaser` are not evaluated on non-game pages.
 import GameConfig from './config/GameConfig.js';
 
 // Small on-page log overlay to surface messages when DevTools are closed or unavailable.
@@ -29,8 +30,7 @@ function installPageLogger() {
         container.style.maxWidth = '40vw';
         container.style.maxHeight = '40vh';
         container.style.overflow = 'auto';
-        container.style.background = 'rgba(0,0,0,0.7)';
-        container.style.color = '#fff';
+    container.style.background = 'rgba(0,0,0,0.7)';
         container.style.fontSize = '12px';
         container.style.padding = '8px';
         container.style.borderRadius = '6px';
@@ -212,55 +212,99 @@ try {
 // external Spine IIFE and our Vite bundle. If `window.spine` never appears, we
 // still bootstrap with the adapter/fallback behavior implemented in NoteleksGame.
 async function bootstrap() {
-    // NoteleksGame.create is async and returns the created game instance (or null on failure)
-    const game = await NoteleksGame.create('phaser-game');
-
-    if (game && typeof window !== 'undefined') {
-        window.noteleksGame = game;
+    // Dynamically import the Noteleks game module only when bootstrapping.
+    // This delays evaluation of modules that expect `Phaser` to be present.
+    try {
+        const mod = await import('./NoteleksGameModular.js');
+        const NoteleksGame = mod && mod.default ? mod.default : mod;
+        const game = await NoteleksGame.create('phaser-game');
+        if (game && typeof window !== 'undefined') {
+            window.noteleksGame = game;
+        }
+        return game;
+    } catch (e) {
+        console.error('[NoteleksMain] Dynamic import/bootstrap failed:', e && e.message ? e.message : e);
+        throw e;
     }
-
-    return game;
 }
 
 if (typeof window !== 'undefined') {
-    const startWhenReady = () => {
-        const maxWait = 2000; // ms
-        const interval = 100; // ms
-        let waited = 0;
+    // Only auto-bootstrap the game when the page actually contains the game container.
+    // This prevents the module from initializing (and requiring global `Phaser`) on
+    // unrelated pages (for example the welcome page) where the Vite runtime or
+    // shared helper chunk may have imported this file.
+    const hasGameContainer = !!document.getElementById('phaser-game');
+    if (hasGameContainer) {
+        const startWhenReady = () => {
+            // Increase bootstrap wait to give external CDN scripts (Phaser, Spine IIFE)
+            // more time to load on slow networks or constrained environments.
+            const maxWait = 6000; // ms (was 2000)
+            const interval = 100; // ms
+            let waited = 0;
 
-        return new Promise((resolve) => {
-            if (window.spine) return resolve(true);
-            const timer = setInterval(() => {
-                if (window.spine) {
-                    clearInterval(timer);
-                    console.info('[NoteleksMain] Spine runtime appeared, bootstrapping');
-                    return resolve(true);
+            // Helper to determine if Spine support is available enough for plugin-registered usage.
+            // Some integration patterns expose `window.spine` (the Spine runtime IIFE). Others
+            // register a factory method on Phaser's GameObjectFactory (scene.add.spine). We
+            // treat either as acceptable for bootstrapping the game with Spine support.
+            const spineDetected = () => {
+                try {
+                    if (typeof window === 'undefined') return false;
+                    if (window.spine) return true;
+                    if (window.Phaser && window.Phaser.GameObjects && window.Phaser.GameObjects.GameObjectFactory) {
+                        const factory = window.Phaser.GameObjects.GameObjectFactory.prototype;
+                        if (factory && typeof factory.spine === 'function') return true;
+                    }
+                } catch (e) {
+                    // ignore detection errors
                 }
-                waited += interval;
-                if (waited >= maxWait) {
-                    clearInterval(timer);
-                    console.info('[NoteleksMain] Spine runtime not detected after wait, bootstrapping with adapter/fallback');
-                    return resolve(false);
-                }
-            }, interval);
-        });
-    };
+                return false;
+            };
 
-    const runBootstrapWhenReady = async () => {
-        console.info('[NoteleksMain] entry script executing, document.readyState=', document.readyState);
-        await startWhenReady();
-        try {
-            await bootstrap();
-        } catch (e) {
-            console.error('[NoteleksMain] bootstrap failed:', e && e.message ? e.message : e);
+            return new Promise((resolve) => {
+                // Prefer waiting for BOTH Phaser and some form of Spine/plugin availability.
+                if (window.Phaser && spineDetected()) return resolve(true);
+
+                const timer = setInterval(() => {
+                    if (window.Phaser && spineDetected()) {
+                        clearInterval(timer);
+                        console.info('[NoteleksMain] Runtime detected (Phaser and spine/plugin), bootstrapping');
+                        return resolve(true);
+                    }
+
+                    if (window.Phaser && !spineDetected() && waited === 0) {
+                        console.info('[NoteleksMain] Phaser present but spine/plugin not yet detected; waiting for spine registration');
+                    }
+
+                    waited += interval;
+                    if (waited >= maxWait) {
+                        clearInterval(timer);
+                        console.info('[NoteleksMain] Runtime not fully detected after wait, bootstrapping with adapter/fallback');
+                        return resolve(false);
+                    }
+                }, interval);
+            });
+        };
+
+        const runBootstrapWhenReady = async () => {
+            console.info('[NoteleksMain] entry script executing, document.readyState=', document.readyState);
+            await startWhenReady();
+            try {
+                await bootstrap();
+            } catch (e) {
+                console.error('[NoteleksMain] bootstrap failed:', e && e.message ? e.message : e);
+            }
+        };
+
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            // If the document is already loaded or interactive, run immediately
+            runBootstrapWhenReady();
+        } else {
+            window.addEventListener('load', runBootstrapWhenReady, { once: true });
         }
-    };
-
-    if (document.readyState === 'complete' || document.readyState === 'interactive') {
-        // If the document is already loaded or interactive, run immediately
-        runBootstrapWhenReady();
     } else {
-        window.addEventListener('load', runBootstrapWhenReady, { once: true });
+        // Skip auto-bootstrap when game container is not present. The game can still
+        // be started manually by importing this module and calling NoteleksGame.create().
+        console.info('[NoteleksMain] Auto-bootstrap skipped; #phaser-game container not present.');
     }
 }
 

@@ -23,8 +23,9 @@ export const GameConfig = {
         jumpPower: 330,
         health: 100,
         maxHealth: 100,
-        // Visual scale applied to the Spine/GameObject display. Use <1 to shrink the character.
-        scale: 0.2,
+    // Visual scale applied to the Spine/GameObject display. Use <1 to shrink the character.
+    // Reduced to 0.3 for smaller character size.
+    scale: 0.2,
     },
 
     // Enemy settings

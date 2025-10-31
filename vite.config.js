@@ -43,6 +43,15 @@ export default defineConfig({
                         return `npm.${name}`;
                     }
                     if (id.includes('resources/js/games')) {
+                        // Keep most game source modules grouped, but avoid forcing
+                        // the Noteleks modular runtime files into the shared 'games'
+                        // chunk. That can cause a dynamic-imported module (which
+                        // expects Phaser at runtime) to be inlined into the entry
+                        // bundle and evaluated on non-game pages, producing
+                        // "Phaser is not defined". Let Rollup decide chunking for
+                        // files under the noteleks folder so dynamic import stays
+                        // as a separate chunk.
+                        if (id.includes('resources/js/games/noteleks/')) return;
                         return 'games';
                     }
                 },
