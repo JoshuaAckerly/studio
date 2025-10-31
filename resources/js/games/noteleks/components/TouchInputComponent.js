@@ -54,7 +54,7 @@ class TouchInputComponent extends Component {
      * Initialize touch input system
      */
     initialize() {
-        console.log('TouchInputComponent: Mobile device detected:', this.isMobile);
+        // debug log removed: TouchInputComponent mobile detection
 
         if (!this.isMobile) {
             // Hide mobile controls area when not mobile
@@ -62,10 +62,9 @@ class TouchInputComponent extends Component {
             return false; // Not a mobile device, skip touch controls
         }
 
-        this.setMobileAreaVisible(true);
-        this.createVirtualControls();
-        this.isEnabled = true;
-        console.log('TouchInputComponent: Touch controls initialized');
+    this.setMobileAreaVisible(true);
+    this.createVirtualControls();
+    this.isEnabled = true;
         return true;
     }
 
@@ -120,11 +119,7 @@ class TouchInputComponent extends Component {
             this.attackButtonY = this.scene.scale.height - 60;
         }
 
-        console.log('TouchInput: Mobile layout calculated', {
-            isMobileViewport,
-            screenHeight: this.scene.scale.height,
-            controlsAreaTop: this.controlsAreaTop,
-        });
+        // debug log removed: mobile layout calculated
     }
 
     /**
@@ -632,7 +627,6 @@ class TouchInputComponent extends Component {
             this.activeTouches.set(pointer.id, { type: 'jump', pointer });
             this.touchState.up = true;
             this.highlightButton(this.virtualControls.jumpButton, 0x6ade80);
-            console.log('TouchInput: JUMP button pressed');
             return;
         }
 
@@ -642,7 +636,6 @@ class TouchInputComponent extends Component {
             this.touchState.attack = true;
             this.highlightButton(this.virtualControls.attackButton, 0xff6666);
             this.triggerAttack(pointer);
-            console.log('TouchInput: ATTACK button pressed');
             return;
         }
 
@@ -735,10 +728,9 @@ class TouchInputComponent extends Component {
         this.virtualControls.joystickKnob.strokeCircle(knobX, knobY, 25);
 
         // Update movement state
-        if (Math.abs(deltaX) > this.joystickDeadZone) {
+            if (Math.abs(deltaX) > this.joystickDeadZone) {
             this.touchState.left = deltaX < 0;
             this.touchState.right = deltaX > 0;
-            console.log('TouchInput: Movement -', this.touchState.left ? 'LEFT' : 'RIGHT');
         } else {
             this.touchState.left = false;
             this.touchState.right = false;

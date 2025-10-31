@@ -5,6 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Noteleks Heroes Beyond Light - {{ config('app.name') }}</title>
     
+    <script>
+        // Silence console output when app.debug is false (production).
+        // This prevents console logging from appearing during normal play.
+        (function(){
+            var debug = {{ config('app.debug') ? 'true' : 'false' }};
+            if (!debug && typeof console !== 'undefined') {
+                ['log','info','warn','error','debug'].forEach(function(m){
+                    try { console[m] = function(){}; } catch(e) { /* ignore */ }
+                });
+            }
+        })();
+    </script>
     <!-- Google Analytics -->
     @if(config('services.google_analytics.tracking_id'))
     <script async src="https://www.googletagmanager.com/gtag/js?id={{ config('services.google_analytics.tracking_id') }}"></script>
@@ -12,7 +24,9 @@
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
-        gtag('config', '{{ config('services.google_analytics.tracking_id') }}');
+        
+        var trackingId = '{{ config('services.google_analytics.tracking_id') }}';
+        gtag('config', trackingId);
         
         // Track game access
         gtag('event', 'game_access', {
@@ -308,7 +322,7 @@
 <body>
     <div id="game-container">
         <div id="game-ui">
-            <div id="score">Score: <span id="score-value">0</span></div>
+            <!-- In-canvas score display (Phaser) is used; removed duplicated DOM score element -->
         </div>
         <div id="phaser-game"></div>
         <div id="mobile-controls-area">

@@ -334,7 +334,7 @@ class GameScene extends Phaser.Scene {
             const modeReported = typeof im.isMobileDevice === 'function' ? im.isMobileDevice() : im.isMobile;
             const modeController = im.inputMode ? im.inputMode.isMobileDevice() : (im.inputMode || null);
             const controls = (typeof im.getControls === 'function') ? im.getControls() : null;
-            console.info('[GameScene] Input diagnostics: inputManager.isMobileDevice()=', modeReported, 'inputModeController=', modeController, 'controls=', !!controls, controls ? Object.keys(controls) : null);
+            // input diagnostics removed to reduce console noise in production
         } catch (e) {
             // ignore diagnostics errors
         }

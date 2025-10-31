@@ -12,6 +12,7 @@
  */
 
 import NoteleksGame from './NoteleksGameModular.js';
+import GameConfig from './config/GameConfig.js';
 
 // Small on-page log overlay to surface messages when DevTools are closed or unavailable.
 function installPageLogger() {
@@ -169,7 +170,41 @@ function installPageLogger() {
     }
 }
 
-installPageLogger();
+// Install the on-page logger only when explicit debug is requested
+try {
+    const pageLogEnabled = (GameConfig && GameConfig.debug && GameConfig.debug.enablePlayerDebugOverlay) || (typeof window !== 'undefined' && !!window.noteleksDebug);
+    if (pageLogEnabled) installPageLogger();
+} catch (e) {
+    // ignore
+}
+
+// Suppress verbose Noteleks-related console messages when debug is disabled
+try {
+    const overlayEnabled = (GameConfig && GameConfig.debug && GameConfig.debug.enablePlayerDebugOverlay) || (typeof window !== 'undefined' && !!window.noteleksDebug);
+    if (typeof window !== 'undefined' && !overlayEnabled) {
+        const suppressed = (GameConfig && GameConfig.debug && Array.isArray(GameConfig.debug.suppressLogPrefixes)) ? GameConfig.debug.suppressLogPrefixes : [];
+        ['log', 'info', 'debug'].forEach((m) => {
+            const orig = console[m] && console[m].bind(console);
+            console[m] = function (...args) {
+                try {
+                    if (args && args.length) {
+                        const first = String(args[0]);
+                        for (const p of suppressed) {
+                            if (first.indexOf(p) !== -1) {
+                                return; // drop this message
+                            }
+                        }
+                    }
+                } catch (e) {
+                    // ignore filter errors and fall through
+                }
+                if (orig) orig(...args);
+            };
+        });
+    }
+} catch (e) {
+    // ignore
+}
 
 // Initialize the game but wait briefly for the Spine runtime to be available so
 // the plugin constructor can be detected. We poll for `window.spine` for a

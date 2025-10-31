@@ -1,6 +1,6 @@
 // import GameConfig from '../config/GameConfig.js';
 import TouchInputComponent from '../components/TouchInputComponent.js';
-import { InputUtils } from '../utils/GameUtils.js';
+import InputUtils from '../utils/InputUtils.js';
 import InputModeController from './InputModeController.js';
 
 /**
@@ -15,7 +15,9 @@ export class InputManager {
         this.touchInput = null;
         this.isMobile = false;
         // Bound handlers for adding/removing event listeners
-    this._onKeyDown = this._onKeyDown.bind(this);
+        this._onKeyDown = this._onKeyDown.bind(this);
+        // Bound pointer handler so we can add/remove the exact same reference
+        this._boundPointerDown = this.handlePointerDown.bind(this);
     }
 
     initialize() {
@@ -27,8 +29,7 @@ export class InputManager {
             this.inputMode = new InputModeController(this.scene, this.touchInput);
             this.inputMode.initialize();
 
-            console.log('InputManager: Mobile device detected:', this.isMobile);
-            console.log('InputManager: User agent:', navigator.userAgent);
+            // debug logs removed: InputManager mobile detection and user agent
 
             // Create control scheme (always create for desktop fallback)
             this.controls = InputUtils.createControlScheme(this.scene);
@@ -40,10 +41,7 @@ export class InputManager {
 
             // Initialize touch controls if on mobile
             if (this.isMobile) {
-                console.log('InputManager: Initializing touch controls');
                 this.touchInput.initialize();
-            } else {
-                console.log('InputManager: Using desktop controls');
             }
 
             // Keyboard handling remains in this manager for action mapping
@@ -52,7 +50,7 @@ export class InputManager {
             }
 
             // Setup pointer input (for both mouse and touch)
-            this.scene.input.on('pointerdown', this.handlePointerDown.bind(this));
+            this.scene.input.on('pointerdown', this._boundPointerDown);
 
             return true;
         } catch (error) {
@@ -65,24 +63,24 @@ export class InputManager {
         // Determine runtime mobile state (prefer inputMode if present)
         const runtimeIsMobile = this.inputMode ? this.inputMode.isMobileDevice() : this.isMobile;
 
-        // On mobile, touch input component handles this
+        // Ignore plain mouse clicks entirely — we only want touch-driven attacks
+        // or keyboard-triggered attacks. This prevents desktop mouse clicks from
+        // firing attacks.
+        // If this looks like a mouse pointer, ignore it (we don't want clicks to fire attacks)
+        if (InputUtils.isMousePointer(pointer)) return;
+
+        // On mobile, touch input component handles pointer events and may indicate an attack
         if (runtimeIsMobile && this.touchInput) {
-            // Touch input component will handle the pointer events
-            // But we still need to trigger attack for screen touches outside virtual controls
             const touchState = this.touchInput.getTouchState();
             if (touchState.attack) {
                 const attackHandler = this.inputHandlers.get('attack');
-                if (attackHandler) {
-                    attackHandler(pointer);
-                }
+                if (attackHandler) attackHandler(pointer);
             }
-        } else {
-            // Desktop mouse input
-            const attackHandler = this.inputHandlers.get('attack');
-            if (attackHandler) {
-                attackHandler(pointer);
-            }
+            return;
         }
+
+        // Otherwise (non-mouse desktop pointer types or fallback), do not trigger from mouse
+        // — keep keyboard-based attacks intact via _onKeyDown.
     }
 
     /**
@@ -224,9 +222,7 @@ export class InputManager {
         if (runtimeIsMobile8 && this.touchInput) {
             const touchState = this.touchInput.getTouchState();
             // Debug: Log touch state only when something is active
-            if (touchState.left || touchState.right || touchState.up || touchState.attack) {
-                console.log('InputManager: Touch state:', touchState);
-            }
+            // debug touch state logging removed
             return touchState;
         }
 
@@ -242,7 +238,7 @@ export class InputManager {
         this.inputHandlers.clear();
 
         if (this.scene.input) {
-            this.scene.input.off('pointerdown', this.handlePointerDown);
+            this.scene.input.off('pointerdown', this._boundPointerDown);
         }
 
         if (this.touchInput) {

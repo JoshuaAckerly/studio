@@ -23,6 +23,8 @@ export const GameConfig = {
         jumpPower: 330,
         health: 100,
         maxHealth: 100,
+        // Visual scale applied to the Spine/GameObject display. Use <1 to shrink the character.
+        scale: 0.2,
     },
 
     // Enemy settings
@@ -127,6 +129,21 @@ export const GameConfig = {
             arrow: { width: 20, height: 4, color: 0x8b4513 },
             magic_bolt: { width: 12, height: 12, color: 0x9900ff },
         },
+    },
+    // Debugging toggles (keep disabled by default)
+    debug: {
+        // When true, the in-page Player debug overlay will be shown automatically
+        // Set to `true` during development when you want the UI. You can also
+        // enable it at runtime by setting `window.noteleksDebug = true` in the
+        // browser console before loading the game.
+        enablePlayerDebugOverlay: false,
+        // Prefixes to suppress from the console when debug UI is disabled.
+        // Messages that contain any of these substrings will be filtered out
+        // from `console.log/info/debug` to reduce noise.
+        suppressLogPrefixes: ['[Noteleks', '[NoteleksGame', '[NoteleksMain', '[Player', '[AssetManager', '[GameScene', '[InputManager', 'TouchInput'],
+        // When true, small convenience DOM syncs (like updating an external #score-value)
+        // will run. Keep false in production so UI concerns remain in-canvas only.
+        syncDOM: false,
     },
 };
 

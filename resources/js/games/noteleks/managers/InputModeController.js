@@ -50,7 +50,6 @@ export default class InputModeController {
         if (this.touchInput && this.touchInput.setMobileAreaVisible) {
             this.touchInput.setMobileAreaVisible(true);
         }
-        console.log('InputModeController: switched to mobile (first touch)');
     }
 
     _onFirstPointer() {
@@ -58,7 +57,6 @@ export default class InputModeController {
         if (this.touchInput && this.touchInput.setMobileAreaVisible) {
             this.touchInput.setMobileAreaVisible(false);
         }
-        console.log('InputModeController: switched to desktop (pointer)');
     }
 
     _onKeyDown(event) {

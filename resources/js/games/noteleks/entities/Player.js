@@ -89,9 +89,17 @@ class Player extends GameObject {
                 // Ensure visible and reasonable scale/alpha
                 if (typeof this.spine.setVisible === 'function') this.spine.setVisible(true);
                 if (typeof this.spine.setAlpha === 'function') this.spine.setAlpha ? this.spine.setAlpha(1) : null;
-                if (typeof this.spine.setScale === 'function') this.spine.setScale(1);
-                if (typeof this.spine.setOrigin === 'function') this.spine.setOrigin(0.5, 1);
-                if (this.spine.setDepth) this.spine.setDepth(10000);
+                // Apply configured base scale for the character visual so it's not too large.
+                try {
+                    const baseScale = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? GameConfig.player.scale : 1;
+                    if (typeof this.spine.setScale === 'function') this.spine.setScale(baseScale);
+                } catch (e) {
+                    // ignore scale application errors
+                }
+                    if (typeof this.spine.setOrigin === 'function') this.spine.setOrigin(0.5, 1);
+                // Keep the player visual behind UI elements (UI uses ~1000). Use a
+                // moderate depth so game objects render above the player but UI stays on top.
+                if (this.spine.setDepth) this.spine.setDepth(500);
 
                 // (debug forced-centering removed — camera should manage visibility)
 
@@ -117,7 +125,9 @@ class Player extends GameObject {
                 // to help visually locate the player if the Spine visual appears off-screen
                 // or invisible. This marker follows the sprite for ~2s then removes itself.
                 try {
-                    if (this.scene && this.scene.add && this.sprite) {
+                    // Only create debug visuals when explicit debug overlay is enabled
+                    const overlayEnabled = (GameConfig && GameConfig.debug && GameConfig.debug.enablePlayerDebugOverlay) || (typeof window !== 'undefined' && !!window.noteleksDebug);
+                    if (overlayEnabled && this.scene && this.scene.add && this.sprite) {
                         const marker = this.scene.add.rectangle(this.sprite.x, this.sprite.y - 24, 18, 18, 0xff0000, 0.95);
                         if (marker.setDepth) marker.setDepth(999999);
                         const follow = () => {
@@ -153,7 +163,8 @@ class Player extends GameObject {
                 // Compute a world -> canvas/screen conversion using the main camera and canvas bounding rect.
                 try {
                     const canvas = (this.scene && this.scene.game && this.scene.game.canvas) || document.querySelector('#phaser-game canvas');
-                    if (canvas && typeof document !== 'undefined' && this.sprite) {
+                    const overlayEnabled = (GameConfig && GameConfig.debug && GameConfig.debug.enablePlayerDebugOverlay) || (typeof window !== 'undefined' && !!window.noteleksDebug);
+                    if (overlayEnabled && canvas && typeof document !== 'undefined' && this.sprite) {
                         const rect = canvas.getBoundingClientRect();
                         // Default to center if camera info is missing
                         let screenX = rect.left + (rect.width / 2);
@@ -270,7 +281,7 @@ class Player extends GameObject {
                                             // Remove any existing fallback image
                                             try { if (this._spineFallbackImage && this._spineFallbackImage.destroy) this._spineFallbackImage.destroy(); } catch (e) {}
                                             this._spineFallbackImage = this.scene.add.image(this.sprite.x, this.sprite.y, texKey).setOrigin(0.5, 1);
-                                            if (this._spineFallbackImage.setDepth) this._spineFallbackImage.setDepth(11);
+                                            if (this._spineFallbackImage.setDepth) this._spineFallbackImage.setDepth(500);
                                             // Hide the problematic spine display so it doesn't occlude
                                             try { if (this.spine && typeof this.spine.setVisible === 'function') this.spine.setVisible(false); } catch (e) {}
                                                 try { this._hideSpineLoading(); } catch (e) {}
@@ -336,7 +347,7 @@ class Player extends GameObject {
                                         } else {
                                             // Create a persistent fallback image using the duplicated texture key prepared by AssetManager
                                             const fb = this.scene.add.image(this.sprite.x, this.sprite.y, 'noteleks-texture').setOrigin(0.5, 1);
-                                            if (fb && fb.setDepth) fb.setDepth(10001);
+                                            if (fb && fb.setDepth) fb.setDepth(501);
                                             // Store the persistent fallback so it remains visible while we continue diagnosis
                                             this._persistentFallbackImage = fb;
                                             // Hide the problematic spine display so it doesn't occlude
@@ -530,8 +541,15 @@ class Player extends GameObject {
             if (typeof this.spine.setOrigin === 'function') {
                 this.spine.setOrigin(0.5, 1);
             }
-            // Ensure the spine is above the physics sprite visually
-            if (this.spine.setDepth) this.spine.setDepth(10);
+            // Ensure configured base scale is applied when the spine display was created synchronously
+            try {
+                const baseScale = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? GameConfig.player.scale : 1;
+                if (typeof this.spine.setScale === 'function') this.spine.setScale(baseScale);
+            } catch (e) {
+                // ignore
+            }
+            // Ensure the spine is above the physics sprite visually but behind UI
+            if (this.spine.setDepth) this.spine.setDepth(500);
             // Finalize visual and schedule hiding the physics sprite in a safe next-tick
             try { if (typeof finalizeSpineVisual === 'function') finalizeSpineVisual(); } catch (e) { /* ignore */ }
         }
@@ -566,7 +584,7 @@ class Player extends GameObject {
                 if (fallback) {
                     // Use the preloaded noteleks texture as a safe static fallback (no Spine runtime calls)
                     this.spine = this.scene.add.image(this.x, this.y, 'noteleks-texture').setOrigin(0.5, 1);
-                    if (this.spine && this.spine.setDepth) this.spine.setDepth(10);
+                    if (this.spine && this.spine.setDepth) this.spine.setDepth(500);
                     try { this._hideSpineLoading(); } catch (e) {}
                     // Finalize visual and schedule hiding the physics sprite in a safe next-tick
                     try { if (typeof finalizeSpineVisual === 'function') finalizeSpineVisual(); } catch (e) { /* ignore */ }
@@ -753,10 +771,15 @@ class Player extends GameObject {
                 }
             };
 
-            // Kick off polling for animation names (overlay will appear automatically)
-            if (typeof window !== 'undefined') {
-                // Start soon but allow the scene to finish loading
-                setTimeout(() => this._startDebugOverlayPolling(), 300);
+            // Kick off polling for animation names (overlay will appear only when enabled)
+            try {
+                const overlayEnabled = (GameConfig && GameConfig.debug && GameConfig.debug.enablePlayerDebugOverlay) || (typeof window !== 'undefined' && !!window.noteleksDebug);
+                if (overlayEnabled && typeof window !== 'undefined') {
+                    // Start soon but allow the scene to finish loading
+                    setTimeout(() => this._startDebugOverlayPolling(), 300);
+                }
+            } catch (e) {
+                // ignore
             }
         } catch (e) {
             // ignore overlay failures
@@ -884,11 +907,19 @@ class Player extends GameObject {
             }
             // Flip spine horizontally to match sprite
             if (this.sprite.flipX) {
-                if (this.spine.scaleX && this.spine.scaleX > 0) this.spine.scaleX = -Math.abs(this.spine.scaleX || 1);
-                else this.spine.scaleX = -1;
+                try {
+                    const base = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? GameConfig.player.scale : 1;
+                    this.spine.scaleX = -Math.abs(base);
+                } catch (e) {
+                    this.spine.scaleX = -1;
+                }
             } else {
-                if (this.spine.scaleX && this.spine.scaleX < 0) this.spine.scaleX = Math.abs(this.spine.scaleX || 1);
-                else this.spine.scaleX = 1;
+                try {
+                    const base = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? GameConfig.player.scale : 1;
+                    this.spine.scaleX = Math.abs(base);
+                } catch (e) {
+                    this.spine.scaleX = 1;
+                }
             }
             // Manual spine AnimationState advance (guarded). Some plugin builds
             // may not auto-update the AnimationState in our environment; this

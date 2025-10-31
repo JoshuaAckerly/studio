@@ -1,5 +1,5 @@
 /* global Phaser */
-
+import DebugUtils from './utils/DebugUtils.js';
 /**
  * GameUI class manages all user interface elements
  */
@@ -63,9 +63,12 @@ class GameUI {
         this.weaponText.setDepth(1000);
 
         // Game over screen (initially hidden)
-        this.gameOverContainer = this.scene.add.container(400, 300);
-        this.gameOverContainer.setScrollFactor(0);
-        this.gameOverContainer.setVisible(false);
+    this.gameOverContainer = this.scene.add.container(400, 300);
+    // Ensure Game Over UI is on top of all other UI and game objects
+    // UI elements use depth ~1000; set the container higher so it always renders above.
+    this.gameOverContainer.setDepth(2000);
+    this.gameOverContainer.setScrollFactor(0);
+    this.gameOverContainer.setVisible(false);
 
         this.createGameOverScreen();
 
@@ -310,6 +313,13 @@ class GameUI {
     }
 
     updateDOMElements() {
+        // Only perform DOM sync when explicitly enabled in config (keeps UI in-canvas by default)
+        try {
+            if (!DebugUtils.shouldSyncDOM()) return;
+        } catch (e) {
+            return;
+        }
+
         // Update DOM elements if they exist
         const scoreElement = document.getElementById('score-value');
 
