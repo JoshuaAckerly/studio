@@ -292,40 +292,50 @@
             }
         }
 
-        // Handle button clicks
-        document.getElementById('back-btn').addEventListener('click', function() {
-            trackGameEvent('game_exit', 'back_to_studio');
-            window.location.href = '{{ route("welcome") }}';
-        });
+        // Handle button clicks (only if buttons exist)
+        const backBtn = document.getElementById('back-btn');
+        if (backBtn) {
+            backBtn.addEventListener('click', function() {
+                trackGameEvent('game_exit', 'back_to_studio');
+                window.location.href = '{{ route("welcome") }}';
+            });
+        }
 
-        document.getElementById('pause-btn').addEventListener('click', function() {
-            if (window.noteleksGame) {
-                const scene = window.noteleksGame.getScene('GameScene');
-                if (scene) {
-                    if (scene.gameState === 'playing') {
-                        scene.pauseGame();
-                        this.textContent = 'Resume';
-                        trackGameEvent('game_pause', 'pause');
-                    } else if (scene.gameState === 'paused') {
-                        scene.resumeGame();
-                        this.textContent = 'Pause';
-                        trackGameEvent('game_resume', 'resume');
+        const pauseBtn = document.getElementById('pause-btn');
+        if (pauseBtn) {
+            pauseBtn.addEventListener('click', function() {
+                if (window.noteleksGame) {
+                    const scene = window.noteleksGame.getScene('GameScene');
+                    if (scene) {
+                        if (scene.gameState === 'playing') {
+                            scene.pauseGame();
+                            this.textContent = 'Resume';
+                            trackGameEvent('game_pause', 'pause');
+                        } else if (scene.gameState === 'paused') {
+                            scene.resumeGame();
+                            this.textContent = 'Pause';
+                            trackGameEvent('game_resume', 'resume');
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
 
-        document.getElementById('restart-btn').addEventListener('click', function() {
-            if (window.noteleksGame) {
-                const scene = window.noteleksGame.getScene('GameScene');
-                if (scene) {
-                    scene.restartGame();
-                    // Reset pause button text
-                    document.getElementById('pause-btn').textContent = 'Pause';
-                    trackGameEvent('game_restart', 'restart');
+        const restartBtn = document.getElementById('restart-btn');
+        if (restartBtn) {
+            restartBtn.addEventListener('click', function() {
+                if (window.noteleksGame) {
+                    const scene = window.noteleksGame.getScene('GameScene');
+                    if (scene) {
+                        scene.restartGame();
+                        // Reset pause button text
+                        const pauseBtn = document.getElementById('pause-btn');
+                        if (pauseBtn) pauseBtn.textContent = 'Pause';
+                        trackGameEvent('game_restart', 'restart');
+                    }
                 }
-            }
-        });
+            });
+        }
     </script>
 </body>
 </html>
