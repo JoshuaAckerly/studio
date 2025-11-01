@@ -28,8 +28,9 @@ export const GameConfig = {
         health: 100,
         maxHealth: 100,
     // Visual scale applied to the Spine/GameObject display. Use <1 to shrink the character.
-    // Reduced to 0.3 for smaller character size.
-    scale: 0.2,
+    // Reduced further to make exported WebP frames fit the game view better.
+    // Lower values shrink large (512px) exported frames to reasonable in-game size.
+    scale: 0.12,
     },
 
     // Enemy settings
