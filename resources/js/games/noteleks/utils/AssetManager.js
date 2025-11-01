@@ -36,6 +36,30 @@ export class AssetManager {
             console.warn('[AssetManager] loadPlayerSpriteSheets called');
         } catch (e) {}
 
+        // Also support loading per-frame WebP sequences exported alongside
+        // the Spine character frames. These live in public/games/noteleks/spine/characters
+        // and follow the naming convention `Skeleton-<Anim>_<index>.webp`.
+        // We queue known sequences here so Phaser animations are created
+        // directly from the image frames when the loader completes.
+        try {
+            // idle: Skeleton-Idle_0..8 (9 frames)
+            AssetManager.loadFrameSequence(scene, 'skeleton-idle', '/games/noteleks/spine/characters/Skeleton-Idle_', 9, 12, -1);
+            // run: Skeleton-Run_0..8 (9 frames)
+            AssetManager.loadFrameSequence(scene, 'skeleton-run', '/games/noteleks/spine/characters/Skeleton-Run_', 9, 12, -1);
+            // walk: Skeleton-Walk_0..8 (9 frames)
+            AssetManager.loadFrameSequence(scene, 'skeleton-walk', '/games/noteleks/spine/characters/Skeleton-Walk_', 9, 12, -1);
+            // jump-attack: Skeleton-JumpAttack_0..7 (8 frames)
+            AssetManager.loadFrameSequence(scene, 'skeleton-jumpattack', '/games/noteleks/spine/characters/Skeleton-JumpAttack_', 8, 12, 0);
+            // attack variants (Attack1/Attack2) — small frame counts
+            AssetManager.loadFrameSequence(scene, 'skeleton-attack1', '/games/noteleks/spine/characters/Skeleton-Attack1_', 2, 12, 0);
+            AssetManager.loadFrameSequence(scene, 'skeleton-attack2', '/games/noteleks/spine/characters/Skeleton-Attack2_', 2, 12, 0);
+            // jump (single frame fallback)
+            AssetManager.loadFrameSequence(scene, 'skeleton-jump', '/games/noteleks/spine/characters/Skeleton-Jump_', 1, 12, 0);
+            console.info('[AssetManager] Queued spine character frame sequences for Phaser fallback animations');
+        } catch (e) {
+            console.warn('[AssetManager] Failed to queue spine character frame sequences:', e && e.message);
+        }
+
         try {
             // The legacy per-animation spritesheet files in /sprites/ are
             // placeholders in this repo (they contain no image data). To
@@ -392,6 +416,23 @@ export class AssetManager {
                     if (!scene.anims.exists(animKey)) {
                         scene.anims.create({ key: animKey, frames, frameRate, repeat });
                         console.info('[AssetManager] Created animation from frame sequence', animKey, 'frames=', frames.length);
+                        // Create common player-level aliases for these skeleton animations
+                        try {
+                            const aliasMap = {
+                                'skeleton-idle': 'player-idle',
+                                'skeleton-run': 'player-run',
+                                'skeleton-walk': 'player-walk',
+                                'skeleton-jumpattack': 'player-jump-attack',
+                                'skeleton-attack1': 'player-attack',
+                                'skeleton-attack2': 'player-attack',
+                                'skeleton-jump': 'player-jump'
+                            };
+                            const aliasKey = aliasMap[animKey];
+                            if (aliasKey && !scene.anims.exists(aliasKey)) {
+                                scene.anims.create({ key: aliasKey, frames: frames.slice(), frameRate, repeat });
+                                console.info('[AssetManager] Created alias animation', aliasKey, 'from', animKey);
+                            }
+                        } catch (e) { /* ignore aliasing failures */ }
                     }
                 } catch (e) {
                     console.warn('[AssetManager] Failed to create animation from frames', animKey, e && e.message);

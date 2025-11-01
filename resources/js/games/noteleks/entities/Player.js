@@ -1867,7 +1867,8 @@ class Player extends GameObject {
                         if (lower === 'idle') return 'player-idle';
                         if (lower === 'run') return this.scene.anims.exists('player-run') ? 'player-run' : 'player-walk';
                         if (lower === 'walk') return this.scene.anims.exists('player-walk') ? 'player-walk' : 'player-run';
-                        if (lower === 'attack' || lower === 'jump-attack' || lower === 'jumpattack') return this.scene.anims.exists('player-attack') ? 'player-attack' : 'player-jump-attack';
+                        // Prefer exact player-attack; do not fall back to player-jump-attack here
+                        if (lower === 'attack' || lower === 'jump-attack' || lower === 'jumpattack') return this.scene.anims.exists('player-attack') ? 'player-attack' : null;
                         if (lower === 'jump') {
                             // prefer an explicit player-jump animation, otherwise fall back to jump-attack or generic attack
                             if (this.scene.anims.exists('player-jump')) return 'player-jump';
@@ -1905,18 +1906,20 @@ class Player extends GameObject {
                             // If this animation is non-looping, revert to idle when complete
                             if (!loop) {
                                 const onComplete = (anim, frame) => {
-                                    try {
-                                        // cleanup listener
-                                        if (typeof fb.off === 'function') fb.off('animationcomplete', onComplete);
-                                    } catch (e) {}
-                                    try {
-                                        if (this.scene && this.scene.anims && this.scene.anims.exists('player-idle') && typeof fb.play === 'function') {
-                                            fb.play('player-idle');
-                                            fb._noteleks_currentAnimKey = 'player-idle';
-                                            fb._noteleks_animStarted = true;
-                                        }
-                                    } catch (e) {}
-                                };
+                                        try {
+                                            // cleanup listener
+                                            if (typeof fb.off === 'function') fb.off('animationcomplete', onComplete);
+                                        } catch (e) {}
+                                        try { this._isAttacking = false; } catch (e) {}
+                                        try { if (this._attackTimeout) { clearTimeout(this._attackTimeout); this._attackTimeout = null; } } catch (e) {}
+                                        try {
+                                            if (this.scene && this.scene.anims && this.scene.anims.exists('player-idle') && typeof fb.play === 'function') {
+                                                fb.play('player-idle');
+                                                fb._noteleks_currentAnimKey = 'player-idle';
+                                                fb._noteleks_animStarted = true;
+                                            }
+                                        } catch (e) {}
+                                    };
                                 try {
                                     if (typeof fb.once === 'function') fb.once('animationcomplete', onComplete);
                                     else if (typeof fb.on === 'function') fb.on('animationcomplete', onComplete);
@@ -1986,7 +1989,8 @@ class Player extends GameObject {
             if (!success && name) {
                 try {
                     const lower = String(name).toLowerCase();
-                    const alternates = [lower + '-attack', lower + 'attack', 'jump-attack', 'attack'];
+                    // Try common alternate names but avoid selecting jump-attack
+                    const alternates = [lower + '-attack', lower + 'attack', 'attack'];
                     for (const a of alternates) {
                         if (success) break;
                         try {
@@ -2055,28 +2059,76 @@ class Player extends GameObject {
             const spineNames = getSpineNames();
             const fb = this._persistentFallbackSprite || this._persistentFallbackImage || null;
 
+            // Build a helper that expands a candidate name into common variants
+            const expand = (base) => {
+                const list = new Set();
+                try {
+                    const raw = String(base || '');
+                    list.add(raw);
+                    const lower = raw.toLowerCase();
+                    list.add(lower);
+                    // common separators and numbering
+                    list.add(raw + '1');
+                    list.add(lower + '1');
+                    list.add(raw + '_1');
+                    list.add(raw + '-1');
+                    list.add(lower + '_1');
+                    list.add(lower + '-1');
+                    // underscore/hyphen variants
+                    list.add(raw.replace(/\s+/g, ''));
+                    list.add(lower.replace(/\s+/g, ''));
+                    list.add(raw.replace(/\s+/g, '_'));
+                    list.add(raw.replace(/\s+/g, '-'));
+                    // Capitalized form
+                    list.add(raw.charAt(0).toUpperCase() + raw.slice(1));
+                    // attack-variants common forms
+                    if (lower.indexOf('attack') !== -1) {
+                        list.add('attack1');
+                        list.add('attack_1');
+                        list.add('attack-1');
+                    }
+                } catch (e) {}
+                return Array.from(list).filter(Boolean);
+            };
+
             for (const n of names) {
                 try {
-                    // Check fallback animations (Phaser)
+                    const variants = expand(n);
+                    // Check fallback animations (Phaser) for any variant
                     if (fb && this.scene && this.scene.anims) {
-                        const candidate = (() => {
-                            const lower = String(n).toLowerCase();
-                            if (lower === 'idle') return 'player-idle';
-                            if (lower === 'run') return this.scene.anims.exists('player-run') ? 'player-run' : 'player-walk';
-                            if (lower === 'attack' || lower === 'jump-attack' || lower === 'jumpattack') return this.scene.anims.exists('player-attack') ? 'player-attack' : 'player-jump-attack';
-                            const cand = 'player-' + lower;
-                            return this.scene.anims.exists(cand) ? cand : null;
-                        })();
-                        if (candidate && this.scene.anims.exists(candidate)) {
-                            this._setSpineAnimation(n, loop);
-                            return true;
+                        for (const v of variants) {
+                            const lowerV = String(v).toLowerCase();
+                            let candidate = null;
+                            if (lowerV === 'idle') candidate = 'player-idle';
+                            else if (lowerV === 'run') candidate = this.scene.anims.exists('player-run') ? 'player-run' : 'player-walk';
+                            else if (lowerV.indexOf('attack') !== -1) {
+                                // prefer exact 'player-attack' and do not fall back to jump-attack
+                                candidate = this.scene.anims.exists('player-attack') ? 'player-attack' : null;
+                            }
+                            else {
+                                const cand = 'player-' + lowerV.replace(/[^a-z0-9_-]/g, '');
+                                candidate = this.scene.anims.exists(cand) ? cand : null;
+                            }
+                            if (candidate && this.scene.anims.exists(candidate)) {
+                                this._setSpineAnimation(v, loop);
+                                return v;
+                            }
                         }
                     }
 
-                    // Check spine animations list
-                    if (spineNames && Array.isArray(spineNames) && spineNames.indexOf(n) !== -1) {
-                        this._setSpineAnimation(n, loop);
-                        return true;
+                    // Check spine animations list for any variant
+                    if (spineNames && Array.isArray(spineNames)) {
+                        for (const v of variants) {
+                            try {
+                                const lowerV = String(v).toLowerCase();
+                                // skip any jump-related variants explicitly
+                                if (lowerV.indexOf('jump') !== -1) continue;
+                                if (spineNames.indexOf(v) !== -1 || spineNames.indexOf(lowerV) !== -1) {
+                                    this._setSpineAnimation(v, loop);
+                                    return v;
+                                }
+                            } catch (e) { /* ignore per-variant errors */ }
+                        }
                     }
                 } catch (e) {
                     // ignore per-candidate errors
@@ -2086,6 +2138,45 @@ class Player extends GameObject {
             // ignore
         }
         return false;
+    }
+
+    // Try to determine animation duration (ms) for either Spine or Phaser fallback
+    _getAnimationDurationMs(animName, fallbackAnimKey = null) {
+        try {
+            // Spine: look up skeleton animation duration (seconds -> ms)
+            const spineObj = this.spine;
+            const sk = (spineObj && spineObj.spine && spineObj.spine.skeleton) || (spineObj && spineObj.skeleton) || null;
+            if (sk && sk.data && Array.isArray(sk.data.animations) && animName) {
+                for (const a of sk.data.animations) {
+                    try {
+                        if (!a || !a.name) continue;
+                        const lower = String(a.name).toLowerCase();
+                        if (lower === String(animName).toLowerCase() || a.name === animName) {
+                            // animation.duration is in seconds in many runtimes
+                            const durSec = (typeof a.duration === 'number') ? a.duration : (typeof a.end === 'number' && typeof a.start === 'number' ? (a.end - a.start) : null);
+                            if (durSec && typeof durSec === 'number') return Math.max(120, Math.round(durSec * 1000));
+                        }
+                    } catch (e) {}
+                }
+            }
+
+            // Phaser fallback: try to use the anim key (frames/frameRate)
+            const fb = this._persistentFallbackSprite || this._persistentFallbackImage || null;
+            const scene = this.scene;
+            if (scene && scene.anims) {
+                const key = fallbackAnimKey || ('player-' + String(animName).toLowerCase().replace(/[^a-z0-9_-]/g, ''));
+                try {
+                    const anim = scene.anims.get(key);
+                    if (anim && Array.isArray(anim.frames) && anim.frameRate) {
+                        const frameCount = anim.frames.length || 1;
+                        const fps = anim.frameRate || 12;
+                        const durMs = Math.round((frameCount / fps) * 1000);
+                        return Math.max(120, durMs);
+                    }
+                } catch (e) {}
+            }
+        } catch (e) {}
+        return null;
     }
 
     attack(pointer) {
@@ -2099,10 +2190,13 @@ class Player extends GameObject {
             // expose different event APIs; attempt a few common patterns and
             // fall back to a timeout to ensure we always clear the attacking
             // state.
-            // Prefer a dedicated 'attack1' animation if present, otherwise
-            // fall back to 'attack' or other candidates. _playPreferredAnimation
-            // will call _setSpineAnimation for the first available candidate.
-            const played = this._playPreferredAnimation(['attack1', 'attack', 'jump-attack'], false);
+            // Prefer a dedicated 'attack' animation if present. Do not fall
+            // back to 'jump-attack'. _playPreferredAnimation will call
+            // _setSpineAnimation for the first available candidate.
+            // Clear any previous attack timeout/listener
+            try { if (this._attackTimeout) { clearTimeout(this._attackTimeout); this._attackTimeout = null; } } catch (e) {}
+
+            const played = this._playPreferredAnimation(['attack'], false);
             if (!played) this._setSpineAnimation('attack', false);
             this._isAttacking = true;
 
@@ -2118,6 +2212,7 @@ class Player extends GameObject {
                                     if (typeof state.removeListener === 'function') state.removeListener(listener);
                                 } catch (e) {}
                                 try { this._isAttacking = false; } catch (e) {}
+                                try { if (this._attackTimeout) { clearTimeout(this._attackTimeout); this._attackTimeout = null; } } catch (e) {}
                                 try { this._setSpineAnimation('idle', true); } catch (e) {}
                             },
                         };
@@ -2127,6 +2222,7 @@ class Player extends GameObject {
                         const cb = () => {
                             try { state.off('complete', cb); } catch (e) {}
                             try { this._isAttacking = false; } catch (e) {}
+                            try { if (this._attackTimeout) { clearTimeout(this._attackTimeout); this._attackTimeout = null; } } catch (e) {}
                             try { this._setSpineAnimation('idle', true); } catch (e) {}
                         };
                         try { state.on('complete', cb); } catch (e) {}
@@ -2136,11 +2232,21 @@ class Player extends GameObject {
                 // Ignore listener hookup failures and fall back to timeout below
             }
 
-            // Safety fallback: clear attack flag after a short delay in case
-            // the runtime doesn't emit an event we hooked.
-            setTimeout(() => {
-                try { this._isAttacking = false; } catch (e) {}
-            }, 800);
+            // Safety fallback: set a timeout based on animation duration (if available)
+            try {
+                const animName = played || 'attack';
+                // fallback key for Phaser animations
+                const fallbackKey = 'player-' + String(animName).toLowerCase().replace(/[^a-z0-9_-]/g, '');
+                let durMs = this._getAnimationDurationMs(animName, fallbackKey);
+                // If we couldn't determine duration, use a conservative default
+                if (!durMs) durMs = 900;
+                // Add a small buffer to ensure completion
+                const safeMs = Math.max(120, Math.round(durMs + 100));
+                try { this._attackTimeout = setTimeout(() => { try { this._isAttacking = false; } catch (e) {} ; try { this._attackTimeout = null; } catch (e) {} }, safeMs); } catch (e) {}
+            } catch (e) {
+                // fallback strict timeout
+                try { this._attackTimeout = setTimeout(() => { try { this._isAttacking = false; } catch (e) {} ; try { this._attackTimeout = null; } catch (e) {} }, 900); } catch (e) {}
+            }
         }
             // Create a short-lived melee hitbox in front of the player to
             // damage nearby enemies while the attack animation plays. This
