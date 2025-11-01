@@ -33,6 +33,7 @@
             'event_category': 'games',
             'event_label': 'noteleks',
             'custom_parameter_subdomain': window.location.hostname
+                
         });
 
         // Track visitor for email notifications
@@ -115,6 +116,20 @@
             flex-direction: column;
         }
         
+        /* Minimal game UI container used by TouchInputComponent */
+        #game-ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 20px;
+            background: rgba(0,0,0,0.6);
+            border-radius: 8px;
+        }
+        
 
         
         #phaser-game {
@@ -132,23 +147,29 @@
                 width: 100%;
             }
 
+            /* Stack like a Game Boy: screen on top, controls below */
             #game-container {
-                padding: 5px;
+                padding: 8px;
                 background: #2a2a2a;
                 height: 100vh; /* Fit exactly in viewport */
                 display: flex;
                 flex-direction: column;
                 justify-content: flex-start;
                 overflow: hidden;
+                gap: 8px;
             }
 
+            /* Make the game area smaller so controls have room underneath */
             #phaser-game {
                 width: 100%;
-                height: 100vh; /* Full screen now */
-                border: none;
-                border-radius: 0;
+                height: 48vh; /* Reserve roughly half the screen for the game */
+                max-height: 420px;
+                border: 3px solid #1a1a1a;
+                border-radius: 12px;
                 background: #000;
                 margin: 0;
+                flex-shrink: 0; /* prevent shrinking when controls expand */
+                box-shadow: inset 0 0 10px rgba(0,0,0,0.5), 0 6px 18px rgba(0,0,0,0.35);
             }
 
             #phaser-game canvas {
@@ -164,6 +185,7 @@
 
         @media (max-width: 768px) and (orientation: landscape) {
             #game-container {
+                /* Landscape layout */
                 flex-direction: row;
                 padding: 5px;
                 background: #2a2a2a;
@@ -235,6 +257,46 @@
             
 
 
+            #mobile-controls-area {
+                display: flex;
+                width: 100%;
+                gap: 12px;
+                align-items: flex-end; /* push controls down inside the area */
+                justify-content: space-between;
+                padding: 12px 14px 20px 14px;
+                box-sizing: border-box;
+                min-height: 28vh; /* reserve space under the screen for controls */
+            }
+
+            /* Columns inside mobile controls area */
+            #mobile-controls-area .left-column,
+            #mobile-controls-area .right-column {
+                flex: 1 1 0;
+                display: flex;
+                align-items: flex-end; /* align controls to bottom */
+                justify-content: center;
+                padding-bottom: 8px;
+            }
+
+            #mobile-controls-area .center-column {
+                flex: 0 0 auto;
+                display: flex;
+                align-items: flex-end;
+                justify-content: center;
+                padding-bottom: 8px;
+            }
+
+            #mobile-controls-area #game-controls {
+                display: flex !important;
+                align-items: center;
+                gap: 8px;
+                /* Ensure the injected controls flow inside the mobile area (not absolutely positioned) */
+                position: static !important;
+                top: auto !important;
+                left: auto !important;
+                transform: none !important;
+            }
+
             #game-controls button:active {
                 transform: translateY(1px);
                 box-shadow: 0 1px 2px rgba(0,0,0,0.3);
@@ -263,11 +325,28 @@
     </style>
 </head>
 <body>
-    <div id="game-container">
+        <div id="game-container">
 
-        <div id="phaser-game"></div>
+            <div id="game-ui">
+                <div id="score">Score: <span id="score-value">0</span></div>
+            </div>
 
-    </div>
+            <div id="phaser-game"></div>
+
+            <div id="mobile-controls-area">
+                <!-- Game-Boy style columns: left = joystick, center = small control bar, right = action buttons -->
+                <div class="left-column" id="mobile-left"></div>
+                <div class="center-column" id="mobile-center">
+                    <div id="game-controls" style="display: none;">
+                        <button id="pause-btn">Pause</button>
+                        <button id="restart-btn">Restart</button>
+                        <button id="back-btn">Back to Studio</button>
+                    </div>
+                </div>
+                <div class="right-column" id="mobile-right"></div>
+            </div>
+
+        </div>
 
     <div id="game-info">
         <h2 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem;">About Noteleks Heroes Beyond Light</h2>

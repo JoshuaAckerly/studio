@@ -83,10 +83,47 @@ class TouchInputComponent extends Component {
         // Clear any existing controls
         mobileControlsArea.innerHTML = '';
 
-        // Create HTML-based controls
-        this.createHTMLJoystick(mobileControlsArea);
-        this.createHTMLButtons(mobileControlsArea);
-        this.createGameControlButtons(mobileControlsArea);
+        // Create left/center/right columns so layout can be controlled via CSS
+        const leftCol = document.createElement('div');
+        leftCol.className = 'left-column';
+        leftCol.id = 'mobile-left';
+        leftCol.style.cssText = 'flex: 1; display: flex; align-items: center; justify-content: center; position: relative;';
+
+        const centerCol = document.createElement('div');
+        centerCol.className = 'center-column';
+        centerCol.id = 'mobile-center';
+        centerCol.style.cssText = 'flex: 0 0 auto; display: flex; align-items: center; justify-content: center; position: relative;';
+
+        const rightCol = document.createElement('div');
+        rightCol.className = 'right-column';
+        rightCol.id = 'mobile-right';
+        rightCol.style.cssText = 'flex: 1; display: flex; align-items: center; justify-content: center; position: relative;';
+
+        // Append columns to area
+        mobileControlsArea.appendChild(leftCol);
+        mobileControlsArea.appendChild(centerCol);
+        mobileControlsArea.appendChild(rightCol);
+
+        // Create HTML-based controls into the appropriate columns
+        // Joystick -> left, action buttons -> right, game controls -> center
+        try {
+            this.createHTMLJoystick(leftCol);
+        } catch (e) {
+            // fallback to adding to area
+            try { this.createHTMLJoystick(mobileControlsArea); } catch (e) {}
+        }
+
+        try {
+            this.createHTMLButtons(rightCol);
+        } catch (e) {
+            try { this.createHTMLButtons(mobileControlsArea); } catch (e) {}
+        }
+
+        try {
+            this.createGameControlButtons(centerCol);
+        } catch (e) {
+            try { this.createGameControlButtons(mobileControlsArea); } catch (e) {}
+        }
     }
 
     /**
@@ -129,19 +166,18 @@ class TouchInputComponent extends Component {
         // Create joystick container
         const joystickContainer = document.createElement('div');
         joystickContainer.id = 'virtual-joystick';
+        // Use relative positioning inside the column so the joystick sits at the bottom
         joystickContainer.style.cssText = `
-            position: absolute;
-            left: 30px;
-            top: 50%;
-            transform: translateY(-50%);
+            position: relative;
             width: 120px;
             height: 120px;
-            background: radial-gradient(circle, rgba(51,51,51,0.8) 0%, rgba(26,26,26,0.8) 100%);
-            border: 3px solid rgba(255,255,255,0.3);
+            background: radial-gradient(circle, rgba(51,51,51,0.9) 0%, rgba(26,26,26,0.9) 100%);
+            border: 3px solid rgba(255,255,255,0.18);
             border-radius: 50%;
             cursor: pointer;
             user-select: none;
             z-index: 10;
+            margin-bottom: 8px;
         `;
 
         // Create joystick knob
@@ -175,16 +211,16 @@ class TouchInputComponent extends Component {
      * Create HTML-based action buttons
      */
     createHTMLButtons(container) {
-        // Create buttons container
-        const buttonsContainer = document.createElement('div');
+    // Create buttons container
+    // Place buttons inside the column; they'll be bottom-aligned by column CSS
+    const buttonsContainer = document.createElement('div');
         buttonsContainer.style.cssText = `
-            position: absolute;
-            right: 30px;
-            top: 50%;
-            transform: translateY(-50%);
+            position: relative;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 14px;
+            align-items: center;
+            margin-bottom: 8px;
             z-index: 10;
         `;
 
@@ -254,11 +290,27 @@ class TouchInputComponent extends Component {
             z-index: 15;
         `;
 
-        // Get the existing buttons (they're hidden in the HTML)
+        // Get the existing buttons (they may be in the blade template). If not present, create them.
         const existingControls = document.getElementById('game-controls');
-        const pauseBtn = document.getElementById('pause-btn');
-        const restartBtn = document.getElementById('restart-btn');
-        const backBtn = document.getElementById('back-btn');
+        let pauseBtn = document.getElementById('pause-btn');
+        let restartBtn = document.getElementById('restart-btn');
+        let backBtn = document.getElementById('back-btn');
+
+        if (!pauseBtn) {
+            pauseBtn = document.createElement('button');
+            pauseBtn.id = 'pause-btn';
+            pauseBtn.textContent = 'Pause';
+        }
+        if (!restartBtn) {
+            restartBtn = document.createElement('button');
+            restartBtn.id = 'restart-btn';
+            restartBtn.textContent = 'Restart';
+        }
+        if (!backBtn) {
+            backBtn = document.createElement('button');
+            backBtn.id = 'back-btn';
+            backBtn.textContent = 'Back to Studio';
+        }
 
         if (pauseBtn && restartBtn && backBtn) {
             // Style the buttons for mobile integration
