@@ -1439,11 +1439,15 @@ class Player extends GameObject {
         // Attack component callbacks
         const attackComponent = this.getComponent('attack');
         attackComponent.onAttack((target, facing, _damage) => {
-            // Handle attack logic
-            if (this.scene.weaponManager) {
-                const direction = facing || this.getComponent('movement').getFacing();
-                this.scene.weaponManager.createWeapon(this.sprite.x, this.sprite.y, direction, target);
-            }
+            // Temporarily disable projectile firing here; we want to work on
+            // the attack animation first and avoid spawning daggers.
+            // The Player.attack() method still plays the attack animation
+            // (via this._setSpineAnimation('attack', false)) and sets
+            // this._isAttacking so animation state is respected.
+            // If we re-enable projectiles later, reintroduce createWeapon
+            // call here or implement melee hit detection instead.
+            // Example placeholder if needed for debugging:
+            // console.info('[Player] attack triggered — projectiles disabled for now', target, facing, _damage);
         });
     }
 
@@ -1977,12 +1981,49 @@ class Player extends GameObject {
             const target = pointer ? { x: pointer.x, y: pointer.y } : null;
             attackComponent.attack(target);
             
-            // Play attack animation when firing
+            // Play attack animation when firing. Prefer to clear the attack
+            // state when the animation finishes. Different Spine runtimes
+            // expose different event APIs; attempt a few common patterns and
+            // fall back to a timeout to ensure we always clear the attacking
+            // state.
             this._setSpineAnimation('attack', false);
             this._isAttacking = true;
+
+            // Try to attach to Spine animation complete events where available
+            try {
+                const state = (this.spine && (this.spine.state || this.spine.animationState)) || null;
+                if (state) {
+                    // Common Spine API: state.addListener({ complete: fn })
+                    if (typeof state.addListener === 'function') {
+                        const listener = {
+                            complete: () => {
+                                try {
+                                    if (typeof state.removeListener === 'function') state.removeListener(listener);
+                                } catch (e) {}
+                                try { this._isAttacking = false; } catch (e) {}
+                                try { this._setSpineAnimation('idle', true); } catch (e) {}
+                            },
+                        };
+                        try { state.addListener(listener); } catch (e) {}
+                    } else if (typeof state.on === 'function' && typeof state.off === 'function') {
+                        // EventEmitter-style
+                        const cb = () => {
+                            try { state.off('complete', cb); } catch (e) {}
+                            try { this._isAttacking = false; } catch (e) {}
+                            try { this._setSpineAnimation('idle', true); } catch (e) {}
+                        };
+                        try { state.on('complete', cb); } catch (e) {}
+                    }
+                }
+            } catch (e) {
+                // Ignore listener hookup failures and fall back to timeout below
+            }
+
+            // Safety fallback: clear attack flag after a short delay in case
+            // the runtime doesn't emit an event we hooked.
             setTimeout(() => {
-                this._isAttacking = false;
-            }, 400);
+                try { this._isAttacking = false; } catch (e) {}
+            }, 800);
         }
     }
 
