@@ -70,8 +70,6 @@
     @endif
     
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
-    <script src="https://unpkg.com/@esotericsoftware/spine-phaser-v3@4.2.*/dist/iife/spine-phaser-v3.js"></script>
-    
 
     <!-- Enable Noteleks in-page debug hooks when present so we can see
          the on-page logger and diagnostic overlays during troubleshooting. -->
@@ -81,6 +79,9 @@
 
     </script>
 
+    <!-- Local development shim for Spine plugin (safe no-op). Replace with
+        the official Spine Phaser plugin IIFE for full runtime support. -->
+    <script src="/libs/spine/spine-plugin-iife.js"></script>
     @vite('resources/js/games/noteleks/main-modular.js')
     <style>
         * {

@@ -107,7 +107,11 @@ class NoteleksGame {
         // detecting window globals (IIFE) and prefer any constructor we find.
         let spinePluginConstructor = null;
         try {
-            const mod = await import('@esotericsoftware/spine-phaser-v3');
+            // Build the package name at runtime so Vite's static import analyzer
+            // cannot attempt to resolve it. Keep @vite-ignore as an extra hint.
+            const moduleName = '@esotericsoftware' + '/spine-phaser-v3';
+            // eslint-disable-next-line no-undef
+            const mod = await import(/* @vite-ignore */ moduleName);
             // The package exports a plugin; try common export names
             spinePluginConstructor = mod?.default?.SpinePlugin || mod?.SpinePlugin || mod?.default || mod;
             console.info('[NoteleksGame] Imported spine plugin via package');

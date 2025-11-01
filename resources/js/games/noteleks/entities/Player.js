@@ -141,42 +141,28 @@ class Player extends GameObject {
             this._spineWatchdogInterval = setInterval(() => {
                 try {
                     this._spineWatchdogAttempts += 1;
-                    // Stop if spine created
+                    // If spine created, stop watchdog
                     if (this.spine) {
-                        clearInterval(this._spineWatchdogInterval);
+                        try { clearInterval(this._spineWatchdogInterval); } catch (e) {}
                         this._spineWatchdogInterval = null;
                         return;
                     }
-                    // Try a focused creation attempt; _tryCreateSpine will itself
-                    // perform small internal retries. We keep this low-cost.
-                    try {
-                        this._tryCreateSpine(4, 150);
-                    } catch (e) {
-                        // ignore per-interval failures
-                    }
+
+                    // Try a light-weight creation attempt to recover
+                    try { this._tryCreateSpine(2, 200); } catch (e) {}
+
+                    // Give up after max attempts
                     if (this._spineWatchdogAttempts >= this._spineWatchdogMax) {
                         try { clearInterval(this._spineWatchdogInterval); } catch (e) {}
                         this._spineWatchdogInterval = null;
                     }
                 } catch (e) {
-                    // ignore watchdog errors but ensure we don't leak timers
-                    try { clearInterval(this._spineWatchdogInterval); } catch (e2) {}
-                    this._spineWatchdogInterval = null;
+                    // ignore per-interval errors
                 }
             }, 500);
         } catch (e) {
-            // ignore watchdog setup failures
+            // ignore watchdog setup errors
         }
-
-        // Continue rest of createPlayer logic that does not depend on spine creation.
-        // We'll return early from here to avoid duplicating the large body of createPlayer.
-        // The original createPlayer() implementation (below) will still run for the
-        // non-spine-specific responsibilities, but we've already handled the sprite
-        // creation and the deferred spine launch.
-        // Call into the original createPlayer body starting at the point after the
-        // initial immediate _tryCreateSpine() call — the file retains the remainder
-        // of createPlayer unchanged so existing fallback probes, debug overlay and
-        // finalization logic still run as designed.
     }
 
     createPlayer() {
@@ -546,6 +532,10 @@ class Player extends GameObject {
                                             // Remove any existing fallback image
                                             try { if (this._spineFallbackImage && this._spineFallbackImage.destroy) this._spineFallbackImage.destroy(); } catch (e) {}
                                             this._spineFallbackImage = this.scene.add.image(this.sprite.x, this.sprite.y, texKey).setOrigin(0.5, 1);
+                                            try {
+                                                const baseScale = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? GameConfig.player.scale : 1;
+                                                if (this._spineFallbackImage && typeof this._spineFallbackImage.setScale === 'function') this._spineFallbackImage.setScale(baseScale);
+                                            } catch (e) {}
                                             if (this._spineFallbackImage.setDepth) this._spineFallbackImage.setDepth(500);
                                             // Hide the problematic spine display so it doesn't occlude
                                             try { if (this.spine && typeof this.spine.setVisible === 'function') this.spine.setVisible(false); } catch (e) {}
@@ -601,25 +591,91 @@ class Player extends GameObject {
                                 try {
                                     // Create a fallback image using the duplicated texture key prepared by AssetManager
                                     if (this.scene && this.scene.add && this.scene.textures && this.scene.textures.exists && this.scene.textures.exists('noteleks-texture')) {
-                                        // If we've already created a persistent fallback, reuse it and update position.
-                                        if (this._persistentFallbackImage && this._persistentFallbackImage.setPosition) {
+                                            // Prefer an animated spritesheet fallback if animations were generated
                                             try {
-                                                this._persistentFallbackImage.setPosition(this.sprite.x, this.sprite.y);
-                                                console.warn('[Player] Reused existing persistent Phaser image fallback');
+                                                // If the animation hasn't been created yet but the spritesheet
+                                                // texture exists, create the anim on-demand so fallbacks
+                                                // don't depend on strict loader ordering.
+                                                try {
+                                                    if (this.scene && this.scene.textures && this.scene.textures.exists && this.scene.textures.exists('skeleton-idle') && this.scene.anims && typeof this.scene.anims.exists === 'function' && !this.scene.anims.exists('player-idle')) {
+                                                        try {
+                                                            const tex = this.scene.textures.get('skeleton-idle');
+                                                            const frameNames = (tex && typeof tex.getFrameNames === 'function') ? tex.getFrameNames() : null;
+                                                            if (frameNames && frameNames.length) {
+                                                                const frames = frameNames.map(n => ({ key: 'skeleton-idle', frame: n }));
+                                                                this.scene.anims.create({ key: 'player-idle', frames, frameRate: 12, repeat: -1 });
+                                                                console.info('[Player] Created missing animation player-idle from skeleton-idle frames');
+                                                                try { this.scene.cache.custom = this.scene.cache.custom || {}; this.scene.cache.custom['player-idle-created-by'] = { by: 'Player', key: 'player-idle', ts: new Date().toISOString() }; } catch (e) {}
+                                                            }
+                                                        } catch (ae) {
+                                                            // ignore animation creation failures
+                                                        }
+                                                    }
+                                                } catch (e) {}
+
+                                                if (this.scene.anims && this.scene.anims.exists && this.scene.anims.exists('player-idle')) {
+                                                    // If we already have a persistent fallback sprite, reuse it
+                                                    if (this._persistentFallbackSprite && this._persistentFallbackSprite.setPosition) {
+                                                        try { this._persistentFallbackSprite.setPosition(this.sprite.x, this.sprite.y); } catch (e) {}
+                                                        console.warn('[Player] Reused existing persistent Phaser animated fallback');
+                                                    } else {
+                                                        // Create an animated sprite using the packed spritesheet animation
+                                                        try {
+                                                            const spr = this.scene.add.sprite(this.sprite.x, this.sprite.y, 'skeleton-idle').setOrigin(0.5, 1);
+                                                            try {
+                                                                const baseScale = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? GameConfig.player.scale : 1;
+                                                                if (spr && typeof spr.setScale === 'function') spr.setScale(baseScale);
+                                                            } catch (e) {}
+                                                            if (spr && spr.play) spr.play('player-idle');
+                                                            if (spr && spr.setDepth) spr.setDepth(501);
+                                                            this._persistentFallbackSprite = spr;
+                                                            try { if (this.spine && typeof this.spine.setVisible === 'function') this.spine.setVisible(false); } catch (e) {}
+                                                            try { this._hideSpineLoading(); } catch (e) {}
+                                                            console.warn('[Player] Spine visual appears blank — created persistent Phaser animated fallback for visibility');
+                                                        } catch (e) {
+                                                            // Fall back to static image if animation creation fails
+                                                            const fb = this.scene.add.image(this.sprite.x, this.sprite.y, 'noteleks-texture').setOrigin(0.5, 1);
+                                                            try {
+                                                                const baseScale = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? GameConfig.player.scale : 1;
+                                                                if (fb && typeof fb.setScale === 'function') fb.setScale(baseScale);
+                                                            } catch (e) {}
+                                                            if (fb && fb.setDepth) fb.setDepth(501);
+                                                            this._persistentFallbackImage = fb;
+                                                            try { if (this.spine && typeof this.spine.setVisible === 'function') this.spine.setVisible(false); } catch (e) {}
+                                                            try { this._hideSpineLoading(); } catch (e) {}
+                                                            console.warn('[Player] Fallback to static image after animated fallback failed');
+                                                        }
+                                                    }
+                                                } else {
+                                                    // No animation present, create a static image fallback
+                                                    if (this._persistentFallbackImage && this._persistentFallbackImage.setPosition) {
+                                                        try { this._persistentFallbackImage.setPosition(this.sprite.x, this.sprite.y); } catch (e) {}
+                                                        console.warn('[Player] Reused existing persistent Phaser image fallback');
+                                                    } else {
+                                                        const fb = this.scene.add.image(this.sprite.x, this.sprite.y, 'noteleks-texture').setOrigin(0.5, 1);
+                                                        try {
+                                                            const baseScale = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? GameConfig.player.scale : 1;
+                                                            if (fb && typeof fb.setScale === 'function') fb.setScale(baseScale);
+                                                        } catch (e) {}
+                                                        if (fb && fb.setDepth) fb.setDepth(501);
+                                                        this._persistentFallbackImage = fb;
+                                                        try { if (this.spine && typeof this.spine.setVisible === 'function') this.spine.setVisible(false); } catch (e) {}
+                                                        try { this._hideSpineLoading(); } catch (e) {}
+                                                        console.warn('[Player] Spine visual appears blank — created persistent Phaser image fallback for visibility');
+                                                    }
+                                                }
                                             } catch (e) {
-                                                // ignore
+                                                // If any of the above fails, create a simple static fallback image
+                                                try {
+                                                    const fb2 = this.scene.add.image(this.sprite.x, this.sprite.y, 'noteleks-texture').setOrigin(0.5, 1);
+                                                    try {
+                                                        const baseScale = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? GameConfig.player.scale : 1;
+                                                        if (fb2 && typeof fb2.setScale === 'function') fb2.setScale(baseScale);
+                                                    } catch (e) {}
+                                                    if (fb2 && fb2.setDepth) fb2.setDepth(501);
+                                                    this._persistentFallbackImage = fb2;
+                                                } catch (ee) { /* ignore */ }
                                             }
-                                        } else {
-                                            // Create a persistent fallback image using the duplicated texture key prepared by AssetManager
-                                            const fb = this.scene.add.image(this.sprite.x, this.sprite.y, 'noteleks-texture').setOrigin(0.5, 1);
-                                            if (fb && fb.setDepth) fb.setDepth(501);
-                                            // Store the persistent fallback so it remains visible while we continue diagnosis
-                                            this._persistentFallbackImage = fb;
-                                            // Hide the problematic spine display so it doesn't occlude
-                                            try { if (this.spine && typeof this.spine.setVisible === 'function') this.spine.setVisible(false); } catch (e) {}
-                                                try { this._hideSpineLoading(); } catch (e) {}
-                                                console.warn('[Player] Spine visual appears blank — created persistent Phaser image fallback for visibility');
-                                        }
                                     } else {
                                         console.warn('[Player] Spine visual appears blank but fallback texture not present');
                                     }
@@ -868,6 +924,14 @@ class Player extends GameObject {
                     this.spine = created || this.spine;
                     console.warn('[Player] Spine display create attempt, success=', !!this.spine);
                     if (this.spine) {
+                        // Immediately attempt to set an initial animation to avoid a
+                        // transient state where animState.apply runs before Player has
+                        // recorded the current animation (causing 'currentAnim=undefined').
+                        try {
+                            // Prefer 'idle' if available; _setSpineAnimation is tolerant
+                            // and will fallback to a sensible animation if 'idle' is missing.
+                            try { this._setSpineAnimation('idle', true); } catch (e) {}
+                        } catch (e) {}
                         try { if (typeof finalizeSpineVisual === 'function') finalizeSpineVisual(); } catch (e) {}
                         try { this._hideSpineLoading(); } catch (e) {}
                         return true;
@@ -1028,6 +1092,8 @@ class Player extends GameObject {
                             this.spine = created;
                             // expose for debugging
                             try { if (typeof window !== 'undefined') window._noteleks_diag_created = created; } catch (e) {}
+                            // Immediately set an initial animation to avoid transient undefined
+                            try { this._setSpineAnimation('idle', true); } catch (e) {}
                             try { if (typeof finalizeSpineVisual === 'function') finalizeSpineVisual(); } catch (e) {}
                             try { this._hideSpineLoading(); } catch (e) {}
                             console.warn('[Player] Aggressive fallback created spine with', p);
@@ -1081,13 +1147,56 @@ class Player extends GameObject {
                 const cached = this.scene && this.scene.cache && this.scene.cache.custom ? this.scene.cache.custom : null;
                 const fallback = cached && cached['spine-canvas-fallback'];
                 if (fallback) {
-                    // Use the preloaded noteleks texture as a safe static fallback (no Spine runtime calls)
-                    this.spine = this.scene.add.image(this.x, this.y, 'noteleks-texture').setOrigin(0.5, 1);
-                    if (this.spine && this.spine.setDepth) this.spine.setDepth(500);
-                    try { this._hideSpineLoading(); } catch (e) {}
-                    // Finalize visual and schedule hiding the physics sprite in a safe next-tick
-                    try { if (typeof finalizeSpineVisual === 'function') finalizeSpineVisual(); } catch (e) { /* ignore */ }
-                    console.warn('[Player] Spine canvas fallback image created as final fallback');
+                    // Prefer an animated spritesheet fallback when available
+                    try {
+                        // Attempt on-demand animation creation if texture exists but anim missing
+                        try {
+                            if (this.scene && this.scene.textures && this.scene.textures.exists && this.scene.textures.exists('skeleton-idle') && this.scene.anims && typeof this.scene.anims.exists === 'function' && !this.scene.anims.exists('player-idle')) {
+                                try {
+                                    const tex = this.scene.textures.get('skeleton-idle');
+                                    const frameNames = (tex && typeof tex.getFrameNames === 'function') ? tex.getFrameNames() : null;
+                                    if (frameNames && frameNames.length) {
+                                        const frames = frameNames.map(n => ({ key: 'skeleton-idle', frame: n }));
+                                        this.scene.anims.create({ key: 'player-idle', frames, frameRate: 12, repeat: -1 });
+                                        console.info('[Player] Created missing animation player-idle from skeleton-idle frames (final fallback)');
+                                        try { this.scene.cache.custom = this.scene.cache.custom || {}; this.scene.cache.custom['player-idle-created-by'] = { by: 'Player', key: 'player-idle', ts: new Date().toISOString(), stage: 'final-fallback' }; } catch (e) {}
+                                    }
+                                } catch (ae) { /* ignore */ }
+                            }
+                        } catch (e) {}
+
+                        if (this.scene && this.scene.anims && this.scene.anims.exists && this.scene.anims.exists('player-idle')) {
+                            const spr = this.scene.add.sprite(this.x, this.y, 'skeleton-idle').setOrigin(0.5, 1);
+                            try {
+                                const baseScale = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? GameConfig.player.scale : 1;
+                                if (spr && typeof spr.setScale === 'function') spr.setScale(baseScale);
+                            } catch (e) {}
+                            if (spr && spr.play) spr.play('player-idle');
+                            if (spr && spr.setDepth) spr.setDepth(500);
+                            this.spine = spr;
+                        } else {
+                            // Use the preloaded noteleks texture as a safe static fallback (no Spine runtime calls)
+                            this.spine = this.scene.add.image(this.x, this.y, 'noteleks-texture').setOrigin(0.5, 1);
+                            try {
+                                const baseScale = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? GameConfig.player.scale : 1;
+                                if (this.spine && typeof this.spine.setScale === 'function') this.spine.setScale(baseScale);
+                            } catch (e) {}
+                            if (this.spine && this.spine.setDepth) this.spine.setDepth(500);
+                        }
+                        try { this._hideSpineLoading(); } catch (e) {}
+                        // Finalize visual and schedule hiding the physics sprite in a safe next-tick
+                        try { if (typeof finalizeSpineVisual === 'function') finalizeSpineVisual(); } catch (e) { /* ignore */ }
+                        console.warn('[Player] Spine canvas fallback created as final fallback (animated if available)');
+                    } catch (e) {
+                        // If animated fallback creation fails, fall back to static image
+                        try {
+                            this.spine = this.scene.add.image(this.x, this.y, 'noteleks-texture').setOrigin(0.5, 1);
+                            if (this.spine && this.spine.setDepth) this.spine.setDepth(500);
+                            try { this._hideSpineLoading(); } catch (e) {}
+                            try { if (typeof finalizeSpineVisual === 'function') finalizeSpineVisual(); } catch (e) { /* ignore */ }
+                            console.warn('[Player] Spine canvas fallback image created as final fallback (static)');
+                        } catch (e2) { /* ignore */ }
+                    }
                 }
             } catch (e) {
                 // ignore
@@ -1106,8 +1215,12 @@ class Player extends GameObject {
         // Note: test-only forced persistent fallback removed. Persistent fallback is created
         // dynamically by the probe/fallback logic above when the Spine visual is detected as blank.
 
-        // Small bob animation state for static fallback to make character feel alive
-        this._fallbackBob = { t: 0 };
+    // Small bob animation state for static fallback to make character feel alive
+    this._fallbackBob = { t: 0 };
+    // Jump progress tracking (position-based)
+    this._jumpStartY = null; // y at jump start
+    this._jumpTravelAccum = 0; // accumulated vertical travel in px
+    this._jumpTravelTarget = null; // estimated total vertical travel (px)
 
         // Expose a debug handle for easier inspection from the browser console
         try {
@@ -1391,7 +1504,8 @@ class Player extends GameObject {
     }
 
     _syncSpineVisual() {
-        if (!this.spine) return;
+        // Proceed if we have either a spine visual or a persistent Phaser fallback
+        if (!this.spine && !this._persistentFallbackSprite && !this._persistentFallbackImage) return;
         try {
             // Spine display may be a Phaser Spine Game Object with x/y properties
             // Handle Image fallback bob animation
@@ -1432,7 +1546,49 @@ class Player extends GameObject {
                 }
                 if (animState && typeof animState.update === 'function' && this.scene && this.scene.game && this.scene.game.loop) {
                     const dt = (this.scene.game.loop.delta || 16) / 1000;
-                    		animState.update(dt);
+                    // Ensure an initial animation is selected before advancing/applying
+                    // the AnimationState. This avoids a race where animState.apply
+                    // runs on the first frame before Player._currentSpineAnim is set
+                    // (which caused transient 'currentAnim= undefined' logs).
+                    if (!this._currentSpineAnim) {
+                        try {
+                            // Prefer 'idle' but fall back to the first available animation
+                            try { this._setSpineAnimation('idle', true); } catch (e) {
+                                try {
+                                    const sk = (this.spine && this.spine.spine && this.spine.spine.skeleton) || this.spine.skeleton || null;
+                                    if (sk && sk.data && Array.isArray(sk.data.animations) && sk.data.animations.length) {
+                                        const names = sk.data.animations.map(a => a.name);
+                                        if (names && names.length) this._setSpineAnimation(names[0], true);
+                                    } else {
+                                        const raw = this.scene && this.scene.cache && this.scene.cache.json ? this.scene.cache.json.get('noteleks-skeleton-data') : null;
+                                        if (raw) {
+                                            const names2 = raw.animations && Array.isArray(raw.animations) ? raw.animations.map(a => a.name) : (raw.animations && typeof raw.animations === 'object' ? Object.keys(raw.animations) : []);
+                                            if (names2 && names2.length) this._setSpineAnimation(names2[0], true);
+                                        }
+                                    }
+                                } catch (e2) { /* ignore fallback failures */ }
+                            }
+                        } catch (e) { /* ignore initial animation set failures */ }
+                    }
+
+                    animState.update(dt);
+                        // If we have jump timing info, attempt to set spine track time
+                        try {
+                            if (this._isJumping && this._jumpStartTime && this._jumpAirtime && animState) {
+                                const now = (this.scene && this.scene.time && typeof this.scene.time.now === 'number') ? this.scene.time.now : Date.now();
+                                let p = (now - this._jumpStartTime) / (this._jumpAirtime || 1);
+                                p = Math.max(0, Math.min(1, p));
+                                try {
+                                    // Some Spine runtimes expose tracks array on animationState
+                                    const entry = (animState.tracks && animState.tracks[0]) || null;
+                                    if (entry && entry.animation && typeof entry.trackTime === 'number') {
+                                        // animation.duration may exist; otherwise use entry.animation.duration
+                                        const dur = (entry.animation && (typeof entry.animation.duration === 'number' ? entry.animation.duration : (entry.animation.duration || 1))) || 1;
+                                        entry.trackTime = p * dur;
+                                    }
+                                } catch (e) {}
+                            }
+                        } catch (e) {}
                     // Some plugin variants expose the runtime skeleton in different places.
                     // Try the common locations and apply the animation state to whichever exists.
                     const skeletonRef = (this.spine && this.spine.spine && this.spine.spine.skeleton) || this.spine.skeleton || null;
@@ -1509,6 +1665,80 @@ class Player extends GameObject {
         } catch (e) {
             // ignore sync errors
         }
+
+        // Ensure any persistent Phaser animated/static fallback follows the
+        // physics sprite (position, flip, depth). MovementComponent updates
+        // the physics sprite; keep the visible fallback matched so controls
+        // appear to work.
+        try {
+            const phys = this.sprite;
+            if (phys) {
+                // Animated sprites created as persistent fallback
+                if (this._persistentFallbackSprite) {
+                    try {
+                        const fb = this._persistentFallbackSprite;
+                        // Match position and origin (sprite uses origin 0.5,1)
+                        if (typeof fb.setPosition === 'function') fb.setPosition(phys.x, phys.y);
+                        // Sync flip — Phaser Sprite uses setFlipX
+                        if (typeof fb.setFlipX === 'function') fb.setFlipX(!!phys.flipX);
+                        // Ensure animation is playing. Avoid repeatedly calling play()
+                        // every frame which restarts the animation and freezes it on
+                        // the first frame. Use a transient flag on the sprite so we
+                        // only call play() once when necessary.
+                        try {
+                            if (typeof fb.play === 'function') {
+                                const isPlaying = fb.anims && !!fb.anims.isPlaying;
+                                if (!isPlaying && fb._noteleks_animStarted !== true) {
+                                    try { fb.play('player-idle'); } catch (e) {}
+                                    try { fb._noteleks_animStarted = true; } catch (e) {}
+                                }
+                            }
+                        } catch (e) {}
+                        // If we're mid-jump, progress the non-looping jump animation
+                        try {
+                            if (this._isJumping && this._jumpStartTime && this._jumpAirtime && fb && fb.anims && fb._noteleks_currentAnimKey && fb._noteleks_currentAnimKey.indexOf('jump') !== -1) {
+                                const now = (this.scene && this.scene.time && typeof this.scene.time.now === 'number') ? this.scene.time.now : Date.now();
+                                let p = (now - this._jumpStartTime) / (this._jumpAirtime || 1);
+                                p = Math.max(0, Math.min(1, p));
+                                try {
+                                    if (typeof fb.anims.setProgress === 'function') {
+                                        fb.anims.setProgress(p);
+                                    } else {
+                                        const anim = fb.anims.currentAnim;
+                                        if (anim && Array.isArray(anim.frames) && anim.frames.length) {
+                                            const idx = Math.min(anim.frames.length - 1, Math.floor(p * anim.frames.length));
+                                            const frame = anim.frames[idx];
+                                            if (frame && fb.anims.setCurrentFrame) fb.anims.setCurrentFrame(frame);
+                                        }
+                                    }
+                                } catch (e) {}
+                            }
+                        } catch (e) {}
+                        // Match depth so it renders above physics sprite
+                        if (typeof fb.setDepth === 'function') fb.setDepth(501);
+                        // Match visible state: show fallback when spine is hidden
+                        try { if (this.spine) fb.setVisible(false); else fb.setVisible(true); } catch (e) {}
+                    } catch (e) {
+                        // ignore per-frame fallback sync errors
+                    }
+                }
+
+                // Static image fallback
+                if (this._persistentFallbackImage) {
+                    try {
+                        const im = this._persistentFallbackImage;
+                        if (typeof im.setPosition === 'function') im.setPosition(phys.x, phys.y);
+                        if (typeof im.setFlipX === 'function') im.setFlipX(!!phys.flipX);
+                        if (typeof im.setDepth === 'function') im.setDepth(501);
+                        try { if (this.spine) im.setVisible(false); else im.setVisible(true); } catch (e) {}
+                    } catch (e) {
+                        // ignore
+                    }
+                }
+            }
+        } catch (e) {
+            // ignore fallback sync failures
+        }
     }
 
     processInputState(inputState, inputComponent, movementComponent) {
@@ -1520,13 +1750,35 @@ class Player extends GameObject {
         
         // Handle jump input
         if (inputState.up && movementComponent.isOnGround()) {
-            movementComponent.jump();
-            this._setSpineAnimation('jump', false);
-            this._isJumping = true;
-            // Clear jump state after animation
-            setTimeout(() => {
-                this._isJumping = false;
-            }, 600);
+            try {
+                const jumped = movementComponent.jump();
+                if (jumped) {
+                    this._setSpineAnimation('jump', false);
+                    this._isJumping = true;
+                    // Estimate airtime from jumpPower and world gravity (t = 2*v0/g)
+                    try {
+                        const v0 = (movementComponent && typeof movementComponent.jumpPower === 'number') ? movementComponent.jumpPower : (GameConfig.player && GameConfig.player.jumpPower) || 300;
+                        const gravity = (this.scene && this.scene.physics && this.scene.physics.world && this.scene.physics.world.gravity && typeof this.scene.physics.world.gravity.y === 'number') ? Math.abs(this.scene.physics.world.gravity.y) : (this.sprite && this.sprite.body && this.sprite.body.gravity && typeof this.sprite.body.gravity.y === 'number' ? Math.abs(this.sprite.body.gravity.y) : 600);
+                        const airtimeSec = (v0 / gravity) * 2;
+                        const airtimeMs = Math.max(100, Math.round(airtimeSec * 1000));
+                        this._jumpStartTime = (this.scene && this.scene.time && typeof this.scene.time.now === 'number') ? this.scene.time.now : Date.now();
+                        this._jumpAirtime = airtimeMs;
+                    } catch (e) {
+                        this._jumpStartTime = (this.scene && this.scene.time && typeof this.scene.time.now === 'number') ? this.scene.time.now : Date.now();
+                        this._jumpAirtime = 600;
+                    }
+
+                    // Clear jump state after estimated airtime (defensive fallback)
+                    try {
+                        const clearMs = (this._jumpAirtime && typeof this._jumpAirtime === 'number') ? (this._jumpAirtime + 80) : 700;
+                        setTimeout(() => {
+                            this._isJumping = false;
+                            this._jumpStartTime = null;
+                            this._jumpAirtime = null;
+                        }, clearMs);
+                    } catch (e) {}
+                }
+            } catch (e) {}
         }
         
         // Only change movement animations if not jumping or attacking
@@ -1559,7 +1811,88 @@ class Player extends GameObject {
     }
 
     _setSpineAnimation(name, loop = true) {
-        if (!this.spine) return;
+        // If no Spine visual is present, attempt to play equivalent Phaser
+        // fallback animations on the persistent fallback sprite/image. This
+        // ensures movement and attack animations still play when Spine is
+        // unavailable.
+        if (!this.spine) {
+            try {
+                const fb = this._persistentFallbackSprite || this._persistentFallbackImage || null;
+                if (fb && this.scene && this.scene.anims) {
+                    // Map generic spine animation names to our Phaser fallback keys
+                    const mapAnim = (n) => {
+                        if (!n) return null;
+                        const lower = String(n).toLowerCase();
+                        if (lower === 'idle') return 'player-idle';
+                        if (lower === 'run') return this.scene.anims.exists('player-run') ? 'player-run' : 'player-walk';
+                        if (lower === 'walk') return this.scene.anims.exists('player-walk') ? 'player-walk' : 'player-run';
+                        if (lower === 'attack' || lower === 'jump-attack' || lower === 'jumpattack') return this.scene.anims.exists('player-attack') ? 'player-attack' : 'player-jump-attack';
+                        if (lower === 'jump') {
+                            // prefer an explicit player-jump animation, otherwise fall back to jump-attack or generic attack
+                            if (this.scene.anims.exists('player-jump')) return 'player-jump';
+                            if (this.scene.anims.exists('player-jump-attack')) return 'player-jump-attack';
+                            if (this.scene.anims.exists('player-attack')) return 'player-attack';
+                            return null;
+                        }
+                        // generic fallback prefix
+                        const candidate = 'player-' + lower;
+                        return this.scene.anims.exists(candidate) ? candidate : null;
+                    };
+
+                    const animKey = mapAnim(name);
+                    if (animKey && this.scene.anims.exists(animKey) && typeof fb.play === 'function') {
+                        try {
+                            // If the fallback sprite is already playing this animation
+                            // (and we've recorded that), avoid re-calling play which
+                            // would restart it. Otherwise, start the requested anim
+                            // and record it so subsequent frames don't restart it.
+                            const currentKey = fb._noteleks_currentAnimKey || null;
+                            const alreadyPlayingRecorded = (currentKey === animKey && fb._noteleks_animStarted === true);
+                            if (alreadyPlayingRecorded) {
+                                this._currentSpineAnim = name;
+                                return;
+                            }
+
+                            // Start the animation on the fallback sprite
+                            fb.play(animKey);
+                            fb._noteleks_currentAnimKey = animKey;
+                            fb._noteleks_animStarted = true;
+                            this._currentSpineAnim = name;
+
+                            // If this animation is non-looping, revert to idle when complete
+                            if (!loop) {
+                                const onComplete = (anim, frame) => {
+                                    try {
+                                        // cleanup listener
+                                        if (typeof fb.off === 'function') fb.off('animationcomplete', onComplete);
+                                    } catch (e) {}
+                                    try {
+                                        if (this.scene && this.scene.anims && this.scene.anims.exists('player-idle') && typeof fb.play === 'function') {
+                                            fb.play('player-idle');
+                                            fb._noteleks_currentAnimKey = 'player-idle';
+                                            fb._noteleks_animStarted = true;
+                                        }
+                                    } catch (e) {}
+                                };
+                                try {
+                                    if (typeof fb.once === 'function') fb.once('animationcomplete', onComplete);
+                                    else if (typeof fb.on === 'function') fb.on('animationcomplete', onComplete);
+                                } catch (e) {
+                                    // ignore listener hookup errors
+                                }
+                            }
+                        } catch (e) {
+                            // fall through to attempt spine APIs (below) if playing fails
+                        }
+                        return;
+                    }
+                }
+            } catch (e) {
+                // ignore fallback play errors and continue to try spine APIs below
+            }
+            // No spine and no playable fallback animation — nothing to do
+            return;
+        }
 
         try {
             if (this._currentSpineAnim === name) return;
@@ -1606,10 +1939,33 @@ class Player extends GameObject {
                     success = true;
                 } catch (e) {}
             }
-            
-            if (success) {
-                this._currentSpineAnim = name;
+            // If we still failed, try some common alternate animation names
+            if (!success && name) {
+                try {
+                    const lower = String(name).toLowerCase();
+                    const alternates = [lower + '-attack', lower + 'attack', 'jump-attack', 'attack'];
+                    for (const a of alternates) {
+                        if (success) break;
+                        try {
+                            // Try the same API patterns for the alternate name
+                            if (typeof this.spine.setAnimation === 'function') {
+                                try { this.spine.setAnimation(0, a, loop); success = true; this._currentSpineAnim = a; break; } catch (e) {}
+                            }
+                            if (this.spine.animationState && typeof this.spine.animationState.setAnimation === 'function') {
+                                try { this.spine.animationState.setAnimation(0, a, loop); success = true; this._currentSpineAnim = a; break; } catch (e) {}
+                            }
+                            if (this.spine.state && typeof this.spine.state.setAnimation === 'function') {
+                                try { this.spine.state.setAnimation(0, a, loop); success = true; this._currentSpineAnim = a; break; } catch (e) {}
+                            }
+                            if (typeof this.spine.play === 'function') {
+                                try { this.spine.play(a, loop); success = true; this._currentSpineAnim = a; break; } catch (e) {}
+                            }
+                        } catch (e) {}
+                    }
+                } catch (e) {}
             }
+
+            if (success && !this._currentSpineAnim) this._currentSpineAnim = name;
         } catch (e) {
             // ignore animation errors
         }

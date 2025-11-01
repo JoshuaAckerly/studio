@@ -1,6 +1,11 @@
 /**
  * Asset Management Utilities
  */
+// Lightweight import-time notice using console.warn so it is visible even when
+// the app's console wrapper suppresses info/debug messages by prefix.
+try { console.warn('[AssetManager] module imported (warn diagnostics)'); } catch (e) {}
+// Honor runtime configuration for Spine usage
+import GameConfig from '../config/GameConfig.js';
 export class AssetManager {
     static createPlaceholderTextures(scene, config) {
         const textures = config.assets.textures;
@@ -24,49 +29,394 @@ export class AssetManager {
         });
     }
 
-    static async loadSpineAssets(scene, config) {
-        const { atlas, json, png } = config.assets.spine;
+    static loadPlayerSpriteSheets(scene, config) {
+        const basePath = '/games/noteleks/sprites/';
+        
+            try {
+            console.warn('[AssetManager] loadPlayerSpriteSheets called');
+        } catch (e) {}
 
         try {
-            // Always queue raw assets as a reliable fallback. This guarantees that
-            // AssetManager.setupSpineData can access atlas text and skeleton JSON
-            // from the scene cache even if the Spine plugin/loader isn't available
-            // at preload time (race conditions, plugin init delays, etc.).
-            try {
-                console.info('[AssetManager] Queuing raw spine assets (fallback safe):', { png, atlas, json });
-                scene.load.image('noteleks-texture', png);
-                scene.load.text('noteleks-atlas-text', atlas);
-                scene.load.json('noteleks-skeleton-data', json);
-            } catch (e) {
-                console.warn('[AssetManager] Failed to queue raw spine assets:', e && e.message);
-            }
+            // The legacy per-animation spritesheet files in /sprites/ are
+            // placeholders in this repo (they contain no image data). To
+            // avoid loader errors during development, prefer our generated
+            // packed spritesheet produced from the Spine frames. Load that
+            // once and create both a 'skeleton-idle' animation and a
+            // convenience alias 'player-idle' so the rest of the codebase
+            // can use the expected animation key.
 
-            // If the official Spine loader is available, also use it (this may
-            // provide optimized loading and cache entries the plugin expects).
-            if (scene.load && typeof scene.load.spine === 'function') {
+            // If we've generated a packed spritesheet for the Spine idle frames,
+            // load it (produced by tools/make_spritesheet.js). These frames are
+            // large by default; you may want to repack with a target size for
+            // production. For now we load it with the detected frame size.
                 try {
-                    console.info('[AssetManager] Spine loader detected, also loading via plugin loader: noteleks-data', { json, atlas });
-                    scene.load.spine('noteleks-data', json, atlas);
-                } catch (e) {
-                    console.warn('[AssetManager] scene.load.spine threw while queuing plugin load:', e && e.message);
+                // Prefer an atlas (.json) sidecar when present. If not present,
+                // fall back to loading the PNG as a uniform spritesheet.
+                const spritesBase = '/games/noteleks/sprites/';
+                const candidates = [
+                    { texKey: 'skeleton-idle', png: spritesBase + 'skeleton_idle_512.png', json: spritesBase + 'skeleton_idle_512.json', frameWidth: 512, frameHeight: 512 },
+                    { texKey: 'skeleton-walk', png: spritesBase + 'skeleton_walk_512.png', json: spritesBase + 'skeleton_walk_512.json', frameWidth: 512, frameHeight: 512 },
+                    { texKey: 'skeleton-run', png: spritesBase + 'skeleton_run_512.png', json: spritesBase + 'skeleton_run_512.json', frameWidth: 512, frameHeight: 512 },
+                    { texKey: 'skeleton-jumpattack', png: spritesBase + 'skeleton_jumpattack_512.png', json: spritesBase + 'skeleton_jumpattack_512.json', frameWidth: 512, frameHeight: 512 }
+                ];
+
+                // Ensure we register the loader-complete handler once (so animations
+                // are created after whichever files we queued finish).
+                if (!AssetManager._hasRegisteredPlayerSpritesheetComplete) {
+                    AssetManager._hasRegisteredPlayerSpritesheetComplete = true;
+                    scene.load.once('complete', () => {
+                        try {
+                            console.warn('[AssetManager] loader.complete fired for player spritesheets; texture existence:', {
+                                'skeleton-idle': !!(scene.textures && scene.textures.exists && scene.textures.exists('skeleton-idle')),
+                                'skeleton-walk': !!(scene.textures && scene.textures.exists && scene.textures.exists('skeleton-walk')),
+                                'skeleton-run': !!(scene.textures && scene.textures.exists && scene.textures.exists('skeleton-run')),
+                                'skeleton-jumpattack': !!(scene.textures && scene.textures.exists && scene.textures.exists('skeleton-jumpattack'))
+                            });
+                        } catch (e) { /* ignore */ }
+                    });
                 }
-            } else {
-                console.info('[AssetManager] Spine loader not detected at preload; relying on raw assets fallback');
+
+                const tryLoadAtlasOrSpritesheet = (c) => {
+                    try {
+                        // Helper: when we queue assets asynchronously (via fetch.then)
+                        // the Scene's automatic preload may already have finished.
+                        // If that happens we must explicitly start the loader so the
+                        // newly queued files are actually fetched. This is a
+                        // best-effort, non-invasive call that avoids having async
+                        // probes silently enqueue assets that are never loaded.
+                        const startLoaderIfIdle = () => {
+                            try {
+                                if (scene && scene.load && !scene.load.isLoading) {
+                                    try { scene.load.start(); } catch (e) {}
+                                    try { console.warn('[AssetManager] Started loader for async queued assets'); } catch (e) {}
+                                }
+                            } catch (e) { /* ignore */ }
+                        };
+                        // Prefer a converted Phaser-style atlas if it exists: our
+                        // converter writes a sibling file with the suffix `.phaser.json`.
+                        const phaserJson = String(c.json).replace(/\.json$/i, '.phaser.json');
+                        // Deterministic loading: avoid async HEAD probes which can
+                        // enqueue loads after preload finishes and cause races.
+                        // Instead, prefer the converted `.phaser.json` sibling and
+                        // queue it directly; let Phaser's loader handle existence
+                        // (404) at load time. If queuing the atlas synchronously
+                        // fails, fall back to trying the original JSON, then the
+                        // numeric spritesheet fallback.
+                        try {
+                            try {
+                                scene.load.atlas(c.texKey, c.png, phaserJson);
+                                startLoaderIfIdle();
+                                console.warn('[AssetManager] Queued atlas (phaser-json) for', c.texKey, '->', phaserJson);
+                            } catch (e) {
+                                // Try original JSON sidecar
+                                try {
+                                    scene.load.atlas(c.texKey, c.png, c.json);
+                                    startLoaderIfIdle();
+                                    console.warn('[AssetManager] Queued atlas for', c.texKey, '->', c.json);
+                                } catch (e2) {
+                                    // Fallback to numeric spritesheet
+                                    try {
+                                        scene.load.spritesheet(c.texKey, c.png, { frameWidth: c.frameWidth, frameHeight: c.frameHeight });
+                                        startLoaderIfIdle();
+                                        console.warn('[AssetManager] Queued spritesheet load for', c.texKey, '->', c.png);
+                                    } catch (e3) {
+                                        console.warn('[AssetManager] Failed to queue spritesheet for', c.texKey, e3 && e3.message);
+                                    }
+                                }
+                            }
+                        } catch (e) {
+                            console.warn('[AssetManager] Failed to queue load for', c.texKey, e && e.message);
+                        }
+                    } catch (e) {
+                        // swallow per-candidate errors
+                    }
+                };
+
+                // Queue each candidate deterministically: load the PNG image and
+                // its packer sidecar JSON into Phaser's cache. Later, on
+                // loader.complete we will synthesize per-frame textures from
+                // the sidecar. This avoids async HEAD probes and keeps all
+                // assets inside the same Scene preload run.
+                for (const c of candidates) {
+                    try {
+                        // Load the full image under the texKey so subsequent
+                        // code can reference scene.textures.get(texKey).
+                        try { scene.load.image(c.texKey, c.png); } catch (e) {}
+                        // Load the original packer JSON sidecar under a stable key
+                        // so we can create individual frames from it after the
+                        // loader completes.
+                        try { scene.load.json(c.texKey + '-sidecar', c.json); } catch (e) {}
+                        console.warn('[AssetManager] Queued image and sidecar JSON for', c.texKey, c.png, c.json);
+                    } catch (e) { /* ignore per-candidate */ }
+                }
+
+                // Create animations after loader completes so frames exist
+                scene.load.once('complete', () => {
+                    try {
+                        console.warn('[AssetManager] loader.complete fired for player spritesheets; texture existence:', {
+                            'skeleton-idle': !!(scene.textures && scene.textures.exists && scene.textures.exists('skeleton-idle')),
+                            'skeleton-walk': !!(scene.textures && scene.textures.exists && scene.textures.exists('skeleton-walk')),
+                            'skeleton-run': !!(scene.textures && scene.textures.exists && scene.textures.exists('skeleton-run')),
+                            'skeleton-jumpattack': !!(scene.textures && scene.textures.exists && scene.textures.exists('skeleton-jumpattack'))
+                        });
+
+                        // If skeleton-idle texture exists, attempt to log its frame info
+                        try {
+                            if (scene.textures && scene.textures.exists && scene.textures.exists('skeleton-idle')) {
+                                const tex = scene.textures.get('skeleton-idle');
+                                let frameNames = null;
+                                try { frameNames = (tex && typeof tex.getFrameNames === 'function') ? tex.getFrameNames() : null; } catch (e) { frameNames = null; }
+                                console.info('[AssetManager] skeleton-idle texture frames sample:', Array.isArray(frameNames) ? frameNames.slice(0,8) : '(no frame names)');
+
+                                // If the atlas loader produced no named frames (or only a
+                                // single '__BASE' frame), attempt to read a JSON sidecar
+                                // we shipped with our packer (which we've loaded into
+                                // Phaser's json cache earlier) and generate separate
+                                // texture entries for each frame. This avoids relying on
+                                // Phaser's atlas parser which may choke on our custom
+                                // JSON format.
+                                try {
+                                    const needsSidecar = !Array.isArray(frameNames) || frameNames.length <= 1;
+                                    if (needsSidecar) {
+                                        const createFromSidecarCached = (sidecarCacheKey, texKey, playerAnimKey, createdPrefix, cacheMarkerKey) => {
+                                            try {
+                                                const json = (scene.cache && scene.cache.json && typeof scene.cache.json.get === 'function') ? scene.cache.json.get(sidecarCacheKey) : null;
+                                                if (!json) return;
+                                                const mainTex = scene.textures.get(texKey);
+                                                const srcImg = mainTex && mainTex.getSourceImage ? mainTex.getSourceImage() : (mainTex && mainTex.source && mainTex.source[0] ? mainTex.source[0].image : null);
+                                                if (!srcImg) return;
+                                                const createdKeys = [];
+                                                for (const f of (json.frames || [])) {
+                                                    try {
+                                                        const nm = String(f.name);
+                                                        const r = f.frame || f.rect || null;
+                                                        if (!r) continue;
+                                                        const cvs = document.createElement('canvas');
+                                                        cvs.width = Math.max(1, r.w);
+                                                        cvs.height = Math.max(1, r.h);
+                                                        const ctx = cvs.getContext && cvs.getContext('2d');
+                                                        if (!ctx) continue;
+                                                        ctx.drawImage(srcImg, r.x, r.y, r.w, r.h, 0, 0, r.w, r.h);
+                                                        const keyName = createdPrefix + nm;
+                                                        if (!scene.textures.exists(keyName)) {
+                                                            scene.textures.addImage(keyName, cvs);
+                                                            createdKeys.push(keyName);
+                                                        }
+                                                    } catch (e) { /* ignore per-frame */ }
+                                                }
+
+                                                // If we created per-frame textures, create an animation
+                                                if (createdKeys.length) {
+                                                    try {
+                                                        const frames = createdKeys.map(k => ({ key: k }));
+                                                        if (!scene.anims.exists(playerAnimKey)) {
+                                                            scene.anims.create({ key: playerAnimKey, frames, frameRate: 12, repeat: (playerAnimKey === 'player-jump-attack' ? 0 : -1) });
+                                                            try { scene.cache.custom = scene.cache.custom || {}; scene.cache.custom[cacheMarkerKey] = { by: 'AssetManager', key: playerAnimKey, ts: new Date().toISOString() }; } catch (e) {}
+                                                            console.info('[AssetManager] Created', playerAnimKey, 'from cached JSON sidecar frames (separate textures):', createdKeys.length);
+                                                        }
+                                                    } catch (e) { /* ignore */ }
+                                                }
+                                            } catch (e) { /* ignore */ }
+                                        };
+
+                                        // idle
+                                        createFromSidecarCached('skeleton-idle-sidecar', 'skeleton-idle', 'player-idle', 'skeleton-idle-frame-', 'player-idle-created-by');
+                                        // walk
+                                        createFromSidecarCached('skeleton-walk-sidecar', 'skeleton-walk', 'player-walk', 'skeleton-walk-frame-', 'player-walk-created-by');
+                                        // run
+                                        createFromSidecarCached('skeleton-run-sidecar', 'skeleton-run', 'player-run', 'skeleton-run-frame-', 'player-run-created-by');
+                                        // jumpattack
+                                        createFromSidecarCached('skeleton-jumpattack-sidecar', 'skeleton-jumpattack', 'player-jump-attack', 'skeleton-jumpattack-frame-', 'player-jump-attack-created-by');
+                                    }
+                                } catch (e) { /* ignore sidecar generation failures */ }
+                            }
+                        } catch (e) { console.warn('[AssetManager] Failed to inspect skeleton-idle texture frames:', e && e.message); }
+
+                        // skeleton-idle + alias
+                        try {
+                            const createFromTextureOrGrid = (texKey, animKey, frameCount, opts = {}) => {
+                                try {
+                                    if (!scene.textures.exists(texKey)) return false;
+                                    if (scene.anims.exists(animKey)) return true;
+                                    const tex = scene.textures.get(texKey);
+                                    // Prefer named frames (atlas)
+                                    const frameNames = (tex && typeof tex.getFrameNames === 'function') ? tex.getFrameNames() : null;
+                                    if (frameNames && frameNames.length) {
+                                        const frames = frameNames.map(n => ({ key: texKey, frame: n }));
+                                        scene.anims.create({ key: animKey, frames, frameRate: opts.frameRate || 12, repeat: (typeof opts.repeat !== 'undefined') ? opts.repeat : -1 });
+                                        console.info('[AssetManager] Created', animKey, 'from frames of', texKey);
+                                        return true;
+                                    }
+
+                                    // Fall back to numeric spritesheet grid.
+                                    // But avoid calling generateFrameNumbers when we
+                                    // have a sidecar JSON (we'll create per-frame
+                                    // textures from it) or when per-frame textures
+                                    // already exist. generateFrameNumbers logs
+                                    // noisy "Frame X not found" messages when used
+                                    // against a plain image.
+                                    const sidecarKey = (texKey + '-sidecar');
+                                    const hasSidecar = !!(scene.cache && scene.cache.json && typeof scene.cache.json.get === 'function' && scene.cache.json.get(sidecarKey));
+                                    const hasPerFrameTextures = Object.keys(scene.textures.list || {}).some(k => k.indexOf(texKey + '-frame-') === 0);
+                                    if (!hasSidecar && !hasPerFrameTextures && typeof scene.anims.generateFrameNumbers === 'function' && frameCount) {
+                                        try {
+                                            const genFrames = scene.anims.generateFrameNumbers(texKey, { start: 0, end: Math.max(0, frameCount - 1) });
+                                            scene.anims.create({ key: animKey, frames: genFrames, frameRate: opts.frameRate || 12, repeat: (typeof opts.repeat !== 'undefined') ? opts.repeat : -1 });
+                                            console.info('[AssetManager] Created', animKey, 'from spritesheet grid', texKey);
+                                            return true;
+                                        } catch (e) {
+                                            console.warn('[AssetManager] generateFrameNumbers failed for', texKey, e && e.message);
+                                            return false;
+                                        }
+                                    }
+                                } catch (e) { /* ignore */ }
+                                return false;
+                            };
+
+                            // idle
+                            if (!scene.anims.exists('skeleton-idle')) {
+                                createFromTextureOrGrid('skeleton-idle', 'skeleton-idle', 9, { frameRate: 12, repeat: -1 });
+                            }
+                            if (!scene.anims.exists('player-idle')) {
+                                // Try to alias from skeleton-idle frames if available
+                                if (scene.anims.exists('skeleton-idle')) {
+                                    try {
+                                        const anim = scene.anims.get('skeleton-idle');
+                                        const frames = anim.frames.map(f => ({ key: f.textureKey, frame: f.frame.name }));
+                                        scene.anims.create({ key: 'player-idle', frames, frameRate: 12, repeat: -1 });
+                                        console.info('[AssetManager] Created player-idle animation alias from skeleton-idle');
+                                    } catch (e) {
+                                        // as a last resort, attempt generateFrameNumbers (may fail)
+                                        try { scene.anims.create({ key: 'player-idle', frames: scene.anims.generateFrameNumbers('skeleton-idle', { start: 0, end: 8 }), frameRate: 12, repeat: -1 }); } catch (e2) { /* ignore */ }
+                                    }
+                                }
+                            }
+
+                            // walk
+                            if (scene.textures.exists('skeleton-walk') && !scene.anims.exists('skeleton-walk')) {
+                                createFromTextureOrGrid('skeleton-walk', 'skeleton-walk', 9, { frameRate: 12, repeat: -1 });
+                            }
+                            if (!scene.anims.exists('player-walk') && scene.anims.exists('skeleton-walk')) {
+                                try {
+                                    const anim = scene.anims.get('skeleton-walk');
+                                    const frames = anim.frames.map(f => ({ key: f.textureKey, frame: f.frame.name }));
+                                    scene.anims.create({ key: 'player-walk', frames, frameRate: 12, repeat: -1 });
+                                    console.info('[AssetManager] Created player-walk animation alias from skeleton-walk');
+                                } catch (e) { /* ignore */ }
+                            }
+
+                            // run
+                            if (scene.textures.exists('skeleton-run') && !scene.anims.exists('skeleton-run')) {
+                                createFromTextureOrGrid('skeleton-run', 'skeleton-run', 9, { frameRate: 12, repeat: -1 });
+                            }
+                            if (!scene.anims.exists('player-run') && scene.anims.exists('skeleton-run')) {
+                                try {
+                                    const anim = scene.anims.get('skeleton-run');
+                                    const frames = anim.frames.map(f => ({ key: f.textureKey, frame: f.frame.name }));
+                                    scene.anims.create({ key: 'player-run', frames, frameRate: 12, repeat: -1 });
+                                    console.info('[AssetManager] Created player-run animation alias from skeleton-run');
+                                } catch (e) { /* ignore */ }
+                            }
+
+                            // jumpattack
+                            if (scene.textures.exists('skeleton-jumpattack') && !scene.anims.exists('skeleton-jumpattack')) {
+                                createFromTextureOrGrid('skeleton-jumpattack', 'skeleton-jumpattack', 8, { frameRate: 12, repeat: 0 });
+                            }
+                            if (!scene.anims.exists('player-jump-attack') && scene.anims.exists('skeleton-jumpattack')) {
+                                try {
+                                    const anim = scene.anims.get('skeleton-jumpattack');
+                                    const frames = anim.frames.map(f => ({ key: f.textureKey, frame: f.frame.name }));
+                                    scene.anims.create({ key: 'player-jump-attack', frames, frameRate: 12, repeat: 0 });
+                                    console.info('[AssetManager] Created player-jump-attack animation alias from skeleton-jumpattack');
+                                } catch (e) { /* ignore */ }
+                            }
+                        } catch (e) {
+                            console.warn('[AssetManager] Failed to create animations on loader complete (safe path):', e && e.message);
+                        }
+
+                    } catch (e) {
+                        console.warn('[AssetManager] Failed to create animations on loader complete:', e && e.message);
+                    }
+                });
+            } catch (e) {
+                // Non-fatal: keep going if spritesheet isn't present
             }
-        } catch {
-            // Silently handle error
-            console.warn('[AssetManager] Failed to queue spine assets for loading', { json, atlas, png });
+            
+            console.warn('[AssetManager] Loading player sprite sheets from:', basePath);
+        } catch (e) {
+            console.warn('[AssetManager] Failed to load player sprite sheets:', e && e.message);
+        }
+    }
+
+    /**
+     * Load a frame-by-frame sequence of WebP files and create a Phaser animation.
+     *
+     * This helper is useful when your animation frames are separate image files
+     * (for example: "idle_0.webp", "idle_1.webp", ...). It queues each frame
+     * as an image load during preload, and when the loader finishes it creates
+     * a Phaser animation that references the loaded texture keys.
+     *
+     * Note: Packing frames into a spritesheet or atlas is still recommended for
+     * production (fewer requests, better GPU upload behavior). Use this helper
+     * as a convenient development/runtime fallback.
+     *
+     * @param {Phaser.Scene} scene
+     * @param {string} animKey - animation key to create (also used as prefix for texture keys)
+     * @param {string} baseUrl - base URL including trailing separator, e.g. '/games/noteleks/spine/characters/idle_'
+     * @param {number} frameCount - number of frames (0-based frames will be loaded: baseUrl + '0.webp' ..)
+     * @param {number} frameRate
+     * @param {number} repeat
+     */
+    static loadFrameSequence(scene, animKey, baseUrl, frameCount, frameRate = 12, repeat = -1) {
+        if (!scene || !scene.load) return;
+
+        const frameKeys = [];
+        for (let i = 0; i < frameCount; i++) {
+            const key = `${animKey}-${i}`;
+            frameKeys.push(key);
+            try {
+                scene.load.image(key, `${baseUrl}${i}.webp`);
+            } catch (e) {
+                console.warn('[AssetManager] Failed to queue frame load', key, e && e.message);
+            }
+        }
+
+        // When the loader completes, create the Phaser animation referencing
+        // the loaded frame texture keys. Using separate texture keys for each
+        // frame is less efficient than a packed spritesheet, but it's simple
+        // and works without additional build steps.
+        try {
+            scene.load.once('complete', () => {
+                try {
+                    const frames = frameKeys.map(k => ({ key: k }));
+                    if (!scene.anims.exists(animKey)) {
+                        scene.anims.create({ key: animKey, frames, frameRate, repeat });
+                        console.info('[AssetManager] Created animation from frame sequence', animKey, 'frames=', frames.length);
+                    }
+                } catch (e) {
+                    console.warn('[AssetManager] Failed to create animation from frames', animKey, e && e.message);
+                }
+            });
+        } catch (e) {
+            console.warn('[AssetManager] Failed to register loader completion listener for frame sequence', animKey, e && e.message);
         }
     }
 
     static setupSpineData(scene) {
         try {
+            // If the game configuration disables Spine, skip all Spine setup.
+            try {
+                if (GameConfig && GameConfig.useSpine === false) {
+                    try { console.info('[AssetManager] GameConfig.useSpine=false; skipping setupSpineData'); } catch (e) {}
+                    return false;
+                }
+            } catch (e) { /* ignore config read errors */ }
             // Diagnostic: list current cache keys and textures so we can debug
             try {
                 const textKeys = scene.cache && scene.cache.text ? scene.cache.text.keys ? Object.keys(scene.cache.text.keys) : [] : [];
                 const jsonKeys = scene.cache && scene.cache.json ? scene.cache.json.keys ? Object.keys(scene.cache.json.keys) : [] : [];
                 const textureKeys = scene.textures ? Object.keys(scene.textures.list || {}) : [];
-                console.info('[AssetManager] setupSpineData diagnostics: textKeys=', textKeys, 'jsonKeys=', jsonKeys, 'textureKeys=', textureKeys);
+                console.warn('[AssetManager] setupSpineData diagnostics: textKeys=', textKeys, 'jsonKeys=', jsonKeys, 'textureKeys=', textureKeys);
             } catch (diagErr) {
                 console.warn('[AssetManager] diagnostics failed:', diagErr && diagErr.message);
             }
@@ -359,9 +709,49 @@ export class AssetManager {
                 }
 
                 if (typeof window !== 'undefined') window.NOTELEKS_DIAG = diag;
-                console.info('[AssetManager] NOTELEKS_DIAG prepared', window.NOTELEKS_DIAG);
+                console.warn('[AssetManager] NOTELEKS_DIAG prepared', window.NOTELEKS_DIAG);
             } catch (e) {
                 // ignore diag failures
+            }
+
+            // Populate a persistent, concise runtime probe for interactive debugging.
+            // This snapshot is intentionally small and serializable so you can inspect
+            // `window._NOTELEKS_ASSET_PROBE` in the browser console at any time.
+            try {
+                if (typeof window !== 'undefined') {
+                    const probe = { ts: new Date().toISOString() };
+                    try {
+                        probe.textures = Object.keys(scene.textures && scene.textures.list ? scene.textures.list : {});
+                    } catch (e) { probe.textures = null; }
+                    try {
+                        probe.anims = [];
+                        if (scene.anims && scene.anims.anims && typeof scene.anims.anims.keys === 'function') {
+                            probe.anims = Array.from(scene.anims.anims.keys());
+                        } else if (scene.anims && typeof scene.anims.get === 'function') {
+                            // Best-effort fallback when internals differ across Phaser builds
+                            try { probe.anims = Object.keys(scene.anims); } catch (e) { /* ignore */ }
+                        }
+                    } catch (e) { probe.anims = null; }
+                    try {
+                        probe.cacheCustomKeys = Object.keys(scene.cache && scene.cache.custom ? scene.cache.custom : {});
+                    } catch (e) { probe.cacheCustomKeys = null; }
+                    try {
+                        const plugin = scene.sys && scene.sys.spine ? scene.sys.spine : null;
+                        if (plugin) {
+                            const atlasCache = plugin.atlasCache || plugin.atlasCacheMap || null;
+                            const skeletonCache = plugin.skeletonDataCache || plugin.skeletonCache || null;
+                            probe.pluginAtlasKeys = atlasCache && typeof atlasCache.keys === 'function' ? atlasCache.keys() : (atlasCache ? Object.keys(atlasCache) : null);
+                            probe.pluginSkeletonKeys = skeletonCache && typeof skeletonCache.keys === 'function' ? skeletonCache.keys() : (skeletonCache ? Object.keys(skeletonCache) : null);
+                        } else {
+                            probe.pluginAtlasKeys = null; probe.pluginSkeletonKeys = null;
+                        }
+                    } catch (e) { probe.pluginAtlasKeys = probe.pluginSkeletonKeys = null; }
+
+                    try { window._NOTELEKS_ASSET_PROBE = probe; } catch (e) { /* ignore */ }
+                    console.warn('[AssetManager] _NOTELEKS_ASSET_PROBE populated', probe);
+                }
+            } catch (e) {
+                // ignore probe failures
             }
 
             if (window.spine) {
@@ -743,6 +1133,265 @@ export class AssetManager {
                     console.warn('[AssetManager] Failed to create spine canvas fallback:', e);
                 }
                 
+                // Ensure commonly expected fallback animations are present when
+                // their spritesheet textures exist but the animation wasn't
+                // created due to loader ordering. Creating them here makes the
+                // fallback paths in Player robust to ordering differences.
+                try {
+                    const ensureAnim = (texKey, animKey, opts = {}) => {
+                        try {
+                            if (!scene || !scene.textures || !scene.anims) return;
+                            if (!scene.textures.exists(texKey)) return;
+                            if (scene.anims.exists(animKey)) return;
+
+                            const tex = scene.textures.get(texKey);
+
+                            // Prefer atlas/packed frame names when available — this
+                            // avoids generateFrameNumbers which expects numeric
+                            // indexed frames and can produce noisy errors when used
+                            // against an atlas.
+                            try {
+                                const frameNames = (tex && typeof tex.getFrameNames === 'function') ? tex.getFrameNames() : null;
+                                if (frameNames && frameNames.length) {
+                                    const frames = frameNames.map(n => ({ key: texKey, frame: n }));
+                                    scene.anims.create({ key: animKey, frames, frameRate: opts.frameRate || 12, repeat: (typeof opts.repeat !== 'undefined') ? opts.repeat : -1 });
+                                    console.info('[AssetManager] Created animation', animKey, 'from frames of', texKey);
+                                    try {
+                                        scene.cache.custom = scene.cache.custom || {};
+                                        scene.cache.custom['player-idle-created-by'] = { by: 'AssetManager', key: animKey, ts: new Date().toISOString() };
+                                    } catch (e) { /* ignore */ }
+                                    return;
+                                }
+                            } catch (e) {
+                                // fall through to spritesheet path
+                            }
+
+                            // If no atlas/frameNames found, look for per-frame textures
+                            // created earlier with names like `${texKey}-frame-0`, `${texKey}_frame_0`, etc.
+                            try {
+                                const allKeys = Object.keys(scene.textures.list || {});
+                                const perFrameCandidates = allKeys.filter(k => k.indexOf(texKey + '-frame-') === 0 || k.indexOf(texKey + '_frame_') === 0 || k.indexOf(texKey + 'frame-') === 0 || k.indexOf(texKey + 'frame_') === 0);
+                                if (perFrameCandidates && perFrameCandidates.length > 1) {
+                                    // Attempt to sort by numeric suffix when present
+                                    const extractNumber = (s) => {
+                                        const m = s.match(/(\d+)(?!.*\d)/);
+                                        return m ? parseInt(m[1], 10) : null;
+                                    };
+                                    perFrameCandidates.sort((a, b) => {
+                                        const na = extractNumber(a);
+                                        const nb = extractNumber(b);
+                                        if (na !== null && nb !== null) return na - nb;
+                                        if (na !== null) return -1;
+                                        if (nb !== null) return 1;
+                                        return a.localeCompare(b);
+                                    });
+                                    const frames = perFrameCandidates.map(k => ({ key: k }));
+                                    scene.anims.create({ key: animKey, frames, frameRate: opts.frameRate || 12, repeat: (typeof opts.repeat !== 'undefined') ? opts.repeat : -1 });
+                                    console.info('[AssetManager] Created animation', animKey, 'from per-frame textures for', texKey, 'count=', frames.length);
+                                    try { scene.cache.custom = scene.cache.custom || {}; scene.cache.custom[animKey + '-created-by'] = { by: 'AssetManager', key: animKey, ts: new Date().toISOString(), source: 'per-frame' }; } catch (e) {}
+                                    return;
+                                }
+                            } catch (e) {
+                                // ignore per-frame discovery failures
+                            }
+
+                            // If no named frames available, try spritesheet-style frames
+                            try {
+                                const frameCount = opts.frameCount || null;
+                                if (typeof scene.anims.generateFrameNumbers === 'function' && frameCount) {
+                                    // Only call generateFrameNumbers when we expect a uniform
+                                    // numeric grid; otherwise this will generate 'Frame not found' errors.
+                                    const genFrames = scene.anims.generateFrameNumbers(texKey, { start: 0, end: Math.max(0, frameCount - 1) });
+                                    scene.anims.create({ key: animKey, frames: genFrames, frameRate: opts.frameRate || 12, repeat: (typeof opts.repeat !== 'undefined') ? opts.repeat : -1 });
+                                    console.info('[AssetManager] Created animation', animKey, 'from spritesheet grid', texKey);
+                                    try {
+                                        scene.cache.custom = scene.cache.custom || {};
+                                        scene.cache.custom['player-idle-created-by'] = { by: 'AssetManager', key: animKey, ts: new Date().toISOString() };
+                                    } catch (e) { /* ignore */ }
+                                    return;
+                                }
+                            } catch (e) {
+                                console.warn('[AssetManager] generateFrameNumbers failed for', texKey, e && e.message);
+                            }
+
+                            // If we reach here, nothing created — no-op
+                        } catch (e) { /* ignore */ }
+                    };
+
+                    try { ensureAnim('skeleton-idle', 'player-idle', { frameCount: 9, frameRate: 12, repeat: -1 }); } catch (e) {}
+                    try { ensureAnim('skeleton-walk', 'player-walk', { frameCount: 9, frameRate: 12, repeat: -1 }); } catch (e) {}
+                    try { ensureAnim('skeleton-run', 'player-run', { frameCount: 9, frameRate: 12, repeat: -1 }); } catch (e) {}
+                    try { ensureAnim('skeleton-jumpattack', 'player-jump-attack', { frameCount: 8, frameRate: 12, repeat: 0 }); } catch (e) {}
+                } catch (e) { /* ignore animation creation failures */ }
+
+                // Ensure a generic 'skeleton' texture exists so objects that
+                // create sprites immediately (Player.createPlayerDeferred) have
+                // a visible image to use. Prefer duplicating the packed idle
+                // source image when available so the early physics sprite is
+                // not invisible while more advanced fallbacks are prepared.
+                try {
+                    if (scene && scene.textures && !scene.textures.exists('skeleton')) {
+                        if (scene.textures.exists('skeleton-idle')) {
+                            try {
+                                const srcTex = scene.textures.get('skeleton-idle');
+                                const srcImg = (srcTex && srcTex.source && srcTex.source[0] && srcTex.source[0].image) ? srcTex.source[0].image : (srcTex && typeof srcTex.getSourceImage === 'function' ? srcTex.getSourceImage() : null);
+                                if (srcImg) {
+                                    try { scene.textures.addImage('skeleton', srcImg); console.info('[AssetManager] Created fallback texture alias: skeleton (from skeleton-idle source)'); } catch (e) { /* ignore addImage failures */ }
+                                }
+                            } catch (e) { /* ignore per-attempt */ }
+                        }
+                    }
+                } catch (e) { /* ignore */ }
+
+                // If the Player instance was constructed earlier with a missing
+                // texture, update it now so the physics sprite becomes visible
+                // immediately. Also create a persistent animated fallback sprite
+                // near the player if an animation is available.
+                try {
+                    if (typeof window !== 'undefined') {
+                        const p = window.noteleksPlayer || null;
+                        if (p && p.sprite) {
+                            try {
+                                // If the sprite was constructed before the 'skeleton'
+                                // texture existed, force it to use the new texture
+                                // now so it becomes visible without manual intervention.
+                                if (scene.textures.exists('skeleton')) {
+                                    try { p.sprite.setTexture('skeleton'); } catch (e) {}
+                                    try { p.sprite.setVisible(true); } catch (e) {}
+                                }
+
+                                // If an animated fallback was created (player-idle),
+                                // create (or reuse) a persistent animated sprite so
+                                // the player shows the intended animation immediately.
+                                if (scene.anims && typeof scene.anims.exists === 'function' && scene.anims.exists('player-idle')) {
+                                    try {
+                                        // Avoid creating duplicates
+                                        if (!p._persistentFallbackSprite || !p._persistentFallbackSprite.playing) {
+                                            try {
+                                                const fx = (p.sprite && typeof p.sprite.x === 'number') ? p.sprite.x : (scene.cameras && scene.cameras.main && scene.cameras.main.centerX) || 0;
+                                                const fy = (p.sprite && typeof p.sprite.y === 'number') ? p.sprite.y : (scene.cameras && scene.cameras.main && scene.cameras.main.centerY) || 0;
+
+                                                // Prefer per-frame texture if it exists (we create
+                                                // keys like 'skeleton-idle-frame-0'). Falling back
+                                                // to 'skeleton-idle' or 'skeleton' when needed.
+                                                let baseTex = null;
+                                                if (scene.textures && scene.textures.exists && scene.textures.exists('skeleton-idle-frame-0')) {
+                                                    baseTex = 'skeleton-idle-frame-0';
+                                                } else if (scene.textures && scene.textures.exists && scene.textures.exists('skeleton-idle')) {
+                                                    baseTex = 'skeleton-idle';
+                                                } else if (scene.textures && scene.textures.exists && scene.textures.exists('skeleton')) {
+                                                    baseTex = 'skeleton';
+                                                }
+
+                                                // Create the sprite using the selected base texture
+                                                // so it's visible even before the animation advances.
+                                                console.info('[AssetManager] Attempting to create persistent fallback, baseTex=', baseTex, 'player.exists=', !!p, 'player.sprite=', !!(p && p.sprite));
+                                                const spr = scene.add.sprite(fx, fy, baseTex || null).setOrigin(0.5, 1);
+                                                // Apply configured player visual scale if available
+                                                try {
+                                                    const baseScale = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? GameConfig.player.scale : 1;
+                                                    if (spr && typeof spr.setScale === 'function') spr.setScale(baseScale);
+                                                } catch (e) {}
+                                                // Play the named animation if available
+                                                try { if (spr && spr.play) spr.play('player-idle'); } catch (e) { console.warn('[AssetManager] play threw', e && e.message); }
+                                                if (spr && spr.setDepth) spr.setDepth(501);
+
+                                                // Hide the physics sprite so the animated fallback is visible
+                                                try { if (p.sprite && typeof p.sprite.setVisible === 'function') p.sprite.setVisible(false); } catch (e) { console.warn('[AssetManager] hide physics sprite failed', e && e.message); }
+
+                                                p._persistentFallbackSprite = spr;
+                                                console.info('[AssetManager] Created persistent animated fallback for player (player-idle) using', baseTex, 'spr.scene=', !!(spr && spr.scene));
+                                            } catch (e) {
+                                                console.warn('[AssetManager] Failed to create persistent animated fallback (caught):', e && e.message);
+                                            }
+                                        }
+                                    } catch (e) {}
+                                }
+                            } catch (e) { /* ignore per-player update errors */ }
+                        }
+                    }
+                } catch (e) { /* ignore */ }
+
+                // Helper to create persistent animated fallback when both the
+                // animation and the Player instance are available. This handles
+                // races where animation or player are created at different times.
+                try {
+                    const createPersistentFallbackIfPossible = () => {
+                        try {
+                            if (!scene || !scene.anims || !scene.textures) return false;
+                            if (!scene.anims.exists || !scene.anims.exists('player-idle')) return false;
+                            const p = (typeof window !== 'undefined') ? window.noteleksPlayer : null;
+                            if (!p || !p.sprite) return false;
+
+                            // Avoid recreating
+                            if (p._persistentFallbackSprite && p._persistentFallbackSprite.destroy && p._persistentFallbackSprite.scene) return true;
+
+                            const fx = (p.sprite && typeof p.sprite.x === 'number') ? p.sprite.x : (scene.cameras && scene.cameras.main && scene.cameras.main.centerX) || 0;
+                            const fy = (p.sprite && typeof p.sprite.y === 'number') ? p.sprite.y : (scene.cameras && scene.cameras.main && scene.cameras.main.centerY) || 0;
+
+                            let baseTex = null;
+                            if (scene.textures.exists('skeleton-idle-frame-0')) baseTex = 'skeleton-idle-frame-0';
+                            else if (scene.textures.exists('skeleton-idle')) baseTex = 'skeleton-idle';
+                            else if (scene.textures.exists('skeleton')) baseTex = 'skeleton';
+
+                            const spr = scene.add.sprite(fx, fy, baseTex || null).setOrigin(0.5, 1);
+                            try {
+                                const baseScale = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? GameConfig.player.scale : 1;
+                                if (spr && typeof spr.setScale === 'function') spr.setScale(baseScale);
+                            } catch (e) {}
+                            try { if (spr && spr.play) spr.play('player-idle'); } catch (e) {}
+                            if (spr && spr.setDepth) spr.setDepth(501);
+                            try { if (p.sprite && typeof p.sprite.setVisible === 'function') p.sprite.setVisible(false); } catch (e) {}
+                            p._persistentFallbackSprite = spr;
+                            console.info('[AssetManager] Persistent animated fallback created (delayed) using', baseTex);
+                            return true;
+                        } catch (e) {
+                            return false;
+                        }
+                    };
+
+                    // Try immediately
+                    try { createPersistentFallbackIfPossible(); } catch (e) { console.warn('[AssetManager] createPersistentFallbackIfPossible immediate invocation threw', e && e.message); }
+
+                    // Poll for animation presence (if absent) then create fallback
+                    try {
+                        if (scene && scene.anims && !scene.anims.exists('player-idle')) {
+                            let attempts = 0;
+                            const ivA = setInterval(() => {
+                                attempts += 1;
+                                try {
+                                    if (scene.anims.exists && scene.anims.exists('player-idle')) {
+                                        try { createPersistentFallbackIfPossible(); } catch (e) { console.warn('[AssetManager] createPersistentFallbackIfPossible from anim poll threw', e && e.message); }
+                                        clearInterval(ivA);
+                                        return;
+                                    }
+                                } catch (e) {}
+                                if (attempts >= 25) clearInterval(ivA);
+                            }, 200);
+                        }
+                    } catch (e) {}
+
+                    // Poll for player existence (if absent) then create fallback
+                    try {
+                        if (typeof window !== 'undefined' && !window.noteleksPlayer) {
+                            let pattempts = 0;
+                            const ivP = setInterval(() => {
+                                pattempts += 1;
+                                try {
+                                    if (window.noteleksPlayer) {
+                                        try { createPersistentFallbackIfPossible(); } catch (e) { console.warn('[AssetManager] createPersistentFallbackIfPossible from player poll threw', e && e.message); }
+                                        clearInterval(ivP);
+                                        return;
+                                    }
+                                } catch (e) {}
+                                if (pattempts >= 50) clearInterval(ivP);
+                            }, 200);
+                        }
+                    } catch (e) {}
+                    // Expose manual trigger for debugging
+                    try { if (typeof window !== 'undefined') window._NOTELEKS_CREATE_FALLBACK = createPersistentFallbackIfPossible; } catch (e) {}
+                } catch (e) { /* ignore helper registration */ }
+
                 // Notify the scene that spine data is ready so game objects can create displays
                 try {
                     if (scene && scene.events && typeof scene.events.emit === 'function') {
@@ -752,7 +1401,19 @@ export class AssetManager {
                     // ignore
                 }
 
-                console.info('[AssetManager] Spine data prepared and cached under scene.cache.custom', Object.keys(scene.cache.custom));
+                // Ensure we record who created the player-idle animation. Some
+                // creation paths run asynchronously (sidecar fetch), so if an
+                // animation exists but our diagnostic marker wasn't set, set it
+                // now to help debugging.
+                try {
+                    scene.cache.custom = scene.cache.custom || {};
+                    if (scene.anims && typeof scene.anims.exists === 'function' && scene.anims.exists('player-idle') && !scene.cache.custom['player-idle-created-by']) {
+                        scene.cache.custom['player-idle-created-by'] = { by: 'AssetManager', key: 'player-idle', ts: new Date().toISOString() };
+                        console.info('[AssetManager] Recorded player-idle creator marker (AssetManager)');
+                    }
+                } catch (e) { /* ignore */ }
+
+                console.warn('[AssetManager] Spine data prepared and cached under scene.cache.custom', Object.keys(scene.cache.custom));
 
                 // --- WebGL instrumentation (debug only) ---
                 // Instrumentation can be noisy; only enable when the explicit

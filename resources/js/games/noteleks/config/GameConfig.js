@@ -10,6 +10,10 @@ export const GameConfig = {
         backgroundColor: 0x2d2d2d,
     },
 
+    // Toggle whether the Spine runtime and skeleton assets should be used.
+    // Set to `false` to run using only frame-by-frame sprite animations.
+    useSpine: false,
+
     // Physics settings
     physics: {
         gravity: { x: 0, y: 300 },
