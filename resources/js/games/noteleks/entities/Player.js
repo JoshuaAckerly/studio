@@ -316,26 +316,30 @@ class Player extends GameObject {
                     // ignore scale application errors
                 }
                 // Defensive normalization: ensure displayWidth is positive and not vanishingly small.
+                // Skip auto-scaling while the player is performing an attack to avoid
+                // animation-frame-size changes from causing visual shrinking.
                 try {
-                    const minPixels = 48; // target minimum visible width in pixels
-                    // If displayWidth is present and small, boost the scale so it becomes visible.
-                    const dw = (typeof this.spine.displayWidth === 'number') ? Math.abs(this.spine.displayWidth) : null;
-                    if (dw !== null && dw > 0 && dw < minPixels) {
-                        const factor = minPixels / dw;
-                        const applied = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? (GameConfig.player.scale * factor) : factor;
-                        if (typeof this.spine.setScale === 'function') {
-                            this.spine.setScale(applied);
-                        } else {
-                            try { this.spine.scaleX = Math.abs(this.spine.scaleX || applied); } catch (e) {}
-                            try { this.spine.scaleY = Math.abs(this.spine.scaleY || applied); } catch (e) {}
+                    if (!this._isAttacking) {
+                        const minPixels = 48; // target minimum visible width in pixels
+                        // If displayWidth is present and small, boost the scale so it becomes visible.
+                        const dw = (typeof this.spine.displayWidth === 'number') ? Math.abs(this.spine.displayWidth) : null;
+                        if (dw !== null && dw > 0 && dw < minPixels) {
+                            const factor = minPixels / dw;
+                            const applied = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? (GameConfig.player.scale * factor) : factor;
+                            if (typeof this.spine.setScale === 'function') {
+                                this.spine.setScale(applied);
+                            } else {
+                                try { this.spine.scaleX = Math.abs(this.spine.scaleX || applied); } catch (e) {}
+                                try { this.spine.scaleY = Math.abs(this.spine.scaleY || applied); } catch (e) {}
+                            }
                         }
-                    }
-                    // Normalize sign of scaleX to match flip state (avoid negative displayWidth confusion)
-                    try {
-                        if (this.sprite && this.sprite.flipX) this.spine.scaleX = -Math.abs(this.spine.scaleX || (GameConfig.player && GameConfig.player.scale) || 1);
-                        else this.spine.scaleX = Math.abs(this.spine.scaleX || (GameConfig.player && GameConfig.player.scale) || 1);
-                    } catch (e) {
-                        // ignore
+                        // Normalize sign of scaleX to match flip state (avoid negative displayWidth confusion)
+                        try {
+                            if (this.sprite && this.sprite.flipX) this.spine.scaleX = -Math.abs(this.spine.scaleX || (GameConfig.player && GameConfig.player.scale) || 1);
+                            else this.spine.scaleX = Math.abs(this.spine.scaleX || (GameConfig.player && GameConfig.player.scale) || 1);
+                        } catch (e) {
+                            // ignore
+                        }
                     }
                 } catch (e) {
                     // ignore normalization errors
@@ -1052,22 +1056,24 @@ class Player extends GameObject {
             }
             // Defensive normalization (same as in finalizeSpineVisual): ensure displayWidth positive and visible
             try {
-                const minPixels = 48;
-                const dw = (typeof this.spine.displayWidth === 'number') ? Math.abs(this.spine.displayWidth) : null;
-                if (dw !== null && dw > 0 && dw < minPixels) {
-                    const factor = minPixels / dw;
-                    const applied = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? (GameConfig.player.scale * factor) : factor;
-                    if (typeof this.spine.setScale === 'function') {
-                        this.spine.setScale(applied);
-                    } else {
-                        try { this.spine.scaleX = Math.abs(this.spine.scaleX || applied); } catch (e) {}
-                        try { this.spine.scaleY = Math.abs(this.spine.scaleY || applied); } catch (e) {}
+                if (!this._isAttacking) {
+                    const minPixels = 48;
+                    const dw = (typeof this.spine.displayWidth === 'number') ? Math.abs(this.spine.displayWidth) : null;
+                    if (dw !== null && dw > 0 && dw < minPixels) {
+                        const factor = minPixels / dw;
+                        const applied = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? (GameConfig.player.scale * factor) : factor;
+                        if (typeof this.spine.setScale === 'function') {
+                            this.spine.setScale(applied);
+                        } else {
+                            try { this.spine.scaleX = Math.abs(this.spine.scaleX || applied); } catch (e) {}
+                            try { this.spine.scaleY = Math.abs(this.spine.scaleY || applied); } catch (e) {}
+                        }
                     }
+                    try {
+                        if (this.sprite && this.sprite.flipX) this.spine.scaleX = -Math.abs(this.spine.scaleX || (GameConfig.player && GameConfig.player.scale) || 1);
+                        else this.spine.scaleX = Math.abs(this.spine.scaleX || (GameConfig.player && GameConfig.player.scale) || 1);
+                    } catch (e) {}
                 }
-                try {
-                    if (this.sprite && this.sprite.flipX) this.spine.scaleX = -Math.abs(this.spine.scaleX || (GameConfig.player && GameConfig.player.scale) || 1);
-                    else this.spine.scaleX = Math.abs(this.spine.scaleX || (GameConfig.player && GameConfig.player.scale) || 1);
-                } catch (e) {}
             } catch (e) {
                 // ignore
             }
@@ -1673,19 +1679,21 @@ class Player extends GameObject {
             // corrects transient cases where displayWidth briefly reports very
             // small values or where previous normalization didn't run.
             try {
-                const minPixels = (GameConfig && GameConfig.player && GameConfig.player.minVisibleWidth) || 40;
-                const dw = (typeof this.spine.displayWidth === 'number') ? Math.abs(this.spine.displayWidth) : null;
-                if (dw !== null && dw > 0 && dw < minPixels) {
-                    const factor = minPixels / dw;
-                    // Determine current absolute scale (fallback to configured base)
-                    const baseScale = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? Math.abs(GameConfig.player.scale) : Math.abs(this.spine.scaleX || 1);
-                    const newScale = baseScale * factor;
-                    if (typeof this.spine.setScale === 'function') {
-                        // preserve horizontal flip sign
-                        this.spine.setScale(this.sprite && this.sprite.flipX ? -newScale : newScale, newScale);
-                    } else {
-                        try { this.spine.scaleX = this.sprite && this.sprite.flipX ? -Math.abs(newScale) : Math.abs(newScale); } catch (e) {}
-                        try { this.spine.scaleY = Math.abs(newScale); } catch (e) {}
+                if (!this._isAttacking) {
+                    const minPixels = (GameConfig && GameConfig.player && GameConfig.player.minVisibleWidth) || 40;
+                    const dw = (typeof this.spine.displayWidth === 'number') ? Math.abs(this.spine.displayWidth) : null;
+                    if (dw !== null && dw > 0 && dw < minPixels) {
+                        const factor = minPixels / dw;
+                        // Determine current absolute scale (fallback to configured base)
+                        const baseScale = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? Math.abs(GameConfig.player.scale) : Math.abs(this.spine.scaleX || 1);
+                        const newScale = baseScale * factor;
+                        if (typeof this.spine.setScale === 'function') {
+                            // preserve horizontal flip sign
+                            this.spine.setScale(this.sprite && this.sprite.flipX ? -newScale : newScale, newScale);
+                        } else {
+                            try { this.spine.scaleX = this.sprite && this.sprite.flipX ? -Math.abs(newScale) : Math.abs(newScale); } catch (e) {}
+                            try { this.spine.scaleY = Math.abs(newScale); } catch (e) {}
+                        }
                     }
                 }
             } catch (e) {
