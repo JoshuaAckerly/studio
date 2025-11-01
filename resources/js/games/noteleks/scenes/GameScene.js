@@ -99,13 +99,19 @@ class GameScene extends Phaser.Scene {
 
                     const spr = scene.add.sprite(fx, fy, baseTex || null).setOrigin(0.5, 1);
                     try {
-                        const baseScale = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? GameConfig.player.scale : 1;
+                        // Prefer the Player's applied scale (which may be an override from setDisplayHeight)
+                        const baseScale = (p && typeof p.getAppliedScale === 'function') ? p.getAppliedScale() : ((GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? GameConfig.player.scale : 1);
                         if (spr && typeof spr.setScale === 'function') spr.setScale(baseScale);
                     } catch (e) {}
                     try { if (spr && spr.play) spr.play('player-idle'); } catch (e) {}
                     if (spr && spr.setDepth) spr.setDepth(501);
                     try { if (p.sprite && typeof p.sprite.setVisible === 'function') p.sprite.setVisible(false); } catch (e) {}
                     p._persistentFallbackSprite = spr;
+                    // If a precise target pixel height is configured, ask the Player
+                    // to compute and apply the final scale so the on-screen height
+                    // matches exactly (this handles timing races where AssetManager
+                    // prepared animations after the Player constructor ran).
+                    try { if (GameConfig && GameConfig.player && GameConfig.player.targetPixelHeight && p && typeof p.setDisplayHeight === 'function') p.setDisplayHeight(GameConfig.player.targetPixelHeight); } catch (e) {}
                     console.info('[GameScene] Created persistent animated fallback for player (player-idle) using', baseTex);
                     return true;
                 } catch (e) {

@@ -309,9 +309,16 @@ class Player extends GameObject {
                 if (typeof this.spine.setVisible === 'function') this.spine.setVisible(true);
                 if (typeof this.spine.setAlpha === 'function') this.spine.setAlpha ? this.spine.setAlpha(1) : null;
                 // Apply configured base scale for the character visual so it's not too large.
-                try {
-                    const baseScale = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? GameConfig.player.scale : 1;
+                    try {
+                    const baseScale = this.getAppliedScale();
                     if (typeof this.spine.setScale === 'function') this.spine.setScale(baseScale);
+                    // If a global target pixel height is configured, compute and apply
+                    // a precise scale so the on-screen height matches the request.
+                    try {
+                        if (GameConfig && GameConfig.player && GameConfig.player.targetPixelHeight) {
+                            this.setDisplayHeight(GameConfig.player.targetPixelHeight);
+                        }
+                    } catch (e) {}
                 } catch (e) {
                     // ignore scale application errors
                 }
@@ -325,7 +332,7 @@ class Player extends GameObject {
                         const dw = (typeof this.spine.displayWidth === 'number') ? Math.abs(this.spine.displayWidth) : null;
                         if (dw !== null && dw > 0 && dw < minPixels) {
                             const factor = minPixels / dw;
-                            const applied = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? (GameConfig.player.scale * factor) : factor;
+                            const applied = this.getAppliedScale() * factor;
                             if (typeof this.spine.setScale === 'function') {
                                 this.spine.setScale(applied);
                             } else {
@@ -335,8 +342,8 @@ class Player extends GameObject {
                         }
                         // Normalize sign of scaleX to match flip state (avoid negative displayWidth confusion)
                         try {
-                            if (this.sprite && this.sprite.flipX) this.spine.scaleX = -Math.abs(this.spine.scaleX || (GameConfig.player && GameConfig.player.scale) || 1);
-                            else this.spine.scaleX = Math.abs(this.spine.scaleX || (GameConfig.player && GameConfig.player.scale) || 1);
+                            if (this.sprite && this.sprite.flipX) this.spine.scaleX = -Math.abs(this.spine.scaleX || this.getAppliedScale() || 1);
+                            else this.spine.scaleX = Math.abs(this.spine.scaleX || this.getAppliedScale() || 1);
                         } catch (e) {
                             // ignore
                         }
@@ -561,8 +568,9 @@ class Player extends GameObject {
                                             // Remove any existing fallback image
                                             try { if (this._spineFallbackImage && this._spineFallbackImage.destroy) this._spineFallbackImage.destroy(); } catch (e) {}
                                             this._spineFallbackImage = this.scene.add.image(this.sprite.x, this.sprite.y, texKey).setOrigin(0.5, 1);
+                                            try { if (GameConfig && GameConfig.player && GameConfig.player.targetPixelHeight) this.setDisplayHeight(GameConfig.player.targetPixelHeight); } catch (e) {}
                                             try {
-                                                const baseScale = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? GameConfig.player.scale : 1;
+                                                const baseScale = this.getAppliedScale();
                                                 if (this._spineFallbackImage && typeof this._spineFallbackImage.setScale === 'function') this._spineFallbackImage.setScale(baseScale);
                                             } catch (e) {}
                                             if (this._spineFallbackImage.setDepth) this._spineFallbackImage.setDepth(500);
@@ -652,12 +660,13 @@ class Player extends GameObject {
                                                         try {
                                                             const spr = this.scene.add.sprite(this.sprite.x, this.sprite.y, 'skeleton-idle').setOrigin(0.5, 1);
                                                             try {
-                                                                const baseScale = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? GameConfig.player.scale : 1;
+                                                                const baseScale = this.getAppliedScale();
                                                                 if (spr && typeof spr.setScale === 'function') spr.setScale(baseScale);
                                                             } catch (e) {}
                                                             if (spr && spr.play) spr.play('player-idle');
                                                             if (spr && spr.setDepth) spr.setDepth(501);
                                                             this._persistentFallbackSprite = spr;
+                                                            try { if (GameConfig && GameConfig.player && GameConfig.player.targetPixelHeight) this.setDisplayHeight(GameConfig.player.targetPixelHeight); } catch (e) {}
                                                             try { if (this.spine && typeof this.spine.setVisible === 'function') this.spine.setVisible(false); } catch (e) {}
                                                             try { this._hideSpineLoading(); } catch (e) {}
                                                             console.warn('[Player] Spine visual appears blank — created persistent Phaser animated fallback for visibility');
@@ -665,11 +674,12 @@ class Player extends GameObject {
                                                             // Fall back to static image if animation creation fails
                                                             const fb = this.scene.add.image(this.sprite.x, this.sprite.y, 'noteleks-texture').setOrigin(0.5, 1);
                                                             try {
-                                                                const baseScale = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? GameConfig.player.scale : 1;
+                                                                const baseScale = this.getAppliedScale();
                                                                 if (fb && typeof fb.setScale === 'function') fb.setScale(baseScale);
                                                             } catch (e) {}
                                                             if (fb && fb.setDepth) fb.setDepth(501);
                                                             this._persistentFallbackImage = fb;
+                                                            try { if (GameConfig && GameConfig.player && GameConfig.player.targetPixelHeight) this.setDisplayHeight(GameConfig.player.targetPixelHeight); } catch (e) {}
                                                             try { if (this.spine && typeof this.spine.setVisible === 'function') this.spine.setVisible(false); } catch (e) {}
                                                             try { this._hideSpineLoading(); } catch (e) {}
                                                             console.warn('[Player] Fallback to static image after animated fallback failed');
@@ -683,11 +693,12 @@ class Player extends GameObject {
                                                     } else {
                                                         const fb = this.scene.add.image(this.sprite.x, this.sprite.y, 'noteleks-texture').setOrigin(0.5, 1);
                                                         try {
-                                                            const baseScale = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? GameConfig.player.scale : 1;
+                                                            const baseScale = this.getAppliedScale();
                                                             if (fb && typeof fb.setScale === 'function') fb.setScale(baseScale);
                                                         } catch (e) {}
                                                         if (fb && fb.setDepth) fb.setDepth(501);
                                                         this._persistentFallbackImage = fb;
+                                                        try { if (GameConfig && GameConfig.player && GameConfig.player.targetPixelHeight) this.setDisplayHeight(GameConfig.player.targetPixelHeight); } catch (e) {}
                                                         try { if (this.spine && typeof this.spine.setVisible === 'function') this.spine.setVisible(false); } catch (e) {}
                                                         try { this._hideSpineLoading(); } catch (e) {}
                                                         console.warn('[Player] Spine visual appears blank — created persistent Phaser image fallback for visibility');
@@ -698,11 +709,12 @@ class Player extends GameObject {
                                                 try {
                                                     const fb2 = this.scene.add.image(this.sprite.x, this.sprite.y, 'noteleks-texture').setOrigin(0.5, 1);
                                                     try {
-                                                        const baseScale = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? GameConfig.player.scale : 1;
+                                                        const baseScale = this.getAppliedScale();
                                                         if (fb2 && typeof fb2.setScale === 'function') fb2.setScale(baseScale);
                                                     } catch (e) {}
                                                     if (fb2 && fb2.setDepth) fb2.setDepth(501);
                                                     this._persistentFallbackImage = fb2;
+                                                    try { if (GameConfig && GameConfig.player && GameConfig.player.targetPixelHeight) this.setDisplayHeight(GameConfig.player.targetPixelHeight); } catch (e) {}
                                                 } catch (ee) { /* ignore */ }
                                             }
                                     } else {
@@ -1049,7 +1061,7 @@ class Player extends GameObject {
             }
             // Ensure configured base scale is applied when the spine display was created synchronously
             try {
-                const baseScale = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? GameConfig.player.scale : 1;
+                const baseScale = this.getAppliedScale();
                 if (typeof this.spine.setScale === 'function') this.spine.setScale(baseScale);
             } catch (e) {
                 // ignore
@@ -1059,9 +1071,9 @@ class Player extends GameObject {
                 if (!this._isAttacking) {
                     const minPixels = 48;
                     const dw = (typeof this.spine.displayWidth === 'number') ? Math.abs(this.spine.displayWidth) : null;
-                    if (dw !== null && dw > 0 && dw < minPixels) {
+                        if (dw !== null && dw > 0 && dw < minPixels) {
                         const factor = minPixels / dw;
-                        const applied = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? (GameConfig.player.scale * factor) : factor;
+                        const applied = this.getAppliedScale() * factor;
                         if (typeof this.spine.setScale === 'function') {
                             this.spine.setScale(applied);
                         } else {
@@ -1070,8 +1082,8 @@ class Player extends GameObject {
                         }
                     }
                     try {
-                        if (this.sprite && this.sprite.flipX) this.spine.scaleX = -Math.abs(this.spine.scaleX || (GameConfig.player && GameConfig.player.scale) || 1);
-                        else this.spine.scaleX = Math.abs(this.spine.scaleX || (GameConfig.player && GameConfig.player.scale) || 1);
+                        if (this.sprite && this.sprite.flipX) this.spine.scaleX = -Math.abs(this.spine.scaleX || this.getAppliedScale() || 1);
+                        else this.spine.scaleX = Math.abs(this.spine.scaleX || this.getAppliedScale() || 1);
                     } catch (e) {}
                 }
             } catch (e) {
@@ -1199,7 +1211,7 @@ class Player extends GameObject {
                         if (this.scene && this.scene.anims && this.scene.anims.exists && this.scene.anims.exists('player-idle')) {
                             const spr = this.scene.add.sprite(this.x, this.y, 'skeleton-idle').setOrigin(0.5, 1);
                             try {
-                                const baseScale = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? GameConfig.player.scale : 1;
+                                const baseScale = this.getAppliedScale();
                                 if (spr && typeof spr.setScale === 'function') spr.setScale(baseScale);
                             } catch (e) {}
                             if (spr && spr.play) spr.play('player-idle');
@@ -1209,7 +1221,7 @@ class Player extends GameObject {
                             // Use the preloaded noteleks texture as a safe static fallback (no Spine runtime calls)
                             this.spine = this.scene.add.image(this.x, this.y, 'noteleks-texture').setOrigin(0.5, 1);
                             try {
-                                const baseScale = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? GameConfig.player.scale : 1;
+                                const baseScale = this.getAppliedScale();
                                 if (this.spine && typeof this.spine.setScale === 'function') this.spine.setScale(baseScale);
                             } catch (e) {}
                             if (this.spine && this.spine.setDepth) this.spine.setDepth(500);
@@ -1429,6 +1441,115 @@ class Player extends GameObject {
         }
     }
 
+    // Return the effective scale to apply to visuals. If a per-player
+    // override (_overrideScale) has been set via setDisplayHeight, use that.
+    getAppliedScale() {
+        try {
+            if (typeof this._overrideScale === 'number' && !Number.isNaN(this._overrideScale) && isFinite(this._overrideScale)) return Math.abs(this._overrideScale);
+            const cfg = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? GameConfig.player.scale : 1;
+            return Math.abs(cfg || 1);
+        } catch (e) {
+            return 1;
+        }
+    }
+
+    /**
+     * Set the displayed on-screen height (in pixels) for the player visual.
+     * This computes a uniform scale from the available source image/frame
+     * height and applies it to both Spine and Phaser fallback visuals.
+     * If a source frame cannot be determined, the call is a no-op.
+     * @param {number} targetPx - desired on-screen height in pixels
+     */
+    setDisplayHeight(targetPx) {
+        try {
+            if (!targetPx || typeof targetPx !== 'number' || targetPx <= 0) return false;
+            // Helper to derive source image/frame height from a Phaser texture key
+            const deriveFromTextureKey = (key) => {
+                try {
+                    if (!this.scene || !this.scene.textures || !this.scene.textures.exists) return null;
+                    if (!this.scene.textures.exists(key)) return null;
+                    const tex = this.scene.textures.get(key);
+                    if (!tex) return null;
+                    // If texture has explicit frames, prefer first frame's height
+                    try {
+                        const frameNames = typeof tex.getFrameNames === 'function' ? tex.getFrameNames() : null;
+                        if (frameNames && frameNames.length) {
+                            const fn = frameNames[0];
+                            const frame = tex.get(fn) || tex.frames && tex.frames[fn] || null;
+                            if (frame && typeof frame.height === 'number' && frame.height > 0) return frame.height;
+                        }
+                    } catch (e) {}
+                    // Fallback: try to get underlying source image dimensions
+                    try {
+                        const src = tex.getSourceImage ? tex.getSourceImage() : (tex && tex.source && tex.source[0] && tex.source[0].image) || null;
+                        if (src && typeof src.height === 'number' && src.height > 0) return src.height;
+                    } catch (e) {}
+                } catch (e) {}
+                return null;
+            };
+
+            // Candidate sources: persistent fallback sprite, persistent image, spine display, physics sprite texture
+            let sourceH = null;
+            try {
+                if (this._persistentFallbackSprite && this._persistentFallbackSprite.texture) {
+                    sourceH = deriveFromTextureKey(this._persistentFallbackSprite.texture.key) || sourceH;
+                }
+                if (!sourceH && this._persistentFallbackImage && this._persistentFallbackImage.texture) {
+                    sourceH = deriveFromTextureKey(this._persistentFallbackImage.texture.key) || sourceH;
+                }
+                if (!sourceH && this.spine) {
+                    // Try to infer source height from spine.displayHeight and current scale
+                    try {
+                        const disp = (typeof this.spine.displayHeight === 'number') ? Math.abs(this.spine.displayHeight) : null;
+                        const curScale = (typeof this.spine.scaleY === 'number') ? Math.abs(this.spine.scaleY) : (typeof this.spine.scale === 'number' ? Math.abs(this.spine.scale) : null);
+                        if (disp && curScale) sourceH = Math.max(2, Math.round(disp / curScale));
+                    } catch (e) {}
+                }
+                if (!sourceH && this.sprite && this.sprite.texture) {
+                    sourceH = deriveFromTextureKey(this.sprite.texture.key) || sourceH;
+                }
+            } catch (e) {}
+
+            if (!sourceH || sourceH <= 0) return false;
+
+            const finalScale = targetPx / sourceH;
+            // Persist override so other logic can pick it up
+            this._overrideScale = finalScale;
+
+            // Apply to spine if present
+            try {
+                if (this.spine) {
+                    if (typeof this.spine.setScale === 'function') {
+                        const sign = (this.sprite && this.sprite.flipX) ? -1 : 1;
+                        this.spine.setScale(sign * finalScale, finalScale);
+                    } else {
+                        try { this.spine.scaleX = (this.sprite && this.sprite.flipX) ? -Math.abs(finalScale) : Math.abs(finalScale); } catch (e) {}
+                        try { this.spine.scaleY = Math.abs(finalScale); } catch (e) {}
+                    }
+                }
+            } catch (e) {}
+
+            // Apply to persistent Phaser fallbacks
+            try {
+                if (this._persistentFallbackSprite && typeof this._persistentFallbackSprite.setScale === 'function') {
+                    this._persistentFallbackSprite.setScale(finalScale);
+                }
+                if (this._persistentFallbackImage && typeof this._persistentFallbackImage.setScale === 'function') {
+                    this._persistentFallbackImage.setScale(finalScale);
+                }
+            } catch (e) {}
+
+            // Also apply to the physics sprite visual so transitions look correct
+            try {
+                if (this.sprite && typeof this.sprite.setScale === 'function') this.sprite.setScale(finalScale);
+            } catch (e) {}
+
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
     setupComponents() {
         const config = GameConfig.player;
 
@@ -1556,14 +1677,14 @@ class Player extends GameObject {
             // Flip spine horizontally to match sprite
             if (this.sprite.flipX) {
                 try {
-                    const base = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? GameConfig.player.scale : 1;
+                    const base = this.getAppliedScale();
                     this.spine.scaleX = -Math.abs(base);
                 } catch (e) {
                     this.spine.scaleX = -1;
                 }
             } else {
                 try {
-                    const base = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? GameConfig.player.scale : 1;
+                    const base = this.getAppliedScale();
                     this.spine.scaleX = Math.abs(base);
                 } catch (e) {
                     this.spine.scaleX = 1;
@@ -1685,7 +1806,7 @@ class Player extends GameObject {
                     if (dw !== null && dw > 0 && dw < minPixels) {
                         const factor = minPixels / dw;
                         // Determine current absolute scale (fallback to configured base)
-                        const baseScale = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? Math.abs(GameConfig.player.scale) : Math.abs(this.spine.scaleX || 1);
+                        const baseScale = this.getAppliedScale() || Math.abs(this.spine.scaleX || 1);
                         const newScale = baseScale * factor;
                         if (typeof this.spine.setScale === 'function') {
                             // preserve horizontal flip sign
@@ -1851,7 +1972,7 @@ class Player extends GameObject {
         // Determine a stable base scale to apply to both Spine and fallback
         // visuals so animations with differing frame sizes don't cause the
         // character to visually shrink or grow when switching animations.
-        const baseScale = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? Math.abs(GameConfig.player.scale) : 1;
+    const baseScale = this.getAppliedScale();
         // If no Spine visual is present, attempt to play equivalent Phaser
         // fallback animations on the persistent fallback sprite/image. This
         // ensures movement and attack animations still play when Spine is
