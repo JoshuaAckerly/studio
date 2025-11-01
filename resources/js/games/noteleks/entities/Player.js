@@ -102,11 +102,36 @@ class Player extends GameObject {
             // Create player sprite with physics (physics sprite used for collisions)
             this.sprite = this.scene.physics.add.sprite(this.x, this.y, 'skeleton');
             this.sprite.playerRef = this;
+            // Ensure the physics sprite uses bottom-centre origin so its
+            // position corresponds to the character's feet. Many visual
+            // assets expect origin (0.5, 1). Also align the physics body
+            // to the visual by setting a sensible body size and offset so
+            // the collision box sits at the character's lower torso/feet
+            // instead of centering it and making the character appear to
+            // float.
+            try {
+                if (typeof this.sprite.setOrigin === 'function') this.sprite.setOrigin(0.5, 1);
+            } catch (e) {}
+            try {
+                // Defensive defaults - these match the PhysicsComponent defaults
+                const bodyW = 32;
+                const bodyH = 48;
+                // Compute offsets relative to the sprite's displayed size
+                const dw = (typeof this.sprite.displayWidth === 'number' && this.sprite.displayWidth > 0) ? this.sprite.displayWidth : (this.sprite.width || bodyW);
+                const dh = (typeof this.sprite.displayHeight === 'number' && this.sprite.displayHeight > 0) ? this.sprite.displayHeight : (this.sprite.height || bodyH);
+                const offsetX = Math.max(0, Math.round((dw / 2) - (bodyW / 2)));
+                const offsetY = Math.max(0, Math.round(dh - bodyH));
+                if (this.sprite.body) {
+                    try { if (typeof this.sprite.body.setSize === 'function') this.sprite.body.setSize(bodyW, bodyH); } catch (e) {}
+                    try { if (typeof this.sprite.body.setOffset === 'function') this.sprite.body.setOffset(offsetX, offsetY); } catch (e) {}
+                }
+            } catch (e) {}
         } catch (e) {
             // If physics isn't available yet, fallback to a simple image so other systems can proceed
             try {
                 this.sprite = this.scene.add.image(this.x, this.y, 'skeleton');
                 this.sprite.playerRef = this;
+                try { if (typeof this.sprite.setOrigin === 'function') this.sprite.setOrigin(0.5, 1); } catch (e) {}
             } catch (e2) {
                 // Ignore: other code will handle missing sprite at runtime
             }
@@ -1815,6 +1840,10 @@ class Player extends GameObject {
     }
 
     _setSpineAnimation(name, loop = true) {
+        // Determine a stable base scale to apply to both Spine and fallback
+        // visuals so animations with differing frame sizes don't cause the
+        // character to visually shrink or grow when switching animations.
+        const baseScale = (GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? Math.abs(GameConfig.player.scale) : 1;
         // If no Spine visual is present, attempt to play equivalent Phaser
         // fallback animations on the persistent fallback sprite/image. This
         // ensures movement and attack animations still play when Spine is
@@ -1846,6 +1875,8 @@ class Player extends GameObject {
                     const animKey = mapAnim(name);
                     if (animKey && this.scene.anims.exists(animKey) && typeof fb.play === 'function') {
                         try {
+                            // Ensure fallback sprite uses the configured base scale
+                            try { if (typeof fb.setScale === 'function') fb.setScale(baseScale); } catch (e) {}
                             // If the fallback sprite is already playing this animation
                             // (and we've recorded that), avoid re-calling play which
                             // would restart it. Otherwise, start the requested anim
@@ -1970,6 +2001,19 @@ class Player extends GameObject {
             }
 
             if (success && !this._currentSpineAnim) this._currentSpineAnim = name;
+            // Enforce base scale on Spine visuals as well so animation-specific
+            // display changes don't cause the character to shrink.
+            try {
+                if (this.spine && typeof this.spine.setScale === 'function') {
+                    // preserve horizontal flip sign
+                    const sign = (this.sprite && this.sprite.flipX) ? -1 : 1;
+                    try { this.spine.setScale(sign * baseScale, baseScale); } catch (e) { this.spine.setScale(baseScale); }
+                } else if (this.spine) {
+                    // best-effort for runtimes that expose scaleX/scaleY
+                    try { this.spine.scaleX = (this.sprite && this.sprite.flipX) ? -Math.abs(this.spine.scaleX || baseScale) : Math.abs(this.spine.scaleX || baseScale); } catch (e) {}
+                    try { this.spine.scaleY = Math.abs(this.spine.scaleY || baseScale); } catch (e) {}
+                }
+            } catch (e) {}
         } catch (e) {
             // ignore animation errors
         }
