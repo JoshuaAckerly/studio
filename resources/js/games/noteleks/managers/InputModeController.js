@@ -27,8 +27,12 @@ export default class InputModeController {
                 window.addEventListener('touchstart', this._onFirstTouch, { once: true, passive: true });
             } catch (e) {}
 
+            // Use a persistent mousedown listener so we can ignore clicks that
+            // originate inside the mobile controls area. Only when a mousedown
+            // occurs outside the controls do we switch to non-mobile mode.
             try {
-                window.addEventListener('mousedown', this._onFirstPointer, { once: true });
+                window.addEventListener('mousedown', this._onFirstPointer);
+                this._pointerListenerAdded = true;
             } catch (e) {}
 
             if (this.scene && this.scene.input && this.scene.input.keyboard) {
@@ -52,11 +56,28 @@ export default class InputModeController {
         }
     }
 
-    _onFirstPointer() {
+    _onFirstPointer(e) {
+        try {
+            // If the click/tap happened inside the mobile controls area, ignore it
+            const area = document.getElementById('mobile-controls-area');
+            if (area && e && e.target && area.contains(e.target)) {
+                // Keep listening for a pointer outside the controls
+                return;
+            }
+        } catch (err) {
+            // ignore DOM errors
+        }
+
         this.isMobile = false;
         if (this.touchInput && this.touchInput.setMobileAreaVisible) {
             this.touchInput.setMobileAreaVisible(false);
         }
+
+        // Remove the listener now that we've settled on pointer mode
+        try {
+            window.removeEventListener('mousedown', this._onFirstPointer);
+            this._pointerListenerAdded = false;
+        } catch (e) {}
     }
 
     _onKeyDown(event) {
@@ -68,7 +89,7 @@ export default class InputModeController {
             window.removeEventListener('touchstart', this._onFirstTouch, { passive: true });
         } catch (e) {}
         try {
-            window.removeEventListener('mousedown', this._onFirstPointer);
+            if (this._pointerListenerAdded) window.removeEventListener('mousedown', this._onFirstPointer);
         } catch (e) {}
         try {
             if (this.scene && this.scene.input && this.scene.input.keyboard) {
