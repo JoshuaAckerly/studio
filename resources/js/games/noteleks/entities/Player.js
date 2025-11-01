@@ -2025,6 +2025,79 @@ class Player extends GameObject {
                 try { this._isAttacking = false; } catch (e) {}
             }, 800);
         }
+            // Create a short-lived melee hitbox in front of the player to
+            // damage nearby enemies while the attack animation plays. This
+            // replaces the ranged dagger behavior temporarily.
+            try {
+                const movementComp = this.getComponent && this.getComponent('movement');
+                const facing = movementComp && typeof movementComp.getFacing === 'function' ? movementComp.getFacing() : 'right';
+                const offsetX = facing === 'right' ? 28 : -28;
+                const hbWidth = 40;
+                const hbHeight = 28;
+
+                const hx = (this.sprite && typeof this.sprite.x === 'number') ? this.sprite.x + offsetX : (this.x + offsetX || offsetX);
+                const hy = (this.sprite && typeof this.sprite.y === 'number') ? this.sprite.y - ((this.sprite.displayHeight || 32) / 2) : (this.y || 0);
+
+                // Create a physics-enabled zone as the hitbox
+                const zone = this.scene.add.zone(hx, hy, hbWidth, hbHeight);
+                try { if (zone.setOrigin) zone.setOrigin(0.5, 0.5); } catch (e) {}
+                try { this.scene.physics.world.enable(zone); } catch (e) {}
+                try { if (zone.body) { zone.body.setAllowGravity && zone.body.setAllowGravity(false); zone.body.setImmovable && zone.body.setImmovable(true); } } catch (e) {}
+
+                // Track enemies we've already damaged this attack so we don't
+                // damage the same enemy multiple times during the short window.
+                zone._noteleks_damaged = new Set();
+
+                const enemyGroup = this.scene && this.scene.enemyManager && this.scene.enemyManager.enemies ? this.scene.enemyManager.enemies : null;
+                if (enemyGroup) {
+                    const hitCallback = (z, enemySprite) => {
+                        try {
+                            if (!enemySprite || !enemySprite.enemyRef) return;
+                            // Use the sprite reference as a unique key
+                            if (z._noteleks_damaged.has(enemySprite)) return;
+                            z._noteleks_damaged.add(enemySprite);
+
+                            const enemy = enemySprite.enemyRef;
+                            const dmg = (attackComponent && typeof attackComponent.getDamage === 'function') ? attackComponent.getDamage() : 1;
+                            const score = enemy.takeDamage(dmg);
+                            // Award score immediately if enemy died
+                            try { if (score && typeof this.scene.addScore === 'function') this.scene.addScore(score); } catch (e) {}
+                            // Optional: create a small hit effect at enemy position
+                            try {
+                                const fx = this.scene.add.graphics();
+                                fx.fillStyle(0xffcc00, 1);
+                                fx.fillCircle(enemySprite.x, enemySprite.y - 8, 6);
+                                this.scene.tweens.add({ targets: fx, alpha: 0, duration: 220, onComplete: () => { try { fx.destroy(); } catch (e) {} } });
+                            } catch (e) {}
+                        } catch (e) {
+                            // swallow per-hit errors
+                        }
+                    };
+
+                    // Add overlap collider and keep a handle for cleanup
+                    let overlapCollider = null;
+                    try {
+                        overlapCollider = this.scene.physics.add.overlap(zone, enemyGroup, hitCallback, null, this.scene);
+                    } catch (e) {
+                        // Some builds return the collider, others don't — ignore
+                    }
+
+                    // Clean up the hitbox shortly after the attack begins
+                    setTimeout(() => {
+                        try {
+                            if (overlapCollider && this.scene && this.scene.physics && this.scene.physics.world && typeof this.scene.physics.world.removeCollider === 'function') {
+                                try { this.scene.physics.world.removeCollider(overlapCollider); } catch (e) {}
+                            }
+                        } catch (e) {}
+                        try { if (zone && typeof zone.destroy === 'function') zone.destroy(); } catch (e) {}
+                    }, 220);
+                } else {
+                    // No enemy group available — destroy the zone immediately
+                    try { if (zone && typeof zone.destroy === 'function') zone.destroy(); } catch (e) {}
+                }
+            } catch (e) {
+                // swallow hitbox setup errors so attacks still play animations
+            }
     }
 
     takeDamage(amount) {
