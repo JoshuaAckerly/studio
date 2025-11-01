@@ -1,0 +1,15 @@
+{
+  "meta": {
+    "image": "idle.webp",
+    "size": { "w": 512, "h": 512 },
+    "frameWidth": 512,
+    "frameHeight": 512,
+    "frameCount": 1
+  },
+  "frames": [
+    {
+      "name": 0,
+      "frame": { "x": 0, "y": 0, "w": 512, "h": 512 }
+    }
+  ]
+}
