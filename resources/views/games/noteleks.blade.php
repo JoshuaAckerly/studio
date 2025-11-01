@@ -70,7 +70,7 @@
     @endif
     
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
-    <script src="https://unpkg.com/@esotericsoftware/spine-phaser-v3@4.2.43/dist/iife/spine-phaser-v3.js"></script>
+    <script src="https://unpkg.com/@esotericsoftware/spine-phaser-v3@4.2.32/dist/iife/spine-phaser-v3.js"></script>
     
 
     <!-- Enable Noteleks in-page debug hooks when present so we can see
