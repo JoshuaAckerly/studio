@@ -2027,6 +2027,67 @@ class Player extends GameObject {
         }
     }
 
+    /**
+     * Try to play the first available animation from a preference list.
+     * This checks both Spine skeleton animations and Phaser fallback animations
+     * before calling _setSpineAnimation so we avoid choosing a jump-attack
+     * when a preferred 'attack1' exists.
+     * @param {string[]} names - candidate animation names in order of preference
+     * @param {boolean} loop
+     * @returns {boolean} true if an animation was played
+     */
+    _playPreferredAnimation(names = [], loop = true) {
+        try {
+            if (!Array.isArray(names) || !names.length) return false;
+
+            // Helper to gather spine animation names if available
+            const getSpineNames = () => {
+                try {
+                    const spineObj = this.spine;
+                    const sk = (spineObj && spineObj.spine && spineObj.spine.skeleton) || (spineObj && spineObj.skeleton) || null;
+                    if (sk && sk.data && Array.isArray(sk.data.animations)) {
+                        return sk.data.animations.map(a => a.name);
+                    }
+                } catch (e) {}
+                return null;
+            };
+
+            const spineNames = getSpineNames();
+            const fb = this._persistentFallbackSprite || this._persistentFallbackImage || null;
+
+            for (const n of names) {
+                try {
+                    // Check fallback animations (Phaser)
+                    if (fb && this.scene && this.scene.anims) {
+                        const candidate = (() => {
+                            const lower = String(n).toLowerCase();
+                            if (lower === 'idle') return 'player-idle';
+                            if (lower === 'run') return this.scene.anims.exists('player-run') ? 'player-run' : 'player-walk';
+                            if (lower === 'attack' || lower === 'jump-attack' || lower === 'jumpattack') return this.scene.anims.exists('player-attack') ? 'player-attack' : 'player-jump-attack';
+                            const cand = 'player-' + lower;
+                            return this.scene.anims.exists(cand) ? cand : null;
+                        })();
+                        if (candidate && this.scene.anims.exists(candidate)) {
+                            this._setSpineAnimation(n, loop);
+                            return true;
+                        }
+                    }
+
+                    // Check spine animations list
+                    if (spineNames && Array.isArray(spineNames) && spineNames.indexOf(n) !== -1) {
+                        this._setSpineAnimation(n, loop);
+                        return true;
+                    }
+                } catch (e) {
+                    // ignore per-candidate errors
+                }
+            }
+        } catch (e) {
+            // ignore
+        }
+        return false;
+    }
+
     attack(pointer) {
         const attackComponent = this.getComponent('attack');
         if (attackComponent && attackComponent.canAttack()) {
@@ -2038,7 +2099,11 @@ class Player extends GameObject {
             // expose different event APIs; attempt a few common patterns and
             // fall back to a timeout to ensure we always clear the attacking
             // state.
-            this._setSpineAnimation('attack', false);
+            // Prefer a dedicated 'attack1' animation if present, otherwise
+            // fall back to 'attack' or other candidates. _playPreferredAnimation
+            // will call _setSpineAnimation for the first available candidate.
+            const played = this._playPreferredAnimation(['attack1', 'attack', 'jump-attack'], false);
+            if (!played) this._setSpineAnimation('attack', false);
             this._isAttacking = true;
 
             // Try to attach to Spine animation complete events where available
