@@ -30,11 +30,11 @@ export const GameConfig = {
     // Visual scale applied to the Spine/GameObject display. Use <1 to shrink the character.
     // Reduced further to make exported WebP frames fit the game view better.
     // Lower values shrink large (512px) exported frames to reasonable in-game size.
-    scale: 0.1,
+    scale: 0.5,
     // Optional: target on-screen height in pixels. When set, Player will compute
     // an override scale so the visual height matches this value (preferred
     // precise sizing method). Set to null or remove to use `scale` instead.
-    targetPixelHeight: 64,
+    targetPixelHeight: 96,
     },
 
     // Enemy settings
