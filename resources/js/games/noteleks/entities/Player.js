@@ -114,13 +114,29 @@ class Player extends GameObject {
             } catch (e) {}
             try {
                 // Defensive defaults - these match the PhysicsComponent defaults
-                const bodyW = 32;
-                const bodyH = 48;
+                // Make the player's physics body match the melee attack hitbox
+                // so collisions/damage line up with the visual attack area.
+                // These values mirror the hitbox used in `attack()` below.
+                const bodyW = 40; // attack hitbox width
+                const bodyH = 28; // attack hitbox height
                 // Compute offsets relative to the sprite's displayed size
                 const dw = (typeof this.sprite.displayWidth === 'number' && this.sprite.displayWidth > 0) ? this.sprite.displayWidth : (this.sprite.width || bodyW);
                 const dh = (typeof this.sprite.displayHeight === 'number' && this.sprite.displayHeight > 0) ? this.sprite.displayHeight : (this.sprite.height || bodyH);
-                const offsetX = Math.max(0, Math.round((dw / 2) - (bodyW / 2)));
-                const offsetY = Math.max(0, Math.round(dh - bodyH));
+                // Compute a centred base offset and store bookkeeping values so
+                // we can flip the body offset at runtime to match facing.
+                const baseOffsetX = Math.round((dw / 2) - (bodyW / 2));
+                const baseOffsetY = Math.max(0, Math.round(dh - bodyH));
+                // The melee hitbox is placed slightly in front of the player when
+                // attacking. Mirror that here by shifting the physics body along X
+                // by this amount (positive -> to the right). We'll apply the
+                // facing flip in `_syncSpineVisual()` each frame so the body
+                // follows the sprite.flipX state.
+                const attackForwardShift = 28;
+                const offsetX = Math.max(0, baseOffsetX + attackForwardShift);
+                const offsetY = baseOffsetY;
+                // Persist for per-frame adjustments
+                try { this._bodyPhysics = this._bodyPhysics || {}; } catch (e) {}
+                try { this._bodyPhysics.width = bodyW; this._bodyPhysics.height = bodyH; this._bodyPhysics.baseOffsetX = baseOffsetX; this._bodyPhysics.baseOffsetY = baseOffsetY; this._bodyPhysics.forwardShift = attackForwardShift; } catch (e) {}
                 if (this.sprite.body) {
                     try { if (typeof this.sprite.body.setSize === 'function') this.sprite.body.setSize(bodyW, bodyH); } catch (e) {}
                     try { if (typeof this.sprite.body.setOffset === 'function') this.sprite.body.setOffset(offsetX, offsetY); } catch (e) {}
@@ -1660,8 +1676,37 @@ class Player extends GameObject {
     }
 
     _syncSpineVisual() {
-        // Proceed if we have either a spine visual or a persistent Phaser fallback
-        if (!this.spine && !this._persistentFallbackSprite && !this._persistentFallbackImage) return;
+    // Proceed if we have either a spine visual or a persistent Phaser fallback.
+    // However, if the developer debug overlay is explicitly enabled we
+    // still want to draw the physics/debug rectangles even when the
+    // Spine/fallback visuals haven't been created yet. This helps during
+    // asset/plugin initialization so collisions can be verified early.
+    const overlayEnabled = (GameConfig && GameConfig.debug && GameConfig.debug.enablePlayerDebugOverlay) || (typeof window !== 'undefined' && !!window.noteleksDebug);
+    if (!this.spine && !this._persistentFallbackSprite && !this._persistentFallbackImage && !overlayEnabled) return;
+        // Landing detection and airborne animation enforcement:
+        // Keep jump lifecycle coherent by ending the jump when movement
+        // component reports grounded, and ensure a jump/fall anim plays
+        // while airborne even when the jump wasn't initiated via input.
+        try {
+            const movementComponent = this.getComponent && this.getComponent('movement');
+            const grounded = movementComponent ? movementComponent.isOnGround() : true;
+            if (grounded) {
+                // If we were jumping (initiated or via fallback), end it and
+                // restore a ground animation unless we're attacking.
+                if (this._isJumping || this._jumpStartTime) {
+                    try { this._endJump(); } catch (e) {}
+                }
+            } else {
+                // Airborne: if not attacking, prefer a looping jump/fall pose
+                try {
+                    if (!this._isAttacking && this._currentSpineAnim !== 'jump') {
+                        this._setSpineAnimation('jump', true);
+                    }
+                } catch (e) {}
+            }
+        } catch (e) {
+            // ignore landing-detection failures
+        }
         try {
             // Spine display may be a Phaser Spine Game Object with x/y properties
             // Handle Image fallback bob animation
@@ -1689,6 +1734,91 @@ class Player extends GameObject {
                 } catch (e) {
                     this.spine.scaleX = 1;
                 }
+            }
+
+            // Ensure the physics body follows the attack hitbox shape and
+            // mirrors correctly when the sprite flips. We stored bookkeeping
+            // values during creation in `this._bodyPhysics`.
+            try {
+                if (this.sprite && this.sprite.body && this._bodyPhysics) {
+                    const bp = this._bodyPhysics;
+                    // Determine facing from MovementComponent if available, else infer from flipX
+                    const movementComponent = this.getComponent && this.getComponent('movement');
+                    const facing = movementComponent && typeof movementComponent.getFacing === 'function' ? movementComponent.getFacing() : (this.sprite.flipX ? 'left' : 'right');
+
+                    // Compute offsetX so the body is shifted forward when facing right,
+                    // and shifted backward when facing left (mirror by negating forwardShift).
+                    let desiredOffsetX = Math.round(bp.baseOffsetX + (facing === 'right' ? bp.forwardShift : -bp.forwardShift));
+                    // Safety clamp to non-negative (Arcade expects non-negative offsets)
+                    if (desiredOffsetX < 0) desiredOffsetX = 0;
+                    const desiredOffsetY = bp.baseOffsetY || 0;
+
+                    // Apply size and offset if functions exist. Doing this every frame
+                    // is cheap and ensures the body mirrors correctly as facing changes.
+                    try { if (typeof this.sprite.body.setSize === 'function') this.sprite.body.setSize(bp.width, bp.height); } catch (e) {}
+                    try { if (typeof this.sprite.body.setOffset === 'function') this.sprite.body.setOffset(desiredOffsetX, desiredOffsetY); } catch (e) {}
+                }
+            } catch (e) {
+                // ignore body-sync failures
+            }
+
+            // Debug visuals: draw physics body and (when attacking) the melee hitbox
+            try {
+                const overlayEnabled = (GameConfig && GameConfig.debug && GameConfig.debug.enablePlayerDebugOverlay) || (typeof window !== 'undefined' && !!window.noteleksDebug);
+                if (overlayEnabled && this.scene && this.scene.add) {
+                    if (!this._debugGraphics) {
+                        try {
+                            this._debugGraphics = this.scene.add.graphics();
+                            if (typeof this._debugGraphics.setDepth === 'function') this._debugGraphics.setDepth(999999);
+                        } catch (e) {
+                            this._debugGraphics = null;
+                        }
+                    }
+                }
+
+                if (this._debugGraphics) {
+                    try { this._debugGraphics.clear(); } catch (e) {}
+                    const g = this._debugGraphics;
+                    // Draw physics body (green)
+                    try {
+                        if (this.sprite && this.sprite.body) {
+                            const b = this.sprite.body;
+                            const bx = (typeof b.x === 'number') ? b.x : (this.sprite.x - ((b.width || (this._bodyPhysics && this._bodyPhysics.width) || 0) / 2));
+                            const by = (typeof b.y === 'number') ? b.y : (this.sprite.y - (this.sprite.displayHeight || 32));
+                            const bw = b.width || (this._bodyPhysics && this._bodyPhysics.width) || 0;
+                            const bh = b.height || (this._bodyPhysics && this._bodyPhysics.height) || 0;
+                            if (bw > 0 && bh > 0) {
+                                g.lineStyle(2, 0x00ff66, 0.95);
+                                g.strokeRect(Math.round(bx), Math.round(by), Math.round(bw), Math.round(bh));
+                            }
+                        }
+                    } catch (e) {
+                        // ignore body draw errors
+                    }
+
+                    // Draw melee hitbox when attacking (red)
+                    try {
+                        if (this._isAttacking && this._bodyPhysics && this.sprite) {
+                            const bp2 = this._bodyPhysics;
+                            const movementComponent = this.getComponent && this.getComponent('movement');
+                            const facing = movementComponent && typeof movementComponent.getFacing === 'function' ? movementComponent.getFacing() : (this.sprite.flipX ? 'left' : 'right');
+                            const hx = this.sprite.x + (facing === 'right' ? bp2.forwardShift : -bp2.forwardShift);
+                            const hy = this.sprite.y - ((this.sprite.displayHeight || 32) / 2);
+                            const hbw = bp2.width || 0;
+                            const hbh = bp2.height || 0;
+                            if (hbw > 0 && hbh > 0) {
+                                const topLeftX = Math.round(hx - (hbw / 2));
+                                const topLeftY = Math.round(hy - (hbh / 2));
+                                g.lineStyle(2, 0xff4444, 0.95);
+                                g.strokeRect(topLeftX, topLeftY, Math.round(hbw), Math.round(hbh));
+                            }
+                        }
+                    } catch (e) {
+                        // ignore hitbox draw errors
+                    }
+                }
+            } catch (e) {
+                // swallow debug visual errors
             }
             // Manual spine AnimationState advance (guarded). Some plugin builds
             // may not auto-update the AnimationState in our environment; this
@@ -1911,29 +2041,13 @@ class Player extends GameObject {
             try {
                 const jumped = movementComponent.jump();
                 if (jumped) {
-                    this._setSpineAnimation('jump', false);
-                    this._isJumping = true;
-                    // Estimate airtime from jumpPower and world gravity (t = 2*v0/g)
+                    // Start jump lifecycle (centralized helper sets timing info)
                     try {
                         const v0 = (movementComponent && typeof movementComponent.jumpPower === 'number') ? movementComponent.jumpPower : (GameConfig.player && GameConfig.player.jumpPower) || 300;
-                        const gravity = (this.scene && this.scene.physics && this.scene.physics.world && this.scene.physics.world.gravity && typeof this.scene.physics.world.gravity.y === 'number') ? Math.abs(this.scene.physics.world.gravity.y) : (this.sprite && this.sprite.body && this.sprite.body.gravity && typeof this.sprite.body.gravity.y === 'number' ? Math.abs(this.sprite.body.gravity.y) : 600);
-                        const airtimeSec = (v0 / gravity) * 2;
-                        const airtimeMs = Math.max(100, Math.round(airtimeSec * 1000));
-                        this._jumpStartTime = (this.scene && this.scene.time && typeof this.scene.time.now === 'number') ? this.scene.time.now : Date.now();
-                        this._jumpAirtime = airtimeMs;
-                    } catch (e) {
-                        this._jumpStartTime = (this.scene && this.scene.time && typeof this.scene.time.now === 'number') ? this.scene.time.now : Date.now();
-                        this._jumpAirtime = 600;
-                    }
-
-                    // Clear jump state after estimated airtime (defensive fallback)
-                    try {
-                        const clearMs = (this._jumpAirtime && typeof this._jumpAirtime === 'number') ? (this._jumpAirtime + 80) : 700;
-                        setTimeout(() => {
-                            this._isJumping = false;
-                            this._jumpStartTime = null;
-                            this._jumpAirtime = null;
-                        }, clearMs);
+                        this._beginJump(v0);
+                        // Play the initial jump animation. Use a looping jump/fall
+                        // pose by default so the airborne visual persists while in air.
+                        this._setSpineAnimation('jump', true);
                     } catch (e) {}
                 }
             } catch (e) {}
@@ -1965,6 +2079,26 @@ class Player extends GameObject {
         // Process attack input
         if (inputState.attack && !this._isAttacking) {
             this.attack();
+        }
+
+        // If the player is not grounded (e.g. falling off a ledge), ensure
+        // the jump animation is active so the Spine character visually
+        // reflects being airborne even when the jump wasn't initiated.
+        try {
+            if (isJumping && !this._isAttacking) {
+                try {
+                    if (this._currentSpineAnim !== 'jump') {
+                        // Use a looping jump/fall pose so we don't revert when
+                        // a non-looping jump animation would finish while still
+                        // airborne.
+                        this._setSpineAnimation('jump', true);
+                    }
+                } catch (e) {
+                    // ignore animation set errors
+                }
+            }
+        } catch (e) {
+            // ignore
         }
     }
 
@@ -2149,6 +2283,71 @@ class Player extends GameObject {
             } catch (e) {}
         } catch (e) {
             // ignore animation errors
+        }
+    }
+
+    /**
+     * Begin a jump lifecycle: record start time and estimated airtime.
+     * v0 is the initial jump velocity (pixels/sec)
+     */
+    _beginJump(v0) {
+        try {
+            this._isJumping = true;
+            this._jumpStartTime = (this.scene && this.scene.time && typeof this.scene.time.now === 'number') ? this.scene.time.now : Date.now();
+            // Determine gravity (prefer world gravity, fallback to body gravity or a default)
+            let gravity = 600;
+            try {
+                if (this.scene && this.scene.physics && this.scene.physics.world && typeof this.scene.physics.world.gravity === 'object' && typeof this.scene.physics.world.gravity.y === 'number') {
+                    gravity = Math.abs(this.scene.physics.world.gravity.y) || gravity;
+                } else if (this.sprite && this.sprite.body && this.sprite.body.gravity && typeof this.sprite.body.gravity.y === 'number') {
+                    gravity = Math.abs(this.sprite.body.gravity.y) || gravity;
+                }
+            } catch (e) {}
+            try {
+                const airtimeSec = (v0 && typeof v0 === 'number') ? ((v0 / gravity) * 2) : 0.6;
+                this._jumpAirtime = Math.max(80, Math.round((airtimeSec || 0.6) * 1000));
+            } catch (e) {
+                this._jumpAirtime = 600;
+            }
+
+            // Defensive fallback: clear the jump state after airtime + buffer
+            try {
+                if (this._jumpClearTimeout) {
+                    clearTimeout(this._jumpClearTimeout);
+                    this._jumpClearTimeout = null;
+                }
+                this._jumpClearTimeout = setTimeout(() => {
+                    try { this._endJump(); } catch (e) {}
+                }, (this._jumpAirtime || 600) + 150);
+            } catch (e) {}
+        } catch (e) {
+            // ignore
+        }
+    }
+
+    /**
+     * End a jump lifecycle: clear timing info and restore appropriate ground animation.
+     */
+    _endJump() {
+        try {
+            this._isJumping = false;
+            this._jumpStartTime = null;
+            this._jumpAirtime = null;
+            try { if (this._jumpClearTimeout) { clearTimeout(this._jumpClearTimeout); this._jumpClearTimeout = null; } } catch (e) {}
+
+            // Restore a grounding animation if not attacking
+            try {
+                if (!this._isAttacking) {
+                    const movementComponent = this.getComponent && this.getComponent('movement');
+                    if (movementComponent && typeof movementComponent.isMoving === 'function' && movementComponent.isMoving()) {
+                        this._setSpineAnimation('run', true);
+                    } else {
+                        this._setSpineAnimation('idle', true);
+                    }
+                }
+            } catch (e) {}
+        } catch (e) {
+            // ignore
         }
     }
 
