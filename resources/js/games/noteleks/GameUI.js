@@ -89,7 +89,7 @@ class GameUI {
             // If any canvas/text/texture creation fails, fall back to DOM-only UI.
             // This will avoid repeated WebGL createTexture / bindTexture errors
             // in environments where the GL context is in a transient/bad state.
-            // eslint-disable-next-line no-console
+             
             console.warn('Canvas-backed UI initialization failed; switching to DOM fallback.', e && e.message ? e.message : e);
             this._usingDOMUI = true;
             this._createDOMUI();
@@ -241,7 +241,7 @@ class GameUI {
         } catch (err) {
             // Canvas-backed game over UI failed; create a DOM-based fallback
             // so the game still presents the end state without causing GL errors.
-            // eslint-disable-next-line no-console
+             
             console.warn('GameOver UI creation failed, falling back to DOM UI:', err && err.message ? err.message : err);
             this._usingDOMUI = true;
             this._createDOMUI(true);
@@ -418,7 +418,7 @@ class GameUI {
                 // Swallow texture creation errors and fall back to DOM overlay.
                 // This prevents WebGL createTexture exceptions from bubbling into the app logs.
                 // Preserve a console warning to aid future debugging.
-                // eslint-disable-next-line no-console
+                 
                 console.warn('Pause text creation failed, using DOM fallback:', e && e.message ? e.message : e);
                 this._createPauseDOMOverlay(pauseMessage);
             }
@@ -502,7 +502,7 @@ class GameUI {
             this._pauseDOMOverlayEl = overlay;
         } catch (e) {
             // If DOM overlay creation fails, don't block the game — just mark as not created.
-            // eslint-disable-next-line no-console
+             
             console.warn('Failed to create pause DOM overlay:', e && e.message ? e.message : e);
             this._pauseDOMOverlayCreated = false;
             this._pauseDOMOverlayEl = null;

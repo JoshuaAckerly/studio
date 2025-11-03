@@ -91,7 +91,7 @@ function parseArgs() {
 
             const imgs = [];
             for (const u of frameUrls) {
-                // eslint-disable-next-line no-await-in-loop
+                 
                 const img = await loadImage(u);
                 imgs.push(img);
             }

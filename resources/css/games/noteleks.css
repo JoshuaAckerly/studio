@@ -23,20 +23,19 @@ body {
     width: 100%;
     max-width: 800px;
     margin-bottom: 10px;
-    padding: 10px 20px;
-    background: rgba(0, 0, 0, 0.7);
-    border-radius: 10px;
-    backdrop-filter: blur(10px);
+    /* Make container invisible by default — game draws UI in-canvas. */
+    padding: 0;
+    background: transparent;
+    border-radius: 0;
+    backdrop-filter: none;
 }
 
-#score,
 #health {
     font-size: 18px;
     font-weight: bold;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
 }
 
-#score-value,
 #health-value {
     color: #4ade80;
 }

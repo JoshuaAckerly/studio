@@ -75,8 +75,70 @@
     <!-- Enable Noteleks in-page debug hooks when present so we can see
          the on-page logger and diagnostic overlays during troubleshooting. -->
     <script>
-        // Set before the Vite entry so main-modular picks this up and
-        // installs the in-page logger / debug overlays.
+        // Very-early error capture: install handlers before the app bundles
+        // are loaded so crashes that occur during or before script execution
+        // are captured to localStorage and optionally posted with sendBeacon.
+        (function(){
+            try {
+                // Expose a small device snapshot for later debugging
+                window.__noteleks_initial_device_info = {
+                    userAgent: navigator.userAgent || null,
+                    deviceMemory: navigator.deviceMemory || null,
+                    cores: navigator.hardwareConcurrency || null,
+                    platform: navigator.platform || null,
+                    ts: Date.now()
+                };
+
+                function writePayload(payload){
+                    try { localStorage.setItem('noteleks_last_error', JSON.stringify(payload)); } catch(e){}
+                    // Try to send to an optional server endpoint for remote capture
+                    try {
+                        if (navigator && typeof navigator.sendBeacon === 'function') {
+                            var blob = new Blob([JSON.stringify(payload)], {type: 'application/json'});
+                            // Best-effort; endpoint is optional on server
+                            navigator.sendBeacon('/__noteleks_error', blob);
+                        }
+                    } catch(e){}
+                }
+
+                var originalOnError = window.onerror;
+                window.onerror = function(message, source, lineno, colno, error){
+                    try {
+                        var payload = {
+                            type: 'error',
+                            message: (error && error.message) || message || String(message),
+                            stack: (error && error.stack) || null,
+                            source: source || null,
+                            lineno: lineno || null,
+                            colno: colno || null,
+                            device: window.__noteleks_initial_device_info || null,
+                            ts: Date.now()
+                        };
+                        writePayload(payload);
+                    } catch(e){}
+                    if (typeof originalOnError === 'function') {
+                        try { originalOnError.apply(this, arguments); } catch(e){}
+                    }
+                    return false;
+                };
+
+                window.addEventListener('unhandledrejection', function(ev){
+                    try {
+                        var reason = ev && ev.reason;
+                        var payload = {
+                            type: 'unhandledrejection',
+                            message: (reason && (reason.message || String(reason))) || 'unhandledrejection',
+                            stack: (reason && reason.stack) || null,
+                            device: window.__noteleks_initial_device_info || null,
+                            ts: Date.now()
+                        };
+                        writePayload(payload);
+                    } catch(e){}
+                }, {passive:true});
+            } catch(e) {
+                // best-effort only
+            }
+        })();
 
     </script>
 
@@ -116,7 +178,10 @@
             flex-direction: column;
         }
         
-        /* Minimal game UI container used by TouchInputComponent */
+        /* Minimal game UI container used by TouchInputComponent
+           Made transparent to avoid a decorative rounded black bar when
+           the in-canvas UI is used. Keep container for positioning of any
+           injected controls, but remove background/padding so it is invisible. */
         #game-ui {
             position: absolute;
             top: 10px;
@@ -125,9 +190,9 @@
             z-index: 100;
             display: flex;
             justify-content: space-between;
-            padding: 10px 20px;
-            background: rgba(0,0,0,0.6);
-            border-radius: 8px;
+            padding: 0;
+            background: transparent;
+            border-radius: 0;
         }
         
 
@@ -328,7 +393,8 @@
         <div id="game-container">
 
             <div id="game-ui">
-                <div id="score">Score: <span id="score-value">0</span></div>
+                <!-- Score moved into in-canvas game UI (GameUI.js).
+                     Removed static DOM score element to avoid duplicate score bars. -->
             </div>
 
             <div id="phaser-game"></div>

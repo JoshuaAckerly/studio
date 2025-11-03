@@ -15,6 +15,30 @@ class NoteleksGame {
         // Install global error handlers early so mobile-only failures can be captured
         // into localStorage for post-mortem inspection. See _installGlobalErrorHandlers().
         this._installGlobalErrorHandlers();
+
+        // Lightweight low-end device detection: use conservative heuristics to
+        // decide whether to enable a lowQuality fallback mode that avoids heavy
+        // assets (Spine) and reduces resolution. This helps small/old phones.
+        try {
+            const deviceMemory = (navigator && navigator.deviceMemory) ? Number(navigator.deviceMemory) : null;
+            const cores = (navigator && navigator.hardwareConcurrency) ? Number(navigator.hardwareConcurrency) : null;
+            const ua = navigator && navigator.userAgent || '';
+            // Heuristics: memory < 2GB or 1-2 cores => lowQuality
+            const lowMem = deviceMemory !== null ? deviceMemory < 2 : false;
+            const lowCores = cores !== null ? cores <= 2 : false;
+            const smallScreenUA = /iPhone|Android/i.test(ua) && window.innerWidth <= 420;
+            this._detectedDeviceInfo = { deviceMemory, cores, ua };
+            // Expose a global flag for debug/QA toggles
+            window.noteleks_lowQuality = (lowMem || lowCores || smallScreenUA) ? true : false;
+            GameConfig.lowQuality = !!window.noteleks_lowQuality;
+            if (GameConfig.lowQuality) {
+                console.info('[NoteleksGame] Low-quality mode enabled by device heuristics', this._detectedDeviceInfo);
+            }
+        } catch (e) {
+            // ignore detection errors
+            GameConfig.lowQuality = false;
+        }
+
         this.config = this.createGameConfig();
     }
 
@@ -32,9 +56,18 @@ class NoteleksGame {
                         lineno,
                         colno,
                         userAgent: navigator.userAgent,
+                        deviceMemory: navigator.deviceMemory || null,
+                        cores: navigator.hardwareConcurrency || null,
                         ts: Date.now(),
                     };
-                    localStorage.setItem('noteleks_last_error', JSON.stringify(payload));
+                    try { localStorage.setItem('noteleks_last_error', JSON.stringify(payload)); } catch (e) {}
+                    // Try sendBeacon as a best-effort remote capture (server endpoint optional)
+                    try {
+                        if (navigator && typeof navigator.sendBeacon === 'function') {
+                            const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+                            navigator.sendBeacon('/__noteleks_error', blob);
+                        }
+                    } catch (e) {}
                 } catch (e) {
                     // ignore storage/set errors
                 }
@@ -53,9 +86,17 @@ class NoteleksGame {
                         message: reason && (reason.message || String(reason)) || 'unhandledrejection',
                         stack: reason && (reason.stack || null) || null,
                         userAgent: navigator.userAgent,
+                        deviceMemory: navigator.deviceMemory || null,
+                        cores: navigator.hardwareConcurrency || null,
                         ts: Date.now(),
                     };
-                    localStorage.setItem('noteleks_last_error', JSON.stringify(payload));
+                    try { localStorage.setItem('noteleks_last_error', JSON.stringify(payload)); } catch (e) {}
+                    try {
+                        if (navigator && typeof navigator.sendBeacon === 'function') {
+                            const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+                            navigator.sendBeacon('/__noteleks_error', blob);
+                        }
+                    } catch (e) {}
                 } catch (e) {
                     // ignore
                 }
@@ -113,6 +154,14 @@ class NoteleksGame {
             console.info('[NoteleksGame] No spine global detected on window.');
         }
 
+        // If lowQuality mode was detected (device heuristics or forced by QA),
+        // avoid registering heavy plugins like Spine and reduce default resolution
+        // to keep memory & CPU footprint low.
+        if (GameConfig.lowQuality) {
+            console.info('[NoteleksGame] createGameConfig: lowQuality true — skipping spine plugin registration and lowering resolution');
+            pluginsConfig = undefined; // explicitly avoid plugin registration
+        }
+
         return {
             type: Phaser.AUTO,
             width: GameConfig.screen.width,
@@ -160,7 +209,7 @@ class NoteleksGame {
             // Build the package name at runtime so Vite's static import analyzer
             // cannot attempt to resolve it. Keep @vite-ignore as an extra hint.
             const moduleName = '@esotericsoftware' + '/spine-phaser-v3';
-            // eslint-disable-next-line no-undef
+             
             const mod = await import(/* @vite-ignore */ moduleName);
             // The package exports a plugin; try common export names
             spinePluginConstructor = mod?.default?.SpinePlugin || mod?.SpinePlugin || mod?.default || mod;
@@ -192,6 +241,22 @@ class NoteleksGame {
         // so Phaser will register the plugin at game creation time (recommended).
         const finalConfig = this.createGameConfig(spinePluginConstructor || this._spinePluginConstructor);
 
+        // If lowQuality mode is enabled, reduce resolution and disable heavy features
+        if (GameConfig.lowQuality) {
+            try {
+                // Reduce the target width/height to lower memory use and texture sizes
+                finalConfig.width = Math.max(320, Math.floor((finalConfig.width || GameConfig.screen.width) / 1.5));
+                finalConfig.height = Math.max(240, Math.floor((finalConfig.height || GameConfig.screen.height) / 1.5));
+                // Prefer a lower resolution canvas scale to reduce GPU memory
+                finalConfig.render = finalConfig.render || {};
+                finalConfig.render.pixelArt = true;
+                finalConfig.resolution = 1; // keep device resolution low
+                // Ensure we do not attempt to register the Spine plugin
+                finalConfig.plugins = undefined;
+            } catch (e) {
+                // ignore adjustments
+            }
+        }
         console.info('[NoteleksGame] Creating Phaser.Game with final config (plugins may be registered by Phaser)');
         this.game = new Phaser.Game({
             ...finalConfig,
