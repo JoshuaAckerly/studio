@@ -6,19 +6,19 @@ import puppeteer from 'puppeteer';
 
 function usage() {
     console.log(`
-Usage: node tools/make_spritesheet.js --base <basePath> --count <numFrames> --out <outPng> [--json <outJson>] [--cols <cols>] [--frameWidth <w>] [--frameHeight <h>]
+Usage: node tools/make_spritesheet.js --base <basePath> --count <numFrames> --out <outImage> [--json <outJson>] [--cols <cols>] [--frameWidth <w>] [--frameHeight <h>]
 
 Arguments:
   --base        Base file path prefix for frames (relative to repo root). Example: public/games/noteleks/spine/characters/Skeleton-Idle_
   --count       Number of frames (frames numbered 0..count-1)
-  --out         Output PNG path (relative to repo root)
+    --out         Output image path (PNG or WebP) (relative to repo root). Use .webp to write a WebP spritesheet.
   --json        Output JSON metadata path (optional)
   --cols        Number of columns in the spritesheet grid (default: 8)
   --frameWidth  Optional frame width to force
   --frameHeight Optional frame height to force
 
 Example:
-  node tools/make_spritesheet.js --base public/games/noteleks/spine/characters/Skeleton-Idle_ --count 9 --out public/games/noteleks/sprites/skeleton_idle.png --json public/games/noteleks/sprites/skeleton_idle.json --cols 4
+    node tools/make_spritesheet.js --base public/games/noteleks/sprites/Skeleton-Idle_ --count 9 --out public/games/noteleks/sprites/skeleton_idle.webp --json public/games/noteleks/sprites/skeleton_idle.json --cols 4
 `);
 }
 
@@ -54,20 +54,31 @@ function parseArgs() {
         const cols = args.cols && args.cols > 0 ? args.cols : 8;
         const frameCount = args.count;
         const frameUrls = [];
-        for (let i = 0; i < frameCount; i++) {
-            const rel = args.base + i + '.webp';
-            const abs = path.resolve(repoRoot, rel);
-            // Read the file and convert to a data URL so the headless page can
-            // load it without relying on file:// access which can be flaky
-            // across environments.
-            try {
-                const buf = await fs.readFile(abs);
-                const dataUrl = 'data:image/webp;base64,' + buf.toString('base64');
-                frameUrls.push(dataUrl);
-            } catch (e) {
-                console.error('[make_spritesheet] Failed to read frame file', abs, e && e.message);
-                throw e;
+    for (let i = 0; i < frameCount; i++) {
+            // Try common filename variants: zero-padded (00,01..) then plain (0,1..)
+            const candidates = [args.base + String(i).padStart(2, '0') + '.webp', args.base + i + '.webp'];
+            let buf = null;
+            let usedRel = null;
+            for (const rel of candidates) {
+                const abs = path.resolve(repoRoot, rel);
+                try {
+                    buf = await fs.readFile(abs);
+                    usedRel = rel;
+                    break;
+                } catch (e) {
+                    // try next candidate
+                }
             }
+            if (!buf) {
+                // Stop gracefully when we hit a missing frame. Use the frames
+                // we've collected so far. This allows generating spritesheets
+                // when exporter produced fewer frames than the requested count.
+                console.warn('[make_spritesheet] Missing frame for index', i, 'stopping early. Tried:', candidates.join(', '));
+                break;
+            }
+            const dataUrl = 'data:image/webp;base64,' + buf.toString('base64');
+            frameUrls.push(dataUrl);
+            console.log('[make_spritesheet] Read frame', usedRel || '(unknown)');
         }
 
         console.log('[make_spritesheet] Launching headless browser...');
@@ -135,7 +146,10 @@ function parseArgs() {
                 framesMeta.push({ name: i, frame: { x: cx, y: cy, w: fw, h: fh } });
             }
 
-            const dataUrl = canvas.toDataURL('image/png');
+            // Prefer WebP output when supported; caller decides output extension.
+            // Use image/webp so the produced spritesheet matches our runtime assets.
+            const outFormat = (typeof window !== 'undefined' && window.__MAKE_SPRITESHEET_FORMAT) ? window.__MAKE_SPRITESHEET_FORMAT : 'image/webp';
+            const dataUrl = canvas.toDataURL(outFormat);
             return { dataUrl, width: canvas.width, height: canvas.height, frameWidth: fw, frameHeight: fh, frames: framesMeta };
         });
 

@@ -1,9 +1,6 @@
 /**
  * Asset Management Utilities
  */
-// Lightweight import-time notice using console.warn so it is visible even when
-// the app's console wrapper suppresses info/debug messages by prefix.
-try { console.warn('[AssetManager] module imported (warn diagnostics)'); } catch (e) {}
 // Honor runtime configuration for Spine usage
 import GameConfig from '../config/GameConfig.js';
 export class AssetManager {
@@ -36,28 +33,147 @@ export class AssetManager {
             console.warn('[AssetManager] loadPlayerSpriteSheets called');
         } catch (e) {}
 
-        // Also support loading per-frame WebP sequences exported alongside
-        // the Spine character frames. These live in public/games/noteleks/spine/characters
-        // and follow the naming convention `Skeleton-<Anim>_<index>.webp`.
-        // We queue known sequences here so Phaser animations are created
-        // directly from the image frames when the loader completes.
+        // Prefer to consult a build-time manifest which lists exact per-frame
+        // image filenames to avoid probing missing candidate names at runtime.
+        // If a manifest exists at `/games/noteleks/sprites/manifest.json` we
+        // enqueue only the files it declares and skip legacy spritesheet
+        // candidates that the manifest explicitly disables (image/json both null).
         try {
-            // idle: Skeleton-Idle_0..8 (9 frames)
-            AssetManager.loadFrameSequence(scene, 'skeleton-idle', '/games/noteleks/spine/characters/Skeleton-Idle_', 9, 12, -1);
-            // run: Skeleton-Run_0..8 (9 frames)
-            AssetManager.loadFrameSequence(scene, 'skeleton-run', '/games/noteleks/spine/characters/Skeleton-Run_', 9, 12, -1);
-            // walk: Skeleton-Walk_0..8 (9 frames)
-            AssetManager.loadFrameSequence(scene, 'skeleton-walk', '/games/noteleks/spine/characters/Skeleton-Walk_', 9, 12, -1);
-            // jump-attack: Skeleton-JumpAttack_0..7 (8 frames)
-            AssetManager.loadFrameSequence(scene, 'skeleton-jumpattack', '/games/noteleks/spine/characters/Skeleton-JumpAttack_', 8, 12, 0);
-            // attack variants (Attack1/Attack2) — small frame counts
-            AssetManager.loadFrameSequence(scene, 'skeleton-attack1', '/games/noteleks/spine/characters/Skeleton-Attack1_', 2, 12, 0);
-            AssetManager.loadFrameSequence(scene, 'skeleton-attack2', '/games/noteleks/spine/characters/Skeleton-Attack2_', 2, 12, 0);
-            // jump (single frame fallback)
-            AssetManager.loadFrameSequence(scene, 'skeleton-jump', '/games/noteleks/spine/characters/Skeleton-Jump_', 1, 12, 0);
-            console.info('[AssetManager] Queued spine character frame sequences for Phaser fallback animations');
+            const manifestCacheKey = 'noteleks-sprites-manifest';
+            const manifestUrl = '/games/noteleks/sprites/manifest.json';
+            let manifestProcessed = false;
+
+            const deriveAnimKeyFromBase = (baseUrl) => {
+                try {
+                    const seg = String(baseUrl).replace(/\/$/, '').split('/').pop();
+                    const name = seg.replace(/_$/,'');
+                    return String(name).replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase();
+                } catch (e) { return null; }
+            };
+
+            const processManifest = (mf) => {
+                try {
+                    if (!mf) return;
+                    manifestProcessed = true;
+                    const seqs = mf.frameSequences || {};
+                    const sheets = mf.sheets || {};
+
+                    // Enqueue exact per-frame files declared in the manifest.
+                    for (const baseUrlRaw of Object.keys(seqs || {})) {
+                        try {
+                            const files = Array.isArray(seqs[baseUrlRaw]) ? seqs[baseUrlRaw] : [];
+                            const animKey = deriveAnimKeyFromBase(baseUrlRaw) || 'skeleton-unknown';
+                            const frameKeys = [];
+                            // Compute a safe full URL for each filename. Manifests may
+                            // include a base-like key (e.g. "/games/.../Skeleton-Walk_")
+                            // while also listing filenames that already include the
+                            // prefix ("Skeleton-Walk_05.webp"). To avoid accidental
+                            // duplication (".../Skeleton-Walk_Skeleton-Walk_05.webp")
+                            // prefer joining the manifest's directory with the listed
+                            // filename when the filename already contains the prefix.
+                            const baseDir = String(baseUrlRaw).replace(/[^\/]*$/, '');
+                            for (let i = 0; i < files.length; i++) {
+                                const fname = files[i];
+                                const key = `${animKey}-${i}`;
+                                frameKeys.push(key);
+                                try {
+                                    let fullUrl = '';
+                                    if (typeof fname === 'string' && fname.startsWith('/')) {
+                                        fullUrl = fname; // absolute path already
+                                    } else if (typeof fname === 'string' && String(fname).indexOf(String(baseDir).split('/').pop()) === 0) {
+                                        // filename already begins with a base fragment; join with directory
+                                        fullUrl = baseDir + fname;
+                                    } else {
+                                        fullUrl = baseUrlRaw + fname;
+                                    }
+                                    scene.load.image(key, fullUrl);
+                                } catch (e) {}
+                            }
+
+                            // Create animation on loader complete
+                            try {
+                                scene.load.once('complete', () => {
+                                    try {
+                                        if (!scene.anims.exists(animKey)) {
+                                            const frames = frameKeys.map(k => ({ key: k }));
+                                            scene.anims.create({ key: animKey, frames, frameRate: 12, repeat: -1 });
+                                            console.info('[AssetManager] Created animation from manifest frames', animKey, 'frames=', frames.length);
+                                        }
+                                    } catch (e) {}
+                                });
+                            } catch (e) {}
+                        } catch (e) { /* ignore per-sequence failures */ }
+                    }
+
+                    // Legacy spritesheet candidates — by default skip these legacy
+                    // `_512` PNG/JSON spritesheets because we prefer the per-frame
+                    // WebP sequences. Set `skipLegacyCandidates` to `false` if you
+                    // intentionally want to allow them.
+                    try {
+                        const skipLegacyCandidates = true; // set to false to allow legacy 512px spritesheets
+                        if (skipLegacyCandidates) {
+                            console.info('[AssetManager] Skipping legacy 512px spritesheet candidates by configuration');
+                        } else {
+                        const spritesBase = '/games/noteleks/sprites/';
+                        const candidates = [
+                            { texKey: 'skeleton-idle', png: spritesBase + 'skeleton_idle_512.png', json: spritesBase + 'skeleton_idle_512.json', frameWidth: 512, frameHeight: 512 },
+                            { texKey: 'skeleton-walk', png: spritesBase + 'skeleton_walk_512.png', json: spritesBase + 'skeleton_walk_512.json', frameWidth: 512, frameHeight: 512 },
+                            { texKey: 'skeleton-run', png: spritesBase + 'skeleton_run_512.png', json: spritesBase + 'skeleton_run_512.json', frameWidth: 512, frameHeight: 512 },
+                            { texKey: 'skeleton-jumpattack', png: spritesBase + 'skeleton_jumpattack_512.png', json: spritesBase + 'skeleton_jumpattack_512.json', frameWidth: 512, frameHeight: 512 }
+                        ];
+
+                        for (const c of candidates) {
+                            try {
+                                const sheetInfo = (sheets && sheets[c.texKey]) ? sheets[c.texKey] : null;
+                                const explicitlyDisabled = sheetInfo && (sheetInfo.image === null && sheetInfo.json === null);
+                                if (explicitlyDisabled) {
+                                    console.info('[AssetManager] Skipping legacy sheet for', c.texKey, 'because manifest disables it');
+                                    continue;
+                                }
+
+                                // Queue image + sidecar JSON for the spritesheet candidate.
+                                try { scene.load.image(c.texKey, c.png); } catch (e) {}
+                                try { scene.load.json(c.texKey + '-sidecar', c.json); } catch (e) {}
+                                console.warn('[AssetManager] Queued legacy spritesheet candidate (manifest allowed):', c.texKey, c.png, c.json);
+                            } catch (e) { /* ignore per-candidate */ }
+                        }
+                        }
+                    } catch (e) { /* ignore candidate block failures */ }
+                } catch (e) { /* ignore manifest processing errors */ }
+            };
+
+            // If the manifest is already available in the JSON cache, process it
+            let mf = null;
+            try { mf = (scene.cache && scene.cache.json && typeof scene.cache.json.get === 'function') ? scene.cache.json.get(manifestCacheKey) : null; } catch (e) { mf = null; }
+            if (mf) {
+                processManifest(mf);
+            } else {
+                // Queue the manifest for preload and process when loaded.
+                try { scene.load.json(manifestCacheKey, manifestUrl); } catch (e) {}
+                try {
+                    scene.load.once('filecomplete-json-' + manifestCacheKey, () => {
+                        try { const m = (scene.cache && scene.cache.json && typeof scene.cache.json.get === 'function') ? scene.cache.json.get(manifestCacheKey) : null; processManifest(m); } catch (e) {}
+                    });
+                } catch (e) {}
+
+                // If the manifest never arrives (missing file), fall back to a
+                // conservative default after a short delay so the preload doesn't
+                // stall forever. This fallback merely queues the minimal known
+                // frame sequences (legacy spine/characters path) if manifest is absent.
+                setTimeout(() => {
+                    try {
+                        if (!manifestProcessed) {
+                            console.warn('[AssetManager] Manifest not processed in time; falling back to legacy per-frame probes (this may cause 404s)');
+                            try { AssetManager.loadFrameSequence(scene, 'skeleton-idle', '/games/noteleks/spine/characters/Skeleton-Idle_', 9, 12, -1); } catch (e) {}
+                            try { AssetManager.loadFrameSequence(scene, 'skeleton-run', '/games/noteleks/spine/characters/Skeleton-Run_', 9, 12, -1); } catch (e) {}
+                            try { AssetManager.loadFrameSequence(scene, 'skeleton-walk', '/games/noteleks/spine/characters/Skeleton-Walk_', 9, 12, -1); } catch (e) {}
+                            try { AssetManager.loadFrameSequence(scene, 'skeleton-jumpattack', '/games/noteleks/spine/characters/Skeleton-JumpAttack_', 8, 12, 0); } catch (e) {}
+                        }
+                    } catch (e) {}
+                }, 800);
+            }
         } catch (e) {
-            console.warn('[AssetManager] Failed to queue spine character frame sequences:', e && e.message);
+            console.warn('[AssetManager] Failed to queue spine character frame sequences (manifest path):', e && e.message);
         }
 
         try {
@@ -441,6 +557,43 @@ export class AssetManager {
         } catch (e) {
             console.warn('[AssetManager] Failed to register loader completion listener for frame sequence', animKey, e && e.message);
         }
+    }
+
+    /**
+     * Queue assets declared in a build-time manifest into the Scene loader.
+     * This is a synchronous enqueue: it merely calls scene.load.* for each
+     * manifest entry so the caller can control loader start/stop behavior.
+     *
+     * @param {Phaser.Scene} scene
+     * @param {Object} manifest
+     */
+    static queueAssetsFromManifest(scene, manifest) {
+        try {
+            if (!scene || !manifest) return;
+            const seqs = manifest.frameSequences || {};
+            for (const baseUrlRaw of Object.keys(seqs || {})) {
+                try {
+                    const files = Array.isArray(seqs[baseUrlRaw]) ? seqs[baseUrlRaw] : [];
+                    const baseDir = String(baseUrlRaw).replace(/[^\/]*$/, '');
+                    const animKey = String(baseUrlRaw).replace(/\/$/, '').split('/').pop().replace(/_$/,'').replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase();
+                    for (let i = 0; i < files.length; i++) {
+                        try {
+                            const fname = files[i];
+                            let fullUrl = '';
+                            if (typeof fname === 'string' && fname.startsWith('/')) {
+                                fullUrl = fname;
+                            } else if (typeof fname === 'string' && String(fname).indexOf(String(baseDir).split('/').pop()) === 0) {
+                                fullUrl = baseDir + fname;
+                            } else {
+                                fullUrl = baseUrlRaw + fname;
+                            }
+                            const key = `${animKey}-${i}`;
+                            try { scene.load.image(key, fullUrl); } catch (e) {}
+                        } catch (e) { /* per-file */ }
+                    }
+                } catch (e) { /* per-sequence */ }
+            }
+        } catch (e) { /* ignore */ }
     }
 
     static setupSpineData(scene) {

@@ -1,6 +1,7 @@
 /* global Phaser */
 import GameConfig from './config/GameConfig.js';
 import GameScene from './scenes/GameScene.js';
+import LoadingScene from './scenes/LoadingScene.js';
 
 // Spine plugin is imported dynamically inside initialize() to keep the main
 // bundle smaller and allow code-splitting. Do not import it at top-level.
@@ -175,7 +176,9 @@ class NoteleksGame {
                 },
             },
             plugins: pluginsConfig,
-            scene: [GameScene],
+            // Start with a LoadingScene so all assets (manifest, sprites, spine)
+            // are loaded before we start the main GameScene.
+            scene: [LoadingScene, GameScene],
             scale: {
                 mode: Phaser.Scale.FIT,
                 autoCenter: Phaser.Scale.CENTER_BOTH,

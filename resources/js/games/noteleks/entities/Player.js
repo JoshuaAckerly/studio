@@ -1528,6 +1528,15 @@ class Player extends GameObject {
 
             if (!sourceH || sourceH <= 0) return false;
 
+            // Guard against implausibly-small source heights (e.g. 1px) which
+            // would produce huge scales (and effectively move the sprite off-screen).
+            // If sourceH is too small, skip applying the display height so we don't
+            // blow up the visual scale. Log a concise warning for debugging.
+            if (sourceH < 4) {
+                try { console.warn('[Player] setDisplayHeight: source height too small (', sourceH, ') — skipping scale application'); } catch (e) {}
+                return false;
+            }
+
             const finalScale = targetPx / sourceH;
             // Persist override so other logic can pick it up
             this._overrideScale = finalScale;

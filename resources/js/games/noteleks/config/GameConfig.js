@@ -28,13 +28,14 @@ export const GameConfig = {
         health: 100,
         maxHealth: 100,
     // Visual scale applied to the Spine/GameObject display. Use <1 to shrink the character.
-    // Reduced further to make exported WebP frames fit the game view better.
-    // Lower values shrink large (512px) exported frames to reasonable in-game size.
-    scale: 0.5,
+    // Increased the base scale because incoming Spine skins were exported smaller.
+    // Set to 1.0 by default and rely on targetPixelHeight for precise sizing.
+    scale: 1.0,
     // Optional: target on-screen height in pixels. When set, Player will compute
     // an override scale so the visual height matches this value (preferred
-    // precise sizing method). Set to null or remove to use `scale` instead.
-    targetPixelHeight: 96,
+    // precise sizing method). Increase this value to make the player visually larger.
+    // Previously 96 — bumping to 140 to better match the new, smaller imported skins.
+    targetPixelHeight: 140,
     },
 
     // Enemy settings

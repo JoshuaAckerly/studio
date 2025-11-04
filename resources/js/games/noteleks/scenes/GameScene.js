@@ -34,8 +34,9 @@ class GameScene extends Phaser.Scene {
     preload() {
         this.showLoadingScreen();
 
-        // Always load player spritesheets/atlases (fallbacks)
-        AssetManager.loadPlayerSpriteSheets(this, GameConfig);
+        // Note: asset loading is handled by LoadingScene. GameScene.preload
+        // keeps spine raw asset queuing in case GameScene is started directly
+        // (defensive), but avoid re-queuing player sprites here.
 
         // Queue Spine raw assets only when configured
         if (GameConfig && GameConfig.useSpine && GameConfig.assets && GameConfig.assets.spine) {
