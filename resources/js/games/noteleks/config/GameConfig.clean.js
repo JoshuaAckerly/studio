@@ -10,23 +10,24 @@ export const GameConfig = {
         backgroundColor: 0x2d2d2d,
     },
 
-    // Using frame-by-frame sprite animations only
-    useSpine: false,
+    // Toggle whether the Spine runtime and skeleton assets should be used.
+    // Set to `false` to run using only frame-by-frame sprite animations.
+    useSpine: true,
 
     // Physics settings
     physics: {
         gravity: { x: 0, y: 300 },
-        debug: true,
+        debug: false,
     },
 
     // Player settings
     player: {
-        startPosition: { x: 400, y: 300 },
+        startPosition: { x: 100, y: 520 },
         speed: 160,
         jumpPower: 330,
         health: 100,
         maxHealth: 100,
-        scale: 0.3,
+        scale: 1.5,
         targetPixelHeight: 96,
     },
 
@@ -117,8 +118,13 @@ export const GameConfig = {
 
     // Asset paths
     assets: {
+        spine: {
+            atlas: '/games/noteleks/spine/characters/Noteleks.atlas',
+            json: '/games/noteleks/spine/characters/Noteleks.json',
+            png: '/games/noteleks/spine/characters/Noteleks.png',
+        },
         textures: {
-            skeleton: { width: 64, height: 96, color: 0xff0000 },
+            skeleton: { width: 64, height: 96, color: 0xffffff },
             enemy: { width: 32, height: 40, color: 0x008000 },
             ground: { width: 64, height: 32, color: 0x4a4a4a },
             background: { width: 800, height: 600, color: 0x2d2d2d },

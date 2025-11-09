@@ -1,7 +1,7 @@
 /* global Phaser */
 import GameConfig from '../config/GameConfig.js';
 import Player from '../entities/Player.js';
-import AssetManager from '../utils/AssetManager.js';
+import AssetManager from '../utils/AssetManagerSimple.js';
 import { GameStateUtils } from '../utils/GameUtils.js';
 import EnemyManager from '../managers/EnemyManager.js';
 import InputManager from '../managers/InputManager.js';
@@ -158,12 +158,92 @@ class GameScene extends Phaser.Scene {
 
     createGameWorld() {
         try { this.physics.world.setBounds(0, 0, GameConfig.screen.width, GameConfig.screen.height); } catch (e) {}
-        try { AssetManager.createPlaceholderTextures(this, GameConfig); } catch (e) {}
+        try { 
+            AssetManager.createPlaceholderTextures(this, GameConfig);
+            console.log('[GameScene] Created placeholder textures');
+            
+            // Animations are created by AssetManager in LoadingScene
+            
+            // Verify skeleton texture exists
+            if (this.textures.exists('skeleton')) {
+                console.log('[GameScene] Skeleton texture exists and ready');
+            } else {
+                console.warn('[GameScene] Skeleton texture missing!');
+            }
+        } catch (e) { console.error('[GameScene] Failed to create placeholder textures:', e.message); }
         try { this.add.image(GameConfig.screen.width / 2, GameConfig.screen.height / 2, 'background'); } catch (e) {}
 
         try { this.platformManager.initialize(); } catch (e) {}
         try { this.platforms = this.platformManager.getPlatforms(); } catch (e) { this.platforms = null; }
         try { this.enemyManager.initialize(); } catch (e) {}
+    }
+
+    createBasicAnimations() {
+        try {
+            // Create WebP animations from loaded frames
+            if (!this.anims.exists('player-idle')) {
+                this.anims.create({
+                    key: 'player-idle',
+                    frames: [
+                        { key: 'Skeleton-Idle-0' },
+                        { key: 'Skeleton-Idle-00' },
+                        { key: 'Skeleton-Idle-01' },
+                        { key: 'Skeleton-Idle-02' },
+                        { key: 'Skeleton-Idle-03' },
+                        { key: 'Skeleton-Idle-04' },
+                        { key: 'Skeleton-Idle-05' },
+                        { key: 'Skeleton-Idle-06' },
+                        { key: 'Skeleton-Idle-07' },
+                        { key: 'Skeleton-Idle-08' }
+                    ],
+                    frameRate: 8,
+                    repeat: -1
+                });
+            }
+            
+            if (!this.anims.exists('player-run')) {
+                this.anims.create({
+                    key: 'player-run',
+                    frames: [
+                        { key: 'Skeleton-Run-0' },
+                        { key: 'Skeleton-Run-00' },
+                        { key: 'Skeleton-Run-01' },
+                        { key: 'Skeleton-Run-02' },
+                        { key: 'Skeleton-Run-03' },
+                        { key: 'Skeleton-Run-04' },
+                        { key: 'Skeleton-Run-05' },
+                        { key: 'Skeleton-Run-06' }
+                    ],
+                    frameRate: 12,
+                    repeat: -1
+                });
+            }
+            
+            if (!this.anims.exists('player-attack')) {
+                this.anims.create({
+                    key: 'player-attack',
+                    frames: [
+                        { key: 'Skeleton-Attack1-0' },
+                        { key: 'Skeleton-Attack1-1' }
+                    ],
+                    frameRate: 8,
+                    repeat: 0
+                });
+            }
+            
+            if (!this.anims.exists('player-jump')) {
+                this.anims.create({
+                    key: 'player-jump',
+                    frames: [{ key: 'Skeleton-Jump-0' }],
+                    frameRate: 1,
+                    repeat: 0
+                });
+            }
+            
+            console.log('[GameScene] Created WebP player animations');
+        } catch (e) {
+            console.error('[GameScene] Failed to create WebP animations:', e.message);
+        }
     }
 
     async setupGameObjects() {

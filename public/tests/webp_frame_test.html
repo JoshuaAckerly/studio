@@ -15,41 +15,22 @@
 <body>
   <h2 style="padding:20px 20px 0 20px;">WebP / Spritesheet Frame Test</h2>
   <div id="controls">
-    <button id="playSheet">Play spritesheet</button>
     <button id="playFrames">Play per-frame images</button>
   </div>
   <div id="container">
-    <div class="panel" id="sheetPanel"></div>
-    <div class="panel" id="framesPanel"></div>
+    <div class="panel" id="framesPanel" style="width:1024px; height:512px;"></div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
   <script>
     // Paths are relative to this HTML file (public/tests/)
-    const spritesheetPath = '../games/noteleks/sprites/skeleton_idle_512.png';
     const frameBase = '../games/noteleks/spine/characters/Skeleton-Idle_';
     const frameCount = 9;
-
-    const sheetConfig = {
-      type: Phaser.CANVAS,
-      parent: 'sheetPanel',
-      width: 512,
-      height: 512,
-      scene: {
-        preload: function() {
-          this.load.spritesheet('skeletonSheet', spritesheetPath, { frameWidth: 512, frameHeight: 512 });
-        },
-        create: function() {
-          this.anims.create({ key: 'sheetIdle', frames: this.anims.generateFrameNumbers('skeletonSheet', { start: 0, end: frameCount - 1 }), frameRate: 12, repeat: -1 });
-          this.add.sprite(256, 256, 'skeletonSheet').play('sheetIdle');
-        }
-      }
-    };
 
     const framesConfig = {
       type: Phaser.CANVAS,
       parent: 'framesPanel',
-      width: 512,
+      width: 1024,
       height: 512,
       scene: {
         preload: function() {
@@ -66,21 +47,14 @@
       }
     };
 
-    let sheetGame, framesGame;
-
-    document.getElementById('playSheet').addEventListener('click', () => {
-      // destroy existing to force reload
-      if (sheetGame) sheetGame.destroy(true);
-      sheetGame = new Phaser.Game(sheetConfig);
-    });
+    let framesGame;
 
     document.getElementById('playFrames').addEventListener('click', () => {
       if (framesGame) framesGame.destroy(true);
       framesGame = new Phaser.Game(framesConfig);
     });
 
-    // Auto-start both
-    document.getElementById('playSheet').click();
+    // Auto-start frames test
     document.getElementById('playFrames').click();
   </script>
 </body>

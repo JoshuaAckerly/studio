@@ -1,5 +1,5 @@
 /**
- * Game Configuration - Clean Version
+ * Game Configuration
  * Central configuration for all game settings
  */
 export const GameConfig = {
@@ -10,24 +10,32 @@ export const GameConfig = {
         backgroundColor: 0x2d2d2d,
     },
 
-    // Using frame-by-frame sprite animations only
+    // Toggle whether the Spine runtime and skeleton assets should be used.
+    // Set to `false` to run using only frame-by-frame sprite animations.
     useSpine: false,
 
     // Physics settings
     physics: {
         gravity: { x: 0, y: 300 },
-        debug: true,
+        debug: false,
     },
 
     // Player settings
     player: {
-        startPosition: { x: 400, y: 300 },
+        startPosition: { x: 100, y: 520 }, // Ground at y=568, player height=48, so y=568-24=544 minus some clearance
         speed: 160,
         jumpPower: 330,
         health: 100,
         maxHealth: 100,
-        scale: 0.3,
-        targetPixelHeight: 96,
+    // Visual scale applied to the Spine/GameObject display. Use <1 to shrink the character.
+    // Increased the base scale because incoming Spine skins were exported smaller.
+    // Set to 1.0 by default and rely on targetPixelHeight for precise sizing.
+    scale: 2.0,
+    // Optional: target on-screen height in pixels. When set, Player will compute
+    // an override scale so the visual height matches this value (preferred
+    // precise sizing method). Increase this value to make the player visually larger.
+    // Previously 96 — bumping to 140 to better match the new, smaller imported skins.
+    targetPixelHeight: 120,
     },
 
     // Enemy settings
@@ -117,8 +125,13 @@ export const GameConfig = {
 
     // Asset paths
     assets: {
+        spine: {
+            atlas: '/games/noteleks/spine/characters/Noteleks.atlas',
+            json: '/games/noteleks/spine/characters/Noteleks.json',
+            png: '/games/noteleks/spine/characters/Noteleks.png',
+        },
         textures: {
-            skeleton: { width: 64, height: 96, color: 0xff0000 },
+            skeleton: { width: 64, height: 96, color: 0xffffff },
             enemy: { width: 32, height: 40, color: 0x008000 },
             ground: { width: 64, height: 32, color: 0x4a4a4a },
             background: { width: 800, height: 600, color: 0x2d2d2d },
@@ -128,11 +141,19 @@ export const GameConfig = {
             magic_bolt: { width: 12, height: 12, color: 0x9900ff },
         },
     },
-
-    // Debug settings (disabled by default for clean version)
+    // Debugging toggles (keep disabled by default)
     debug: {
-        enablePlayerDebugOverlay: false,
-        suppressLogPrefixes: ['[Player]', '[Spine]'],
+        // When true, the in-page Player debug overlay will be shown automatically
+        // Set to `true` during development when you want the UI. You can also
+        // enable it at runtime by setting `window.noteleksDebug = true` in the
+        // browser console before loading the game.
+        enablePlayerDebugOverlay: true,
+        // Prefixes to suppress from the console when debug UI is disabled.
+        // Messages that contain any of these substrings will be filtered out
+        // from `console.log/info/debug` to reduce noise.
+        suppressLogPrefixes: [],
+        // When true, small convenience DOM syncs (like updating an external #score-value)
+        // will run. Keep false in production so UI concerns remain in-canvas only.
         syncDOM: false,
     },
 };

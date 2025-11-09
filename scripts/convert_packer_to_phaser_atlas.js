@@ -8,6 +8,7 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
+import child_process from 'child_process';
 
 async function convertFile(filePath) {
   const src = await fs.readFile(filePath, 'utf8');
@@ -20,6 +21,67 @@ async function convertFile(filePath) {
   }
 
   if (!data.frames || !Array.isArray(data.frames)) {
+    // Support explicit per-frame manifest format used by our game (frameSequences)
+    // which lists separate image files rather than a packed spritesheet.
+    // We now support an optional selective packing workflow: if a `scripts/pack-config.json`
+    // lists this manifest's directory (or the manifest file itself) we will attempt
+    // to run the `texturepacker` CLI (if available) to produce a Phaser atlas. If
+    // not listed (or texturepacker not present) we skip conversion and log an
+    // informational message.
+    if (data.frameSequences || data.sheets) {
+      const packConfigPath = path.join(process.cwd(), 'scripts', 'pack-config.json');
+      let packConfig = null;
+      try {
+        const cfgRaw = await fs.readFile(packConfigPath, 'utf8');
+        packConfig = JSON.parse(cfgRaw);
+      } catch (e) {
+        // no pack-config present or invalid -> treat as no packing requested
+      }
+
+      const dir = path.dirname(filePath);
+      const base = path.basename(filePath);
+      const shouldPack = packConfig && Array.isArray(packConfig.pack) && (
+        packConfig.pack.includes(base) || packConfig.pack.includes(dir) || packConfig.pack.includes(filePath)
+      );
+
+      if (!shouldPack) {
+        console.info(`Skipping ${filePath}: appears to be a per-frame manifest (frameSequences/sheets) — no packer->phaser conversion required`);
+        return;
+      }
+
+      // Attempt to pack this directory using the texturepacker CLI.
+      const tpAvailable = (() => {
+        try {
+          const v = child_process.execSync('texturepacker --version', { stdio: 'pipe' }).toString().trim();
+          return v || true;
+        } catch (err) {
+          return false;
+        }
+      })();
+
+      const outBase = path.join(dir, base.replace(/\.json$/i, ''));
+      const outJson = `${outBase}.phaser.json`;
+      const outPng = `${outBase}.png`;
+
+      if (!tpAvailable) {
+        console.info(`Pack config requests packing for ${filePath} but 'texturepacker' CLI was not found.`);
+        console.info(`To pack manually run (from project root):`);
+        console.info(`  texturepacker --format phaser --data "${outJson}" --sheet "${outPng}" "${dir}"`);
+        console.info(`Build will continue and runtime will use the per-frame manifest.`);
+        return;
+      }
+
+      try {
+        console.log(`Running texturepacker for ${filePath} -> ${outJson}, ${outPng}`);
+        child_process.execSync(`texturepacker --format phaser --data "${outJson}" --sheet "${outPng}" "${dir}"`, { stdio: 'inherit' });
+        console.log(`Packed ${filePath} -> ${path.basename(outJson)} (${filePath})`);
+      } catch (err) {
+        console.error(`texturepacker failed for ${filePath}: ${err.message}`);
+      }
+
+      return;
+    }
+
     console.error(`Skipping ${filePath}: missing "frames" array`);
     return;
   }

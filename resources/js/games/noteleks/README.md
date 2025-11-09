@@ -1,240 +1,192 @@
-# Noteleks Heroes Beyond Light - Modular Structure
+# Noteleks Heroes - Phaser 3 Game
 
-## Overview
+> A 2D action platformer built with Phaser 3 and WebP frame animations
 
-The Noteleks game has been refactored from a single monolithic script into a clean, modular architecture with separate classes and responsibilities.
+## 🎮 Current Implementation
 
-## File Structure
+### Technology Stack
+- **Phaser 3.70.0** - Game engine
+- **WebP Animations** - 356x356 pixel frame-based animations
+- **Component-Based Architecture** - Modular entity system
+- **Direct Asset Loading** - No manifest dependency
+
+### Game Features
+- **Player Character**: Animated skeleton with idle, run, attack, and jump states
+- **Physics System**: Arcade physics with collision detection
+- **Input Controls**: WASD/Arrow keys for movement, Space for attack
+- **Debug Mode**: Visual collision boundaries (green outlines)
+
+## 📁 Project Structure
 
 ```
-resources/js/games/noteleks/
-├── main.js           # Entry point and DOM integration
-├── NoteleksGame.js   # Game initialization and configuration
-├── GameScene.js      # Main game scene logic
-├── Player.js         # Player character management
-├── Enemy.js          # Enemy types and AI behavior
-├── WeaponManager.js  # Weapon/projectile system
-└── GameUI.js         # User interface management
-```
-
-## Class Responsibilities
-
-### `main.js` - GameMain Class
-
-- Entry point for the entire game
-- Handles DOM integration and button events
-- Manages game lifecycle (initialization, cleanup)
-- Error handling and user feedback
-
-### `NoteleksGame.js` - NoteleksGame Class
-
-- Phaser game configuration and setup
-- Spine plugin integration
-- Game instance management
-- High-level game controls (pause, restart)
-
-### `GameScene.js` - GameScene Class
-
-- Main Phaser scene implementation
-- Game loop and state management
-- Collision detection setup
-- Enemy spawning and progression
-- Input handling coordination
-
-### `Player.js` - Player Class
-
-- Noteleks character implementation
-- Movement and physics
-- Spine 2D animation management
-- Attack mechanics
-- Damage handling and visual effects
-
-### `Enemy.js` - Enemy Class
-
-- Multiple enemy types (zombie, skeleton, ghost, boss)
-- Individual AI behaviors per enemy type
-- Health and damage systems
-- Scoring on destruction
-
-### `WeaponManager.js` - WeaponManager Class
-
-- Weapon/projectile creation and management
-- Multiple weapon types (dagger, fireball, arrow, magic_bolt)
-- Hit detection and effects
-- Weapon cleanup and optimization
-
-### `GameUI.js` - GameUI Class
-
-- Score and health display
-- Health bar visualization
-- Game over screen
-- Pause screen
-- DOM element synchronization
-
-## Key Features
-
-### Modular Design
-
-- Clean separation of concerns
-- Easy to extend and maintain
-- Individual class testing possible
-- Reusable components
-
-### Enhanced Enemy System
-
-- Multiple enemy types with unique behaviors
-- Progressive difficulty based on score
-- Boss enemies at higher scores
-- Intelligent AI patterns
-
-### Improved Weapon System
-
-- Multiple weapon types
-- Visual hit effects
-- Proper cleanup and optimization
-- Mouse/touch targeting support
-
-### Professional UI Management
-
-- In-game overlay UI
-- Health bar with color coding
-- Animated game over screen
-- Proper pause functionality
-
-### Error Handling
-
-- Graceful fallbacks for missing assets
-- User-friendly error messages
-- Debug information for troubleshooting
-- Spine animation error recovery
-
-## Usage
-
-The game now loads via ES6 modules through Vite:
-
-```html
-# Noteleks Game - Modular Architecture ## Overview The Noteleks game has been completely refactored from a monolithic structure to a modular,
-component-based architecture using the Entity Component System (ECS) pattern with manager classes. ## Architecture ### Core Structure
-```
-
-resources/js/games/noteleks/
-├── main-modular.js # Entry point
-├── NoteleksGameModular.js # Main game class
+noteleks/
+├── main-modular.js              # Entry point
+├── NoteleksGameModular.js       # Main game class
 ├── config/
-│ └── GameConfig.js # Centralized configuration
+│   └── GameConfig.js           # Game configuration
 ├── entities/
-│ ├── GameObject.js # Base entity class
-│ ├── Player.js # Player entity with components
-│ └── Enemy.js # Enemy entity with components
+│   └── Player.js               # Player entity with simplified controls
 ├── components/
-│ ├── HealthComponent.js # Health management
-│ ├── MovementComponent.js # Movement and physics
-│ ├── InputComponent.js # Input handling
-│ ├── AttackComponent.js # Attack system
-│ └── AIComponent.js # AI behavior
+│   ├── HealthComponent.js      # Health management
+│   ├── MovementComponent.js    # Physics movement
+│   ├── InputComponent.js       # Input handling
+│   ├── AttackComponent.js      # Combat system
+│   └── PhysicsComponent.js     # Physics body setup
 ├── managers/
-│ ├── AssetManager.js # Asset loading and management
-│ ├── InputManager.js # Global input handling
-│ ├── EnemyManager.js # Enemy spawning and lifecycle
-│ └── PlatformManager.js # Platform generation
+│   ├── EnemyManager.js         # Enemy spawning
+│   ├── InputManager.js         # Input coordination
+│   └── PlatformManager.js      # Platform generation
 ├── scenes/
-│ └── GameScene.js # Main game scene
-├── utils/
-│ └── MathUtils.js # Mathematical utilities
-└── factories/
-└── GameObjectFactory.js # Object creation factory
-
+│   ├── GameScene.js            # Main gameplay scene
+│   └── LoadingScene.js         # Asset loading with animation creation
+└── utils/
+    └── AssetManagerSimple.js   # Simplified asset management
 ```
 
-## Key Features
+## 🎯 Animation System
 
-### 1. Component-Based Entities
+### WebP Frame Structure
+- **Skeleton-Idle**: 16 frames (00-15) - 8 FPS, loops
+- **Skeleton-Run**: 16 frames (00-15) - 12 FPS, loops  
+- **Skeleton-Attack1**: 3 frames (0-2) - 8 FPS, no loop
+- **Skeleton-Jump**: 1 frame (0) - Static pose
+- **Skeleton-JumpAttack**: 8 frames (0-7) - For future use
+
+### Animation Loading Process
+1. **LoadingScene** loads individual WebP files directly
+2. **createAnimations()** builds Phaser animations from loaded frames
+3. **Player** uses animation keys: `player-idle`, `player-run`, `player-attack`, `player-jump`
+
+## ⚙️ Configuration
+
+### Player Settings (GameConfig.js)
+```javascript
+player: {
+    startPosition: { x: 400, y: 300 },
+    speed: 160,           // Movement speed
+    jumpPower: 330,       // Jump velocity
+    scale: 0.3,          // Sprite scale (356x356 → ~107x107)
+    health: 100,
+    maxHealth: 100
+}
+```
+
+### Physics Settings
+```javascript
+physics: {
+    gravity: { x: 0, y: 300 },
+    debug: true          // Shows collision boundaries
+}
+```
+
+## 🎮 Controls
+
+- **A/D or Left/Right Arrow**: Move left/right
+- **W or Up Arrow**: Jump
+- **Space**: Attack (planned)
+- **Escape**: Return to home page
+
+## 🔧 Development Setup
+
+### Asset Requirements
+- WebP animation frames in `/public/games/noteleks/sprites/`
+- Naming convention: `Skeleton-[Action]_[FrameNumber].webp`
+- Recommended size: 356x356 pixels per frame
+
+### Running the Game
+1. Navigate to `https://studio.test/noteleks`
+2. Game loads automatically through Vite dev server
+3. Debug mode shows green collision boundaries
+
+## 🏗️ Architecture Details
+
+### Entity-Component System
 - **GameObject**: Base class with component management
-- **Player**: Composed of health, movement, input, and attack components
-- **Enemy**: Composed of health, movement, and AI components
+- **Components**: Modular behaviors (Health, Movement, Physics, etc.)
+- **Player**: Main entity using simplified direct input controls
 
-### 2. Manager Pattern
-- **AssetManager**: Centralized asset loading and caching
-- **InputManager**: Global input state management
-- **EnemyManager**: Enemy spawning, AI coordination, and collision handling
-- **PlatformManager**: Dynamic platform generation
+### Simplified Input System
+```javascript
+// Direct keyboard input in Player.update()
+const keys = this.scene.input.keyboard.addKeys('W,S,A,D,UP,DOWN,LEFT,RIGHT');
 
-### 3. Configuration-Driven Design
-- **GameConfig.js**: Single source of truth for all game settings
-- Easily tweakable gameplay parameters
-- Organized by system (player, enemies, weapons, UI, assets)
-
-### 4. Modular Components
-- **HealthComponent**: Damage handling and health management
-- **MovementComponent**: Physics-based movement with platformer mechanics
-- **InputComponent**: Keyboard input processing
-- **AttackComponent**: Weapon firing and combat mechanics
-- **AIComponent**: Enemy behavior and pathfinding
-
-## Benefits of the New Architecture
-
-1. **Maintainability**: Clear separation of concerns
-2. **Extensibility**: Easy to add new entities, components, or managers
-3. **Testability**: Isolated components can be tested independently
-4. **Performance**: Efficient component-based updates
-5. **Configuration**: Centralized settings for easy tweaking
-
-## Usage
-
-The game is now initialized through `main-modular.js` which creates a Phaser game instance with the modular architecture. All legacy files have been removed and the build system updated accordingly.
-
-## Development
-
-To add new features:
-1. Create new components in the `components/` folder
-2. Add new entities in the `entities/` folder using the GameObject base class
-3. Create managers for complex systems in the `managers/` folder
-4. Update GameConfig.js with new configuration options
-5. Use the GameObjectFactory for consistent object creation
-
-## Build System
-
-The game is built using Vite and imported in the Laravel Blade template. The entry point is `main-modular.js` which initializes the entire modular system.
+if (keys.LEFT.isDown || keys.A.isDown) {
+    this.sprite.body.setVelocityX(-160);
+    this.playAnimation('run', true);
+}
 ```
 
-All game logic is automatically initialized when the DOM loads, with proper cleanup on page unload.
+### Physics Body Configuration
+- **Visual Size**: 356x356 scaled to ~107x107 pixels
+- **Collision Body**: 100x150 pixels, centered on character
+- **Body Offset**: (128, 180) to align with character sprite
 
-## Development
+## 🐛 Current Status
 
-### Adding New Enemy Types
+### ✅ Working Features
+- Player movement and jumping
+- WebP frame animations (idle, run, jump)
+- Physics collision with world bounds
+- Debug visualization of collision boxes
+- Proper scaling and positioning
 
-1. Add new type to `Enemy.js` configuration objects
-2. Implement AI behavior in `Enemy.js`
-3. Add spawn logic in `GameScene.js`
+### 🔄 Recent Changes
+- Removed Spine animation system dependency
+- Simplified to direct WebP frame loading
+- Streamlined player input controls
+- Fixed physics body sizing issues
+- Removed manifest.json dependency
 
-### Adding New Weapons
+### 🎯 Next Steps
+- Implement attack animation and mechanics
+- Add enemy spawning and AI
+- Create platform/level geometry
+- Add sound effects and music
+- Implement game UI (health, score)
 
-1. Add weapon configuration to `WeaponManager.js`
-2. Create placeholder texture in `GameScene.js`
-3. Implement any special behavior
+## 📝 Technical Notes
 
-### Extending UI
+### Animation Frame Loading
+```javascript
+// LoadingScene loads frames directly
+for (let i = 0; i <= 15; i++) {
+    const frameNum = i.toString().padStart(2, '0');
+    this.load.image(`skeleton-idle-${i}`, `/games/noteleks/sprites/Skeleton-Idle_${frameNum}.webp`);
+}
 
-1. Add new elements in `GameUI.js`
-2. Update DOM template if needed
-3. Handle state synchronization
+// Creates Phaser animation
+this.anims.create({
+    key: 'player-idle',
+    frames: idleFrames,
+    frameRate: 8,
+    repeat: -1
+});
+```
 
-## Benefits of Refactoring
+### Physics Body Setup
+```javascript
+// Set collision body smaller than visual sprite
+this.sprite.body.setSize(100, 150);           // Collision size
+this.sprite.body.setOffset(128, 180);         // Center on character
+this.sprite.body.setCollideWorldBounds(true); // Stay in game area
+```
 
-1. **Maintainability**: Each class has a single responsibility
-2. **Extensibility**: Easy to add new features without affecting existing code
-3. **Debugging**: Isolated functionality makes issues easier to track down
-4. **Performance**: Better memory management and cleanup
-5. **Collaboration**: Multiple developers can work on different components
-6. **Testing**: Individual classes can be unit tested
+## 🎨 Asset Guidelines
 
-## Migration Notes
+### WebP Frame Specifications
+- **Resolution**: 356x356 pixels
+- **Format**: WebP for optimal compression
+- **Naming**: `Skeleton-[Action]_[Frame].webp`
+- **Character Positioning**: Centered in frame for consistent scaling
 
-The refactored version maintains full backward compatibility with:
+### Animation Timing
+- **Idle**: 8 FPS for subtle movement
+- **Run**: 12 FPS for smooth motion
+- **Attack**: 8 FPS for clear action frames
+- **Jump**: Static frame, no animation needed
 
-- Existing Spine 2D animations
-- All game mechanics and controls
-- DOM integration and button events
-- Save/scoring system (when implemented)
+---
 
-All functionality from the original monolithic version has been preserved while gaining the benefits of modular architecture.
+**Game URL**: https://studio.test/noteleks  
+**Debug Mode**: Enabled by default (green collision outlines)  
+**Framework**: Phaser 3.70.0 with WebGL rendering

@@ -17,7 +17,7 @@ class Player extends GameObject {
         // Animation states
         this._isJumping = false;
         this._isAttacking = false;
-        this._currentAnim = null;
+        this._currentSpineAnim = null;
         
         // Create player and setup components
         this.createPlayer();
@@ -25,67 +25,68 @@ class Player extends GameObject {
     }
 
     createPlayer() {
-        // Use new 356x356 WebP sprite
-        this.sprite = this.scene.physics.add.sprite(this.x, this.y, 'skeleton-idle-0');
-        console.log('[Player] 356x356 WebP sprite created');
-        
-        this.sprite.playerRef = this;
-        this.sprite.setOrigin(0.5, 1);
-        this.sprite.setScale(GameConfig.player.scale);
-        this.sprite.setVisible(true);
-        this.sprite.setDepth(100);
-        
-        // Ensure physics body is properly configured
-        if (this.sprite.body) {
-            this.sprite.body.setCollideWorldBounds(true);
-            this.sprite.body.setBounce(0);
-            // Set physics body to match full sprite size
-            this.sprite.body.setSize(356, 356);
-            // No offset needed - matches sprite exactly
+        // Create physics sprite for collisions
+        try {
+            this.sprite = this.scene.physics.add.sprite(this.x, this.y, 'skeleton');
+            this.sprite.playerRef = this;
+            this.sprite.setOrigin(0.5, 1);
+            this.sprite.setScale(GameConfig.player.scale);
+            this.sprite.setVisible(true);
+        } catch (e) {
+            console.warn('[Player] Failed to create physics sprite:', e.message);
+            return;
         }
-        
-        // Start idle animation if sprite supports it
-        if (this.sprite.play) {
-            this.playAnimation('idle', true);
+
+        // Try to create Spine display
+        this.spine = null;
+        this.createSpineDisplay();
+    }
+
+    createSpineDisplay() {
+        try {
+            // Check if Spine plugin is available
+            if (!this.scene.add.spine) {
+                console.warn('[Player] Spine plugin not available, using fallback');
+                return;
+            }
+
+            // Create Spine display
+            this.spine = this.scene.add.spine(this.x, this.y, 'noteleks-data', 'noteleks-data');
+            
+            if (this.spine) {
+                this.spine.setOrigin(0.5, 1);
+                this.spine.setScale(GameConfig.player.scale);
+                this.spine.setDepth(500);
+                
+                // Set initial animation
+                this.setSpineAnimation('idle', true);
+                
+                // Hide physics sprite since we have Spine
+                this.sprite.setVisible(false);
+                
+                console.log('[Player] Spine display created successfully');
+            }
+        } catch (e) {
+            console.warn('[Player] Failed to create Spine display:', e.message);
         }
     }
 
-    playAnimation(name, loop = true) {
-        if (!this.sprite) return;
+    setSpineAnimation(name, loop = true) {
+        if (!this.spine) return;
         
         try {
-            if (this._currentAnim === name) return;
+            if (this._currentSpineAnim === name) return;
             
-            // Try to play WebP animations on sprites
-            if (this.sprite.play && typeof this.sprite.play === 'function') {
-                // Map game animation names to player animation names
-                let animKey = null;
-                if (name === 'idle') animKey = 'player-idle';
-                else if (name === 'run') animKey = 'player-run';
-                else if (name === 'attack') animKey = 'player-attack';
-                else if (name === 'jump') animKey = 'player-jump';
-                
-                if (animKey && this.scene.anims.exists(animKey)) {
-                    this.sprite.play(animKey);
-                    this._currentAnim = name;
-                    console.log('[Player] Playing animation:', animKey);
-                } else {
-                    console.warn('[Player] Animation not found:', animKey);
-                }
-            } else {
-                // For rectangles, just change color to indicate animation state
-                if (name === 'attack') {
-                    this.sprite.setFillStyle(0xffff00); // Yellow for attack
-                    setTimeout(() => this.sprite.setFillStyle(0xff0000), 300); // Back to red
-                } else if (name === 'run') {
-                    this.sprite.setFillStyle(0x00ffff); // Cyan for running
-                } else {
-                    this.sprite.setFillStyle(0xff0000); // Red for idle
-                }
-                this._currentAnim = name;
+            // Try different animation API patterns
+            if (this.spine.animationState && typeof this.spine.animationState.setAnimation === 'function') {
+                this.spine.animationState.setAnimation(0, name, loop);
+                this._currentSpineAnim = name;
+            } else if (typeof this.spine.setAnimation === 'function') {
+                this.spine.setAnimation(0, name, loop);
+                this._currentSpineAnim = name;
             }
         } catch (e) {
-            console.warn('[Player] Failed to play animation:', name, e.message);
+            console.warn('[Player] Failed to set animation:', name, e.message);
         }
     }
 
@@ -96,6 +97,8 @@ class Player extends GameObject {
         this.addComponent('physics', new PhysicsComponent({
             bounce: 0.2,
             collideWorldBounds: true,
+            bodyWidth: 32,
+            bodyHeight: 48,
         }));
 
         // Add movement component
@@ -130,32 +133,38 @@ class Player extends GameObject {
 
     update(cursors, wasd, spaceKey) {
         if (this.scene.gameState !== 'playing') return;
-        if (!this.sprite || !this.sprite.body) return;
 
-        // Simple direct controls
-        const keys = this.scene.input.keyboard.addKeys('W,S,A,D,UP,DOWN,LEFT,RIGHT');
-        
-        // Reset velocity
-        this.sprite.body.setVelocityX(0);
-        
-        // Left/Right movement
-        if (keys.LEFT.isDown || keys.A.isDown) {
-            this.sprite.body.setVelocityX(-160);
-            this.sprite.setFlipX(true); // Face left
-            this.playAnimation('run', true);
-        } else if (keys.RIGHT.isDown || keys.D.isDown) {
-            this.sprite.body.setVelocityX(160);
-            this.sprite.setFlipX(false); // Face right
-            this.playAnimation('run', true);
-        } else {
-            this.playAnimation('idle', true);
+        // Check if this is being called from SystemManager with deltaTime only
+        if (typeof cursors === 'number' && wasd === undefined && spaceKey === undefined) {
+            super.update(cursors);
+            return;
         }
-        
-        // Jump
-        if ((keys.UP.isDown || keys.W.isDown) && this.sprite.body.touching.down) {
-            this.sprite.body.setVelocityY(-330);
-            this.playAnimation('jump', false);
+
+        // Defensive check for input objects
+        if (!cursors || !wasd || !spaceKey) {
+            return;
         }
+
+        // Update all components first
+        super.update(16); // 16ms for 60fps
+
+        // Handle input
+        const inputComponent = this.getComponent('input');
+        const movementComponent = this.getComponent('movement');
+
+        if (inputComponent && movementComponent) {
+            const inputState = {
+                left: cursors.left?.isDown || wasd.A?.isDown || false,
+                right: cursors.right?.isDown || wasd.D?.isDown || false,
+                up: cursors.up?.isDown || wasd.W?.isDown || false,
+                attack: false, // Mouse input handled separately
+            };
+
+            this.processInputState(inputState, inputComponent, movementComponent);
+        }
+
+        // Sync visual position
+        this.syncVisual();
     }
 
     updateWithInputState(inputState) {
@@ -177,8 +186,22 @@ class Player extends GameObject {
     }
 
     syncVisual() {
-        // No additional sync needed for sprite-only mode
-        // Sprite position and flip are handled by physics and movement components
+        if (!this.spine) return;
+
+        try {
+            // Sync position
+            this.spine.x = this.sprite.x;
+            this.spine.y = this.sprite.y;
+
+            // Sync flip
+            if (this.sprite.flipX) {
+                this.spine.scaleX = -Math.abs(GameConfig.player.scale);
+            } else {
+                this.spine.scaleX = Math.abs(GameConfig.player.scale);
+            }
+        } catch (e) {
+            console.warn('[Player] Failed to sync visual:', e.message);
+        }
     }
 
     processInputState(inputState, inputComponent, movementComponent) {
@@ -193,7 +216,7 @@ class Player extends GameObject {
             const jumped = movementComponent.jump();
             if (jumped) {
                 this._isJumping = true;
-                this.playAnimation('jump', false);
+                this.setSpineAnimation('jump', false);
                 
                 // Clear jumping state after animation
                 setTimeout(() => {
@@ -203,16 +226,25 @@ class Player extends GameObject {
         }
         
         // Handle movement animations
-        if (inputState.left) {
-            movementComponent.moveLeft();
-            this.playAnimation('run', true);
-        } else if (inputState.right) {
-            movementComponent.moveRight();
-            this.playAnimation('run', true);
-        } else {
-            movementComponent.stopHorizontal();
-            if (!this._isJumping && !isJumping && !this._isAttacking) {
-                this.playAnimation('idle', true);
+        if (!this._isJumping && !isJumping && !this._isAttacking) {
+            if (inputState.left) {
+                movementComponent.moveLeft();
+                this.setSpineAnimation('run', true);
+            } else if (inputState.right) {
+                movementComponent.moveRight();
+                this.setSpineAnimation('run', true);
+            } else {
+                movementComponent.stopHorizontal();
+                this.setSpineAnimation('idle', true);
+            }
+        } else if (!this._isJumping && !this._isAttacking) {
+            // Allow horizontal movement while in air
+            if (inputState.left) {
+                movementComponent.moveLeft();
+            } else if (inputState.right) {
+                movementComponent.moveRight();
+            } else {
+                movementComponent.stopHorizontal();
             }
         }
 
@@ -230,12 +262,12 @@ class Player extends GameObject {
             
             // Play attack animation
             this._isAttacking = true;
-            this.playAnimation('attack', false);
+            this.setSpineAnimation('attack', false);
             
             // Clear attacking state after animation
             setTimeout(() => {
                 this._isAttacking = false;
-                this.playAnimation('idle', true);
+                this.setSpineAnimation('idle', true);
             }, 800);
 
             // Create melee hitbox
@@ -343,7 +375,7 @@ class Player extends GameObject {
         // Reset animation states
         this._isJumping = false;
         this._isAttacking = false;
-        this.playAnimation('idle', true);
+        this.setSpineAnimation('idle', true);
     }
 }
 

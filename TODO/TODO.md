@@ -13,8 +13,8 @@ Add or update items as you make progress.
 
 ## Immediate next tasks (for you)
 
-- [ ] Run a hard-refresh and verify the dev server is serving the updated modules (DevTools -> Network -> Disable cache).
-- [ ] If old `public/build` bundles still serve, consider removing or renaming them to force dev-mode imports.
+                                                                                 
+
 - [ ] Inspect `window._NOTELEKS_ASSET_PROBE` in the browser console after load to verify textures and animations.
 
 ## Refactor tasks

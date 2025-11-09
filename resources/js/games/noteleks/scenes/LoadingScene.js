@@ -1,6 +1,6 @@
 /* global Phaser */
 import GameConfig from '../config/GameConfig.js';
-import AssetManager from '../utils/AssetManager.js';
+import AssetManager from '../utils/AssetManagerSimple.js';
 
 class LoadingScene extends Phaser.Scene {
     constructor() {
@@ -17,57 +17,102 @@ class LoadingScene extends Phaser.Scene {
             this._progressText = this.add.text(w / 2, h / 2, 'Loading...', { font: '16px Arial', fill: '#ffffff' }).setOrigin(0.5);
         } catch (e) { /* ignore */ }
 
-        // Two-stage preload:
-        // 1) Fetch the manifest and any minimal UI assets
-        // 2) When manifest is available, enqueue all frame WebP assets and
-        //    spine assets, then start the loader again so the LoadingScene
-        //    remains visible while the full asset set downloads.
+        // Load WebP animation frames directly
         try {
-            const manifestCacheKey = 'noteleks-sprites-manifest';
-            const manifestUrl = '/games/noteleks/sprites/manifest.json';
-
-            // Stage 1: enqueue manifest (and keep the loading UI)
-            try { this.load.json(manifestCacheKey, manifestUrl); } catch (e) {}
-
-            // Show progress for both stages
-            try { this.load.on('progress', (p) => { try { if (this._progressText) this._progressText.setText('Loading: ' + Math.round(p * 100) + '%'); } catch (e) {} }); } catch (e) {}
-
-            // When the manifest file is loaded, queue the rest of the assets
-            try {
-                this.load.once('filecomplete-json-' + manifestCacheKey, () => {
-                    try {
-                        const mf = (this.cache && this.cache.json && typeof this.cache.json.get === 'function') ? this.cache.json.get(manifestCacheKey) : null;
-                        // Synchronously queue manifest-declared assets
-                        try { AssetManager.queueAssetsFromManifest(this, mf); } catch (e) { console.warn('[LoadingScene] queueAssetsFromManifest failed', e && e.message); }
-
-                        // Also queue Spine raw assets if configured
-                        if (GameConfig && GameConfig.useSpine && GameConfig.assets && GameConfig.assets.spine) {
-                            try { this.load.text('noteleks-atlas-text', GameConfig.assets.spine.atlas); } catch (e) {}
-                            try { this.load.json('noteleks-skeleton-data', GameConfig.assets.spine.json); } catch (e) {}
-                            try { this.load.image('noteleks-texture', GameConfig.assets.spine.png); } catch (e) {}
-                        }
-
-                        // Start the loader for stage 2 (assets enqueued above)
-                        try {
-                            if (this.load && !this.load.isLoading) {
-                                this.load.start();
-                            }
-                        } catch (e) { /* ignore */ }
-
-                        // When second-stage loading completes, start GameScene
-                        try {
-                            this.load.once('complete', () => {
-                                try { this.scene.start('GameScene'); } catch (e) { console.warn('[LoadingScene] Failed to start GameScene', e && e.message); }
-                            });
-                        } catch (e) { /* ignore */ }
-                    } catch (e) { console.warn('[LoadingScene] manifest handler failed', e && e.message); }
-                });
-            } catch (e) { console.warn('[LoadingScene] Failed to register manifest filecomplete handler', e && e.message); }
-        } catch (e) { console.warn('[LoadingScene] AssetManager load failed', e && e.message); }
+            // Load idle animation frames
+            for (let i = 0; i <= 15; i++) {
+                const frameNum = i.toString().padStart(2, '0');
+                this.load.image(`skeleton-idle-${i}`, `/games/noteleks/sprites/Skeleton-Idle_${frameNum}.webp`);
+            }
+            
+            // Load run animation frames
+            for (let i = 0; i <= 15; i++) {
+                const frameNum = i.toString().padStart(2, '0');
+                this.load.image(`skeleton-run-${i}`, `/games/noteleks/sprites/Skeleton-Run_${frameNum}.webp`);
+            }
+            
+            // Load attack animations
+            for (let i = 0; i <= 2; i++) {
+                this.load.image(`skeleton-attack1-${i}`, `/games/noteleks/sprites/Skeleton-Attack1_${i}.webp`);
+            }
+            
+            // Load jump animation
+            this.load.image('skeleton-jump-0', '/games/noteleks/sprites/Skeleton-Jump_0.webp');
+            
+            // Load jump attack animation
+            for (let i = 0; i <= 7; i++) {
+                this.load.image(`skeleton-jumpattack-${i}`, `/games/noteleks/sprites/Skeleton-JumpAttack_${i}.webp`);
+            }
+            
+            // Show progress
+            this.load.on('progress', (p) => {
+                if (this._progressText) this._progressText.setText('Loading: ' + Math.round(p * 100) + '%');
+            });
+            
+            // When loading completes, create animations and start GameScene
+            this.load.once('complete', () => {
+                this.createAnimations();
+                this.scene.start('GameScene');
+            });
+        } catch (e) {
+            console.warn('[LoadingScene] WebP loading failed', e.message);
+        }
     }
 
     create() {
         // nothing — transition happens on loader complete
+    }
+    
+    createAnimations() {
+        try {
+            // Create idle animation
+            const idleFrames = [];
+            for (let i = 0; i <= 15; i++) {
+                idleFrames.push({ key: `skeleton-idle-${i}` });
+            }
+            this.anims.create({
+                key: 'player-idle',
+                frames: idleFrames,
+                frameRate: 8,
+                repeat: -1
+            });
+            
+            // Create run animation
+            const runFrames = [];
+            for (let i = 0; i <= 15; i++) {
+                runFrames.push({ key: `skeleton-run-${i}` });
+            }
+            this.anims.create({
+                key: 'player-run',
+                frames: runFrames,
+                frameRate: 12,
+                repeat: -1
+            });
+            
+            // Create attack animation
+            const attackFrames = [];
+            for (let i = 0; i <= 2; i++) {
+                attackFrames.push({ key: `skeleton-attack1-${i}` });
+            }
+            this.anims.create({
+                key: 'player-attack',
+                frames: attackFrames,
+                frameRate: 8,
+                repeat: 0
+            });
+            
+            // Create jump animation
+            this.anims.create({
+                key: 'player-jump',
+                frames: [{ key: 'skeleton-jump-0' }],
+                frameRate: 1,
+                repeat: 0
+            });
+            
+            console.log('[LoadingScene] Created WebP animations');
+        } catch (e) {
+            console.error('[LoadingScene] Failed to create animations:', e.message);
+        }
     }
 }
 

@@ -77,7 +77,12 @@ class HealthComponent extends Component {
      */
     applyDamageEffect() {
         if (this.gameObject.sprite) {
-            this.gameObject.sprite.setTint(0xff0000);
+            // Handle both sprites and rectangles
+            if (typeof this.gameObject.sprite.setTint === 'function') {
+                this.gameObject.sprite.setTint(0xff0000);
+            } else if (typeof this.gameObject.sprite.setFillStyle === 'function') {
+                this.gameObject.sprite.setFillStyle(0xffffff); // White flash for rectangles
+            }
 
             // Clear effect after invulnerability period
             if (this.gameObject.scene) {
@@ -93,8 +98,13 @@ class HealthComponent extends Component {
      */
     clearVisualEffects() {
         if (this.gameObject.sprite) {
-            this.gameObject.sprite.setTint(0xffffff);
-            this.gameObject.sprite.setAlpha(1.0);
+            // Handle both sprites and rectangles
+            if (typeof this.gameObject.sprite.setTint === 'function') {
+                this.gameObject.sprite.setTint(0xffffff);
+                this.gameObject.sprite.setAlpha(1.0);
+            } else if (typeof this.gameObject.sprite.setFillStyle === 'function') {
+                this.gameObject.sprite.setFillStyle(0xff0000); // Back to red for rectangles
+            }
         }
     }
 

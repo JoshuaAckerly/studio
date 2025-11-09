@@ -1,10 +1,12 @@
-/**
+/*
  * Simplified AssetManager
  *
- * Only supports one animation upload method: manifest-driven per-frame
- * WebP sequences. This reduces runtime complexity and avoids probing/sidecar
- * behaviors. Spine-related helpers are intentionally no-ops when Spine is
- * not enabled via GameConfig.useSpine.
+ * Single supported flow: manifest-driven per-frame WebP sequences.
+ * - Loads images listed in manifest.frameSequences
+ * - Creates Phaser animations keyed by a normalized name derived from the manifest key
+ * - Creates a simple alias map so existing code referencing legacy keys still works
+ *
+ * This file intentionally omits legacy sidecar/spritesheet/spine self-heal logic.
  */
 import GameConfig from '../config/GameConfig.js';
 
@@ -21,17 +23,16 @@ export class AssetManager {
                         if (scene.textures.exists(key)) return;
                         const graphics = scene.add.graphics();
                         graphics.fillStyle(textureConfig.color);
-                        graphics.fillRect(0, 0, textureConfig.width || 32, textureConfig.height || 32);
-                        graphics.generateTexture(key, textureConfig.width || 32, textureConfig.height || 32);
+                        graphics.fillRect(0, 0, textureConfig.width, textureConfig.height);
+                        graphics.generateTexture(key, textureConfig.width, textureConfig.height);
                         graphics.destroy();
-                        console.log(`[AssetManager] Created placeholder texture '${key}' ${textureConfig.width}x${textureConfig.height}`);
                     }
-                } catch (_e) {
-                    console.error(`[AssetManager] Failed to create texture '${key}':`, _e.message);
+                } catch (e) {
+                    // ignore per-texture failures
                 }
             });
         } catch (e) {
-            console.error('[AssetManager] createPlaceholderTextures failed:', e.message);
+            // ignore
         }
     }
 
@@ -61,8 +62,7 @@ export class AssetManager {
                         .replace(/_$/, '')
                         .replace(/[^a-zA-Z0-9]+/g, '-')
                         .toLowerCase();
-                } catch (_e) {
-                    void 0;
+                } catch (e) {
                     return null;
                 }
             };
@@ -88,14 +88,12 @@ export class AssetManager {
                             }
                             const key = `${animKey}-${i}`;
                             scene.load.image(key, fullUrl);
-                        } catch (_e) {
+                        } catch (e) {
                             // ignore per-file enqueue failures
-                            void 0;
                         }
                     }
-                } catch (_e) {
+                } catch (e) {
                     // ignore per-sequence failures
-                    void 0;
                 }
             }
 
@@ -133,7 +131,7 @@ export class AssetManager {
                                         const srcImg = scene.textures.get(firstKey).getSourceImage();
                                         if (srcImg) scene.textures.addImage(animKey, srcImg);
                                     }
-                                } catch (_e) { void 0; }
+                                } catch (e) { }
 
                                 // Create alias if mapped
                                 const alias = aliasMap[animKey];
@@ -144,16 +142,15 @@ export class AssetManager {
                                             const framesCopy = baseAnim.frames.map(f => ({ key: f.textureKey, frame: f.frame ? f.frame.name : f.frame }));
                                             scene.anims.create({ key: alias, frames: framesCopy, frameRate: 12, repeat: -1 });
                                         }
-                                    } catch (_e) { void 0; }
+                                    } catch (e) { }
                                 }
-                            } catch (_e) { void 0; }
+                            } catch (e) { }
                         }
-                    } catch (_e) { void 0; }
+                    } catch (e) { }
                 });
-            } catch (_e) { void 0; }
-        } catch (_e) {
+            } catch (e) { }
+        } catch (e) {
             // ignore top-level failures
-            void 0;
         }
     }
 
@@ -167,7 +164,7 @@ export class AssetManager {
         for (let i = 0; i < frameCount; i++) {
             const key = `${animKey}-${i}`;
             frameKeys.push(key);
-            try { scene.load.image(key, `${baseUrl}${i}.webp`); } catch (_e) { void 0; }
+            try { scene.load.image(key, `${baseUrl}${i}.webp`); } catch (e) { }
         }
         try {
             scene.load.once('complete', () => {
@@ -176,9 +173,9 @@ export class AssetManager {
                         const frames = frameKeys.map(k => ({ key: k }));
                         scene.anims.create({ key: animKey, frames, frameRate, repeat });
                     }
-                } catch (_e) { void 0; }
+                } catch (e) { }
             });
-        } catch (_e) { void 0; }
+        } catch (e) { }
     }
 
     /**
@@ -191,13 +188,13 @@ export class AssetManager {
         try {
             if (GameConfig && GameConfig.useSpine === false) return false;
             return false;
-        } catch (_e) {
+        } catch (e) {
             return false;
         }
     }
 }
 
 // Developer convenience
-try { if (typeof window !== 'undefined') window.AssetManager = AssetManager; } catch (_e) { void 0; }
+try { if (typeof window !== 'undefined') window.AssetManager = AssetManager; } catch (e) { }
 
 export default AssetManager;
