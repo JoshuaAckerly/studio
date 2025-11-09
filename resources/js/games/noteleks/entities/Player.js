@@ -5,6 +5,7 @@ import MovementComponent from '../components/MovementComponent.js';
 import PhysicsComponent from '../components/PhysicsComponent.js';
 import GameConfig from '../config/GameConfig.js';
 import GameObject from '../core/GameObject.js';
+import AnimationManager from '../managers/AnimationManager.js';
 
 /**
  * Player Entity - Clean Version
@@ -17,7 +18,8 @@ class Player extends GameObject {
         // Animation states
         this._isJumping = false;
         this._isAttacking = false;
-        this._currentAnim = null;
+        this.animationManager = null;
+        this.lastAttackTime = 0;
         
         // Create player and setup components
         this.createPlayer();
@@ -25,9 +27,9 @@ class Player extends GameObject {
     }
 
     createPlayer() {
-        // Use new 356x356 WebP sprite
+        // Use WebP sprite
         this.sprite = this.scene.physics.add.sprite(this.x, this.y, 'skeleton-idle-0');
-        console.log('[Player] 356x356 WebP sprite created');
+        console.log('[Player] WebP sprite created - Dimensions:', this.sprite.width, 'x', this.sprite.height);
         
         this.sprite.playerRef = this;
         this.sprite.setOrigin(0.5, 1);
@@ -39,53 +41,28 @@ class Player extends GameObject {
         if (this.sprite.body) {
             this.sprite.body.setCollideWorldBounds(true);
             this.sprite.body.setBounce(0);
-            // Set physics body to match full sprite size
-            this.sprite.body.setSize(356, 356);
-            // No offset needed - matches sprite exactly
+            // Set physics body to match skeleton body (157x237 sprite)
+            this.sprite.body.setSize(60, 100); // Character-sized collision
+            this.sprite.body.setOffset(48, 120); // Center on skeleton body
         }
         
-        // Start idle animation if sprite supports it
-        if (this.sprite.play) {
-            this.playAnimation('idle', true);
-        }
+        // Initialize animation manager
+        this.animationManager = new AnimationManager(this.sprite, this.scene);
+        this.animationManager.play('player-idle', true);
     }
 
     playAnimation(name, loop = true) {
-        if (!this.sprite) return;
+        if (!this.animationManager) return;
         
-        try {
-            if (this._currentAnim === name) return;
-            
-            // Try to play WebP animations on sprites
-            if (this.sprite.play && typeof this.sprite.play === 'function') {
-                // Map game animation names to player animation names
-                let animKey = null;
-                if (name === 'idle') animKey = 'player-idle';
-                else if (name === 'run') animKey = 'player-run';
-                else if (name === 'attack') animKey = 'player-attack';
-                else if (name === 'jump') animKey = 'player-jump';
-                
-                if (animKey && this.scene.anims.exists(animKey)) {
-                    this.sprite.play(animKey);
-                    this._currentAnim = name;
-                    console.log('[Player] Playing animation:', animKey);
-                } else {
-                    console.warn('[Player] Animation not found:', animKey);
-                }
-            } else {
-                // For rectangles, just change color to indicate animation state
-                if (name === 'attack') {
-                    this.sprite.setFillStyle(0xffff00); // Yellow for attack
-                    setTimeout(() => this.sprite.setFillStyle(0xff0000), 300); // Back to red
-                } else if (name === 'run') {
-                    this.sprite.setFillStyle(0x00ffff); // Cyan for running
-                } else {
-                    this.sprite.setFillStyle(0xff0000); // Red for idle
-                }
-                this._currentAnim = name;
-            }
-        } catch (e) {
-            console.warn('[Player] Failed to play animation:', name, e.message);
+        // Map game animation names to player animation names
+        let animKey = null;
+        if (name === 'idle') animKey = 'player-idle';
+        else if (name === 'run') animKey = 'player-run';
+        else if (name === 'attack') animKey = 'player-attack';
+        else if (name === 'jump') animKey = 'player-jump';
+        
+        if (animKey) {
+            this.animationManager.play(animKey, loop);
         }
     }
 
@@ -133,7 +110,7 @@ class Player extends GameObject {
         if (!this.sprite || !this.sprite.body) return;
 
         // Simple direct controls
-        const keys = this.scene.input.keyboard.addKeys('W,S,A,D,UP,DOWN,LEFT,RIGHT');
+        const keys = this.scene.input.keyboard.addKeys('W,S,A,D,UP,DOWN,LEFT,RIGHT,SPACE');
         
         // Reset velocity
         this.sprite.body.setVelocityX(0);
@@ -141,20 +118,29 @@ class Player extends GameObject {
         // Left/Right movement
         if (keys.LEFT.isDown || keys.A.isDown) {
             this.sprite.body.setVelocityX(-160);
-            this.sprite.setFlipX(true); // Face left
-            this.playAnimation('run', true);
+            this.sprite.setFlipX(true);
+            this.playAnimation('run');
         } else if (keys.RIGHT.isDown || keys.D.isDown) {
             this.sprite.body.setVelocityX(160);
-            this.sprite.setFlipX(false); // Face right
-            this.playAnimation('run', true);
+            this.sprite.setFlipX(false);
+          
+            this.playAnimation('run');
         } else {
-            this.playAnimation('idle', true);
+            this.playAnimation('idle');
         }
         
         // Jump
         if ((keys.UP.isDown || keys.W.isDown) && this.sprite.body.touching.down) {
             this.sprite.body.setVelocityY(-330);
-            this.playAnimation('jump', false);
+            this.playAnimation('jump');
+        }
+        
+        // Attack with cooldown
+        const currentTime = Date.now();
+        if (keys.SPACE.isDown && currentTime - this.lastAttackTime > 500) {
+            this.playAnimation('attack');
+            this.createMeleeHitbox();
+            this.lastAttackTime = currentTime;
         }
     }
 
@@ -245,15 +231,15 @@ class Player extends GameObject {
 
     createMeleeHitbox() {
         try {
-            const movementComp = this.getComponent('movement');
-            const facing = movementComp?.getFacing() || 'right';
-            const offsetX = facing === 'right' ? 28 : -28;
-            
+            // Determine facing direction from sprite flip
+            const facing = this.sprite.flipX ? 'left' : 'right';
+            const offsetX = facing === 'right' ? 20 : -20; // Move hitbox closer to player
+
             const hx = this.sprite.x + offsetX;
-            const hy = this.sprite.y - (this.sprite.displayHeight / 2);
-            
+            const hy = this.sprite.y - 20; // Position at character's hand/weapon level
+   
             // Create hitbox zone
-            const zone = this.scene.add.zone(hx, hy, 40, 28);
+            const zone = this.scene.add.zone(hx, hy, 50, 100);
             this.scene.physics.world.enable(zone);
             
             if (zone.body) {

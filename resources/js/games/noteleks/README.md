@@ -6,13 +6,15 @@
 
 ### Technology Stack
 - **Phaser 3.70.0** - Game engine
-- **WebP Animations** - 356x356 pixel frame-based animations
+- **WebP Animations** - 157x237 pixel frame-based animations (spear removed)
+- **AnimationManager** - Extracted animation logic from Player class
 - **Component-Based Architecture** - Modular entity system
 - **Direct Asset Loading** - No manifest dependency
 
 ### Game Features
-- **Player Character**: Animated skeleton with idle, run, attack, and jump states
-- **Physics System**: Arcade physics with collision detection
+- **Player Character**: Animated skeleton (no weapon) with idle, run, attack, and jump states
+- **Physics System**: Character-sized collision box (80x120) positioned on skeleton body
+- **Attack System**: Melee hitbox with 500ms cooldown, positioned at hand level
 - **Input Controls**: WASD/Arrow keys for movement, Space for attack
 - **Debug Mode**: Visual collision boundaries (green outlines)
 
@@ -45,17 +47,18 @@ noteleks/
 
 ## 🎯 Animation System
 
-### WebP Frame Structure
+### WebP Frame Structure (Weaponless Skeleton)
 - **Skeleton-Idle**: 16 frames (00-15) - 8 FPS, loops
 - **Skeleton-Run**: 16 frames (00-15) - 12 FPS, loops  
-- **Skeleton-Attack1**: 3 frames (0-2) - 8 FPS, no loop
+- **Skeleton-Attack1**: 3 frames (0-2) - 8 FPS, no loop (hand motion only)
 - **Skeleton-Jump**: 1 frame (0) - Static pose
 - **Skeleton-JumpAttack**: 8 frames (0-7) - For future use
 
-### Animation Loading Process
+### Animation Architecture
 1. **LoadingScene** loads individual WebP files directly
 2. **createAnimations()** builds Phaser animations from loaded frames
-3. **Player** uses animation keys: `player-idle`, `player-run`, `player-attack`, `player-jump`
+3. **AnimationManager** handles sprite animation logic (extracted from Player)
+4. **Player** delegates to AnimationManager for cleaner separation
 
 ## ⚙️ Configuration
 
@@ -91,7 +94,8 @@ physics: {
 ### Asset Requirements
 - WebP animation frames in `/public/games/noteleks/sprites/`
 - Naming convention: `Skeleton-[Action]_[FrameNumber].webp`
-- Recommended size: 356x356 pixels per frame
+- Current size: 157x237 pixels per frame (weaponless skeleton)
+- **Next**: Separate weapon sprites for attachment system
 
 ### Running the Game
 1. Navigate to `https://studio.test/noteleks`

@@ -14,20 +14,28 @@
 - [x] **Animation State Management** - Simplified to single animation system
 - [x] **Memory Leaks** - Cleaned up complex event listeners and timeouts
 
-## Medium Priority Improvements
+## High Priority Refactoring
 
-### 🏗️ Architecture Improvements
-- [ ] **Create SpineManager Class** - Extract all Spine-related functionality from Player.js
-- [ ] **Create AnimationController** - Unified animation system for both Spine and Phaser fallbacks
-- [ ] **Create VisualManager** - Handle all visual synchronization and fallback logic
-- [ ] **Improve Error Handling** - Add consistent error boundaries and recovery mechanisms
+### 🏗️ Code Architecture
+- [x] **Extract Animation Logic** - Created AnimationManager class, removed from Player
+- [ ] **Extract Input System** - Move input handling out of Player.update() to dedicated InputHandler
+- [ ] **Create Weapon System** - Separate weapon sprites that attach to skeleton hand position
+- [ ] **Simplify Component System** - Reduce unused components, focus on essential ones
+- [ ] **Extract Physics Management** - Move collision box logic to dedicated PhysicsManager
+- [ ] **Create Entity Factory** - Centralized entity creation and configuration
+
+### 🗡️ Weapon Implementation
+- [ ] **Spear Weapon Class** - Separate spear sprite with positioning system
+- [ ] **Weapon Attachment** - System to attach weapons to skeleton hand/arm
+- [ ] **Weapon-Specific Attacks** - Different hitboxes and animations per weapon
+- [ ] **Weapon Switching** - Runtime weapon changing capability
+- [ ] **Weapon Configuration** - Data-driven weapon stats and behavior
 
 ### 🎮 Game Features
-- [ ] **Add Save System** - Implement game progress saving
-- [ ] **Add Settings Menu** - Allow players to configure controls, audio, graphics
-- [ ] **Add More Enemy Types** - Expand enemy variety and behaviors
-- [ ] **Add Power-ups** - Implement collectible power-ups and abilities
-- [ ] **Add Level System** - Create multiple levels with increasing difficulty
+- [ ] **Add Enemy System** - Basic enemy spawning and AI
+- [ ] **Add Level Geometry** - Platforms and obstacles
+- [ ] **Add Game UI** - Health bar, score display
+- [ ] **Add Sound Effects** - Audio feedback for actions
 
 ### 🎨 Visual Improvements
 - [ ] **Optimize Asset Loading** - Implement proper asset preloading and caching
@@ -82,6 +90,10 @@
 - [x] **Input system simplification** - Direct keyboard input without complex managers
 - [x] **Debug visualization** - Physics collision boundaries display
 - [x] **Documentation update** - New README reflecting current implementation
+- [x] **AnimationManager extraction** - Separated animation logic from Player class
+- [x] **Weaponless skeleton** - Removed spear from animations for separate weapon system
+- [x] **Attack system** - Melee hitbox with cooldown, positioned at hand level
+- [x] **Collision box optimization** - Character-sized physics body positioned on skeleton
 
 ## Notes
 - Focus on Player.js refactoring first as it's the most complex file
