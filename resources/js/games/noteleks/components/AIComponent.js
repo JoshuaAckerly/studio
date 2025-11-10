@@ -14,10 +14,28 @@ class AIComponent extends Component {
         // Set properties from config
         this.speed = this.config.speed;
         this.detectionRange = this.config.detectionRange;
+        
+        // Stun system for knockback
+        this.isStunned = false;
+        this.stunEndTime = 0;
     }
 
     update(_deltaTime) {
         if (!this.enabled || !this.target) return;
+        
+        // Check if stun has expired
+        if (this.isStunned && Date.now() > this.stunEndTime) {
+            this.isStunned = false;
+        }
+        
+        // Don't move if stunned
+        if (this.isStunned) {
+            const movementComponent = this.gameObject.getComponent('movement');
+            if (movementComponent) {
+                movementComponent.stopHorizontal();
+            }
+            return;
+        }
 
         // Simple AI: just move toward the player
         this.chaseTarget();
@@ -120,6 +138,28 @@ class AIComponent extends Component {
         }
 
         return null;
+    }
+    
+    /**
+     * Stun the enemy for a specified duration
+     * @param {number} duration - Stun duration in milliseconds
+     */
+    stun(duration) {
+        this.isStunned = true;
+        this.stunEndTime = Date.now() + duration;
+        
+        // Stop movement immediately
+        const movementComponent = this.gameObject.getComponent('movement');
+        if (movementComponent) {
+            movementComponent.stopHorizontal();
+        }
+    }
+    
+    /**
+     * Check if enemy is currently stunned
+     */
+    getIsStunned() {
+        return this.isStunned;
     }
 }
 

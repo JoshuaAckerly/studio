@@ -6,15 +6,18 @@
 
 ### Technology Stack
 - **Phaser 3.70.0** - Game engine
-- **WebP Animations** - 157x237 pixel frame-based animations (spear removed)
+- **WebP Animations** - 356x356 pixel frame-based animations (weaponless skeleton)
 - **AnimationManager** - Extracted animation logic from Player class
 - **Component-Based Architecture** - Modular entity system
 - **Direct Asset Loading** - No manifest dependency
 
 ### Game Features
 - **Player Character**: Animated skeleton (no weapon) with idle, run, attack, and jump states
-- **Physics System**: Character-sized collision box (80x120) positioned on skeleton body
-- **Attack System**: Melee hitbox with 500ms cooldown, positioned at hand level
+- **Physics System**: Character-sized collision box (60x100) positioned on skeleton body
+- **Attack System**: Melee hitbox with 500ms cooldown, knockback effects, positioned at hand level
+- **Combat System**: Enemy knockback on hit, increased health values, hit tracking per attack
+- **Enemy System**: Working AI with multiple enemy types (zombie, skeleton, ghost, boss)
+- **Score System**: Points awarded for defeating enemies
 - **Input Controls**: WASD/Arrow keys for movement, Space for attack
 - **Debug Mode**: Visual collision boundaries (green outlines)
 
@@ -86,7 +89,7 @@ physics: {
 
 - **A/D or Left/Right Arrow**: Move left/right
 - **W or Up Arrow**: Jump
-- **Space**: Attack (planned)
+- **Space**: Attack (working with knockback)
 - **Escape**: Return to home page
 
 ## 🔧 Development Setup
@@ -94,7 +97,7 @@ physics: {
 ### Asset Requirements
 - WebP animation frames in `/public/games/noteleks/sprites/`
 - Naming convention: `Skeleton-[Action]_[FrameNumber].webp`
-- Current size: 157x237 pixels per frame (weaponless skeleton)
+- Current size: 356x356 pixels per frame (weaponless skeleton)
 - **Next**: Separate weapon sprites for attachment system
 
 ### Running the Game
@@ -122,31 +125,39 @@ if (keys.LEFT.isDown || keys.A.isDown) {
 
 ### Physics Body Configuration
 - **Visual Size**: 356x356 scaled to ~107x107 pixels
-- **Collision Body**: 100x150 pixels, centered on character
-- **Body Offset**: (128, 180) to align with character sprite
+- **Collision Body**: 60x100 pixels, centered on character
+- **Body Offset**: (48, 120) to align with character sprite
 
 ## 🐛 Current Status
 
 ### ✅ Working Features
-- Player movement and jumping
-- WebP frame animations (idle, run, jump)
-- Physics collision with world bounds
+- Player movement and jumping with direct keyboard controls
+- WebP frame animations (idle, run, jump, attack)
+- Physics collision with world bounds and character-sized collision box
+- Attack system with melee hitbox and enemy knockback
+- Enemy spawning system with AI behavior
+- Enemy health system with balanced values (zombie: 5, skeleton: 7, ghost: 4, boss: 15)
+- Score system with points for defeating enemies
+- Hit tracking system preventing multiple hits per attack
 - Debug visualization of collision boxes
 - Proper scaling and positioning
 
 ### 🔄 Recent Changes
 - Removed Spine animation system dependency
 - Simplified to direct WebP frame loading
-- Streamlined player input controls
-- Fixed physics body sizing issues
+- Streamlined player input controls to direct keyboard handling
+- Fixed physics body sizing issues (60x100 collision box)
 - Removed manifest.json dependency
+- Implemented working enemy system with AI
+- Added score system and hit tracking
+- Extracted AnimationManager from Player class
 
 ### 🎯 Next Steps
-- Implement attack animation and mechanics
-- Add enemy spawning and AI
-- Create platform/level geometry
+- Implement separate weapon system (spear attachment)
+- Create platform/level geometry with jumpable heights
 - Add sound effects and music
-- Implement game UI (health, score)
+- Implement game UI (health bar, better score display)
+- Add particle effects for combat feedback
 
 ## 📝 Technical Notes
 
@@ -170,8 +181,8 @@ this.anims.create({
 ### Physics Body Setup
 ```javascript
 // Set collision body smaller than visual sprite
-this.sprite.body.setSize(100, 150);           // Collision size
-this.sprite.body.setOffset(128, 180);         // Center on character
+this.sprite.body.setSize(60, 100);            // Collision size
+this.sprite.body.setOffset(48, 120);          // Center on character
 this.sprite.body.setCollideWorldBounds(true); // Stay in game area
 ```
 

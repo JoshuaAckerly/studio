@@ -3,7 +3,7 @@
  * Simplified main entry point without extensive logging and debug systems
  */
 
-import GameConfig from './config/GameConfig.clean.js';
+import GameConfig from './config/GameConfig.js';
 
 /**
  * Initialize the game but wait for Phaser and Spine to be available

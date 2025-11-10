@@ -24,6 +24,14 @@ class Enemy extends GameObject {
         this.sprite = this.scene.physics.add.sprite(this.x, this.y, 'enemy');
         this.sprite.setTint(this.config.color);
 
+        // Configure physics body for proper knockback
+        if (this.sprite.body) {
+            this.sprite.body.setCollideWorldBounds(true);
+            this.sprite.body.setBounce(0.1);
+            this.sprite.body.setMass(GameConfig.combat.knockback.enemyMass);
+            this.sprite.body.setDrag(GameConfig.combat.knockback.enemyDrag);
+        }
+
         // Store reference to this enemy class in the sprite
         this.sprite.enemyRef = this;
     }

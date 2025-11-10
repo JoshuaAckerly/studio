@@ -39,7 +39,7 @@ export const GameConfig = {
         },
         types: {
             zombie: {
-                health: 2,
+                health: 5,
                 speed: 60,
                 jumpPower: 200,
                 damage: 20,
@@ -48,7 +48,7 @@ export const GameConfig = {
                 score: 10,
             },
             skeleton: {
-                health: 3,
+                health: 7,
                 speed: 100,
                 jumpPower: 250,
                 damage: 25,
@@ -57,7 +57,7 @@ export const GameConfig = {
                 score: 15,
             },
             ghost: {
-                health: 1,
+                health: 4,
                 speed: 120,
                 jumpPower: 0, // Ghosts float
                 damage: 15,
@@ -66,7 +66,7 @@ export const GameConfig = {
                 score: 20,
             },
             boss: {
-                health: 10,
+                health: 15,
                 speed: 80,
                 jumpPower: 300,
                 damage: 40,
@@ -74,6 +74,17 @@ export const GameConfig = {
                 color: 0xff0000,
                 score: 100,
             },
+        },
+    },
+
+    // Combat settings
+    combat: {
+        knockback: {
+            forceX: 200,        // Horizontal knockback force
+            forceY: -100,       // Vertical knockback force (negative = upward)
+            enemyMass: 1,       // Enemy physics mass
+            enemyDrag: 80,      // Enemy drag for natural deceleration
+            stunDuration: 800,  // Time in ms enemy can't move after knockback
         },
     },
 

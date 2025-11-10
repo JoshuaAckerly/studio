@@ -6,6 +6,7 @@ import PhysicsComponent from '../components/PhysicsComponent.js';
 import GameConfig from '../config/GameConfig.js';
 import GameObject from '../core/GameObject.js';
 import AnimationManager from '../managers/AnimationManager.js';
+import InputHandler from '../managers/InputHandler.js';
 
 /**
  * Player Entity - Clean Version
@@ -19,7 +20,9 @@ class Player extends GameObject {
         this._isJumping = false;
         this._isAttacking = false;
         this.animationManager = null;
-        this.lastAttackTime = 0;
+        
+        // Input handler
+        this.inputHandler = new InputHandler(scene);
         
         // Create player and setup components
         this.createPlayer();
@@ -105,129 +108,21 @@ class Player extends GameObject {
         });
     }
 
-    update(cursors, wasd, spaceKey) {
+    update() {
         if (this.scene.gameState !== 'playing') return;
         if (!this.sprite || !this.sprite.body) return;
 
-        // Simple direct controls
-        const keys = this.scene.input.keyboard.addKeys('W,S,A,D,UP,DOWN,LEFT,RIGHT,SPACE');
-        
-        // Reset velocity
-        this.sprite.body.setVelocityX(0);
-        
-        // Left/Right movement
-        if (keys.LEFT.isDown || keys.A.isDown) {
-            this.sprite.body.setVelocityX(-160);
-            this.sprite.setFlipX(true);
-            this.playAnimation('run');
-        } else if (keys.RIGHT.isDown || keys.D.isDown) {
-            this.sprite.body.setVelocityX(160);
-            this.sprite.setFlipX(false);
-          
-            this.playAnimation('run');
-        } else {
-            this.playAnimation('idle');
+        // Get input state from InputHandler
+        const inputState = this.inputHandler.getInputState();
+        if (inputState) {
+            this.inputHandler.processPlayerInput(this, inputState);
         }
         
-        // Jump
-        if ((keys.UP.isDown || keys.W.isDown) && this.sprite.body.touching.down) {
-            this.sprite.body.setVelocityY(-330);
-            this.playAnimation('jump');
-        }
-        
-        // Attack with cooldown
-        const currentTime = Date.now();
-        if (keys.SPACE.isDown && currentTime - this.lastAttackTime > 500) {
-            this.playAnimation('attack');
-            this.createMeleeHitbox();
-            this.lastAttackTime = currentTime;
-        }
+        // Update InputHandler
+        this.inputHandler.update();
     }
 
-    updateWithInputState(inputState) {
-        if (this.scene.gameState !== 'playing') return;
 
-        // Update all components first
-        super.update(16);
-
-        // Handle input
-        const inputComponent = this.getComponent('input');
-        const movementComponent = this.getComponent('movement');
-
-        if (inputComponent && movementComponent && inputState) {
-            this.processInputState(inputState, inputComponent, movementComponent);
-        }
-
-        // Sync visual position
-        this.syncVisual();
-    }
-
-    syncVisual() {
-        // No additional sync needed for sprite-only mode
-        // Sprite position and flip are handled by physics and movement components
-    }
-
-    processInputState(inputState, inputComponent, movementComponent) {
-        // Process movement input
-        inputComponent.processInput(inputState);
-
-        // Check if jumping
-        const isJumping = !movementComponent.isOnGround();
-        
-        // Handle jump input
-        if (inputState.up && movementComponent.isOnGround()) {
-            const jumped = movementComponent.jump();
-            if (jumped) {
-                this._isJumping = true;
-                this.playAnimation('jump', false);
-                
-                // Clear jumping state after animation
-                setTimeout(() => {
-                    this._isJumping = false;
-                }, 600);
-            }
-        }
-        
-        // Handle movement animations
-        if (inputState.left) {
-            movementComponent.moveLeft();
-            this.playAnimation('run', true);
-        } else if (inputState.right) {
-            movementComponent.moveRight();
-            this.playAnimation('run', true);
-        } else {
-            movementComponent.stopHorizontal();
-            if (!this._isJumping && !isJumping && !this._isAttacking) {
-                this.playAnimation('idle', true);
-            }
-        }
-
-        // Process attack input
-        if (inputState.attack && !this._isAttacking) {
-            this.attack();
-        }
-    }
-
-    attack(pointer) {
-        const attackComponent = this.getComponent('attack');
-        if (attackComponent && attackComponent.canAttack()) {
-            const target = pointer ? { x: pointer.x, y: pointer.y } : null;
-            attackComponent.attack(target);
-            
-            // Play attack animation
-            this._isAttacking = true;
-            this.playAnimation('attack', false);
-            
-            // Clear attacking state after animation
-            setTimeout(() => {
-                this._isAttacking = false;
-                this.playAnimation('idle', true);
-            }, 800);
-
-            // Create melee hitbox
-            this.createMeleeHitbox();
-        }
-    }
 
     createMeleeHitbox() {
         try {
@@ -247,14 +142,48 @@ class Player extends GameObject {
                 zone.body.setImmovable(true);
             }
 
+            // Track which enemies have been hit by this attack
+            const hitEnemies = new Set();
+
             // Handle enemy collisions
             const enemyGroup = this.scene.enemyManager?.enemies;
             if (enemyGroup) {
                 const hitCallback = (z, enemySprite) => {
-                    if (enemySprite?.enemyRef) {
+                    if (enemySprite?.enemyRef && !hitEnemies.has(enemySprite.enemyRef)) {
+                        // Mark this enemy as hit to prevent multiple hits
+                        hitEnemies.add(enemySprite.enemyRef);
+                        
                         const enemy = enemySprite.enemyRef;
-                        const damage = this.getComponent('attack')?.getDamage() || 1;
+                        // Apply knockback using configuration values
+                        const knockbackConfig = GameConfig.combat.knockback;
+                        const attackDirection = this.sprite.flipX ? -1 : 1;
+                        
+                        console.log('[Player] Applying knockback to enemy:', knockbackConfig.forceX * attackDirection);
+                        
+                        if (enemySprite.body) {
+                            // Ensure enemy body has proper physics properties for knockback
+                            enemySprite.body.setMass(knockbackConfig.enemyMass);
+                            enemySprite.body.setDrag(knockbackConfig.enemyDrag);
+                            
+                            // Apply knockback velocity
+                            enemySprite.body.setVelocityX(knockbackConfig.forceX * attackDirection);
+                            enemySprite.body.setVelocityY(knockbackConfig.forceY);
+                            
+                            console.log('[Player] Enemy velocity set to:', enemySprite.body.velocity.x, enemySprite.body.velocity.y);
+                        }
+                        
+                        // Stun the enemy to prevent immediate movement toward player
+                        const aiComponent = enemy.getComponent('ai');
+                        if (aiComponent) {
+                            aiComponent.stun(knockbackConfig.stunDuration);
+                            console.log('[Player] Enemy stunned for', knockbackConfig.stunDuration, 'ms');
+                        }
+                        
+                        // Then apply damage
+                        const damage = 1; // Fixed damage of 1
                         const score = enemy.takeDamage(damage);
+                        
+                        console.log('[Player] Hit enemy, health remaining:', enemy.getHealth());
                         
                         if (score && this.scene.addScore) {
                             this.scene.addScore(score);
@@ -330,6 +259,19 @@ class Player extends GameObject {
         this._isJumping = false;
         this._isAttacking = false;
         this.playAnimation('idle', true);
+    }
+
+    destroy() {
+        // Clean up InputHandler
+        if (this.inputHandler) {
+            this.inputHandler.destroy();
+            this.inputHandler = null;
+        }
+        
+        // Call parent destroy if it exists
+        if (super.destroy) {
+            super.destroy();
+        }
     }
 }
 

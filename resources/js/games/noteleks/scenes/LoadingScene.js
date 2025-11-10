@@ -101,11 +101,15 @@ class LoadingScene extends Phaser.Scene {
                 repeat: 0
             });
             
-            // Create jump animation
+            // Create jump animation using JumpAttack frames for more dynamic movement
+            const jumpFrames = [];
+            for (let i = 0; i <= 7; i++) {
+                jumpFrames.push({ key: `skeleton-jumpattack-${i}` });
+            }
             this.anims.create({
                 key: 'player-jump',
-                frames: [{ key: 'skeleton-jump-0' }],
-                frameRate: 1,
+                frames: jumpFrames,
+                frameRate: 15,
                 repeat: 0
             });
             

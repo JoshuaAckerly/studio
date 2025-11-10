@@ -60,7 +60,7 @@ class GameUI {
         this.updateHealthBar(); // Update after setting scroll factor
 
             // Weapon indicator
-            this.weaponText = this.scene.add.text(16, 100, 'Weapon: Dagger', {
+            this.weaponText = this.scene.add.text(16, 100, '', {
                 fontSize: '18px',
                 fill: '#ffffff',
                 fontFamily: 'Arial',

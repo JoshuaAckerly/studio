@@ -4,7 +4,7 @@ import Player from '../entities/Player.js';
 import AssetManager from '../utils/AssetManagerSimple.js';
 import { GameStateUtils } from '../utils/GameUtils.js';
 import EnemyManager from '../managers/EnemyManager.js';
-import InputManager from '../managers/InputManager.js';
+
 import PlatformManager from '../managers/PlatformManager.js';
 import GameObjectFactory from '../factories/GameObjectFactory.js';
 import GameUI from '../GameUI.js';
@@ -22,7 +22,7 @@ class GameScene extends Phaser.Scene {
         this.gameState = GameStateUtils.STATES.LOADING;
         this.player = null;
         this.enemyManager = null;
-        this.inputManager = null;
+
         this.platformManager = null;
         this.weaponManager = null;
         this.gameUI = null;
@@ -142,13 +142,13 @@ class GameScene extends Phaser.Scene {
 
     initializeManagers() {
         this.enemyManager = new EnemyManager(this);
-        this.inputManager = new InputManager(this);
+
         this.platformManager = new PlatformManager(this);
 
         this.weaponManager = new WeaponManager(this);
         this.gameUI = new GameUI(this);
 
-        try { this.inputManager.initialize(); } catch (e) {}
+
         try {
             this.systemManager.registerSystem('weaponManager', this.weaponManager);
             this.systemManager.registerSystem('gameUI', this.gameUI);
@@ -275,11 +275,7 @@ class GameScene extends Phaser.Scene {
     }
 
     registerInputHandlers() {
-        try {
-            this.inputManager.registerInputHandler('attack', (pointer) => {
-                if (this.gameState === GameStateUtils.STATES.PLAYING && this.player) this.player.attack(pointer);
-            });
-        } catch (e) {}
+        // Input handling is now managed by Player's InputHandler
     }
 
     startGame() { this.gameState = GameStateUtils.STATES.PLAYING; }
@@ -288,12 +284,10 @@ class GameScene extends Phaser.Scene {
         try {
             // Global quick-exit: pressing Escape should return the user to the
             // site's home page. Check first so it works from any game state.
-            try {
-                if (this.inputManager && typeof this.inputManager.isEscapePressed === 'function' && this.inputManager.isEscapePressed()) {
-                    try { if (typeof window !== 'undefined') window.location.href = '/'; } catch (e) {}
-                    return;
-                }
-            } catch (e) {}
+            // Global input handling is now done by Player's InputHandler
+            if (this.player && this.player.inputHandler) {
+                this.player.inputHandler.update();
+            }
             // When playing, run the main gameplay update
             if (this.gameState === GameStateUtils.STATES.PLAYING) {
                 this.handleGameplayUpdate();
@@ -319,21 +313,19 @@ class GameScene extends Phaser.Scene {
     handleGameplayUpdate() {
         try { this.systemManager.update && this.systemManager.update(16); } catch (e) {}
         try {
-            if (this.player && this.inputManager) {
-                if (this.inputManager.isMobileDevice && this.inputManager.isMobileDevice()) {
-                    const touchState = this.inputManager.getMovementInput();
-                    this.player.updateWithInputState && this.player.updateWithInputState(touchState);
-                } else {
-                    const controls = this.inputManager.getControls && this.inputManager.getControls();
-                    if (controls && controls.cursors) this.player.update && this.player.update(controls.cursors, controls.wasd, controls.space);
-                }
+            if (this.player) {
+                this.player.update();
             }
         } catch (e) {}
         try { this.enemyManager && this.enemyManager.update && this.enemyManager.update(this.player); } catch (e) {}
     }
 
-    handleGameOverInput() { if (this.inputManager && this.inputManager.isRestartPressed && this.inputManager.isRestartPressed()) this.restartGame(); }
-    handlePausedInput() { if (this.inputManager && this.inputManager.isPausePressed && this.inputManager.isPausePressed()) this.resumeGame(); }
+    handleGameOverInput() { 
+        // Game over input is handled by Player's InputHandler
+    }
+    handlePausedInput() { 
+        // Pause input handling simplified
+    }
 
     showLoadingScreen() {
         try {
@@ -379,7 +371,7 @@ class GameScene extends Phaser.Scene {
 
     shutdown() {
         try { this.enemyManager && this.enemyManager.shutdown(); } catch (e) {}
-        try { this.inputManager && this.inputManager.shutdown(); } catch (e) {}
+
         try { this.platformManager && this.platformManager.shutdown(); } catch (e) {}
         try { this.systemManager && this.systemManager.shutdown(); } catch (e) {}
     }
