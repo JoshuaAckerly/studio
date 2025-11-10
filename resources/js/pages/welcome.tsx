@@ -15,9 +15,9 @@ const navigation = [
 ];
 const features = [
     {
-        name: 'Collaborative 3D Creation',
+        name: 'Game Development',
         description:
-            'Designing 2D character concepts and collaborating with talented 3D modelers on Fiverr to bring them to life. Each character starts as a vision and becomes reality through creative partnership.',
+            'Building Noteleks Heroes - a 2D action platformer with working combat system, enemy AI, physics-based knockback, and WebP animations. Features include player movement, attack mechanics, enemy spawning, and score tracking.',
         icon: CubeIcon,
     },
     {
@@ -70,6 +70,11 @@ const faqs = [
         id: 6,
         question: 'What does "vibe coding" mean to your development process?',
         answer: "Vibe coding means developing organically and letting creativity flow naturally. It's about putting things out there based on how they feel at the time, allowing for authentic expression and iterative improvement as I learn new skills.",
+    },
+    {
+        id: 7,
+        question: 'What can I expect from Noteleks Heroes?',
+        answer: 'Noteleks Heroes is my first playable game - a 2D action platformer built with Phaser 3. It features a weaponless skeleton character with smooth movement, attack mechanics with knockback physics, enemy AI with multiple types, and a scoring system. The game uses WebP animations and has working combat with proper collision detection.',
     },
 ];
 const footerNavigation = {
@@ -213,7 +218,7 @@ export default function Welcome() {
                                         href="/noteleks"
                                         className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:bg-indigo-500 dark:hover:bg-indigo-400 dark:focus-visible:outline-indigo-500"
                                     >
-                                        Play Noteleks Heroes ⚔️
+                                        Play Noteleks Heroes ⚔️ (Alpha)
                                     </a>
                                     <a href="/illustrations" className="text-sm/6 font-semibold text-gray-900 dark:text-white">
                                         View Gallery <span aria-hidden="true">→</span>
@@ -245,11 +250,11 @@ export default function Welcome() {
                     <div className="mx-auto max-w-2xl lg:text-center">
                         <h2 className="text-base/7 font-semibold text-gray-600 dark:text-gray-400">Creative Journey</h2>
                         <p className="mt-2 text-4xl font-semibold tracking-tight text-pretty text-gray-900 sm:text-5xl lg:text-balance dark:text-white">
-                            Music, Collaboration & Growth
+                            Music, Games & Growth
                         </p>
                         <p className="mt-6 text-lg/8 text-gray-700 dark:text-gray-300">
-                            Starting with music as my foundation, I'm expanding into visual concepts, collaborative 3D creation, and game development.
-                            Each step is about becoming more well-rounded while maintaining core values of peace and creativity.
+                            Starting with music as my foundation, I'm expanding into game development, visual concepts, and collaborative 3D creation.
+                            Noteleks Heroes is my first playable game - a 2D action platformer with working combat, enemy AI, and physics.
                         </p>
                     </div>
                     <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-4xl">

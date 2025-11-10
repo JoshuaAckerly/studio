@@ -28,9 +28,8 @@ export class PlatformManager {
             const tileX = i * groundTileWidth + groundTileWidth / 2;
             const tileY = screenHeight - groundTileHeight / 2; // Position at bottom of screen
 
-            const groundTile = this.platforms.create(tileX, tileY, 'ground');
-            groundTile.setVisible(true);
-            groundTile.setActive(true);
+            const groundTile = this.scene.entityFactory.createPlatform(tileX, tileY, 'ground');
+            this.platforms.add(groundTile);
         }
 
         // Floating platforms - positioned relative to screen size
@@ -46,24 +45,32 @@ export class PlatformManager {
     }
 
     createFloatingPlatform(x, y, width = 64, height = 32) {
-        const platform = this.platforms.create(x, y, 'ground');
-
+        const overrides = {};
+        
         if (width !== 64 || height !== 32) {
             const scaleX = width / GameConfig.assets.textures.ground.width;
             const scaleY = height / GameConfig.assets.textures.ground.height;
-            platform.setScale(scaleX, scaleY).refreshBody();
+            overrides.scale = { x: scaleX, y: scaleY };
         }
-
+        
+        const platform = this.scene.entityFactory.createPlatform(x, y, 'floating', overrides);
+        this.platforms.add(platform);
+        
         return platform;
     }
 
     addCustomPlatform(x, y, width, height, texture = 'ground') {
-        const platform = this.platforms.create(x, y, texture);
-
         const scaleX = width / GameConfig.assets.textures.ground.width;
         const scaleY = height / GameConfig.assets.textures.ground.height;
-        platform.setScale(scaleX, scaleY).refreshBody();
-
+        
+        const overrides = {
+            sprite: texture,
+            scale: { x: scaleX, y: scaleY }
+        };
+        
+        const platform = this.scene.entityFactory.createPlatform(x, y, 'ground', overrides);
+        this.platforms.add(platform);
+        
         return platform;
     }
 

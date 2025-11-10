@@ -1,5 +1,4 @@
 import GameConfig from '../config/GameConfig.js';
-import Enemy from '../entities/Enemy.js';
 // import { MathUtils } from '../utils/GameUtils.js';
 
 /**
@@ -48,8 +47,8 @@ export class EnemyManager {
         const spawnPosition = this.calculateSpawnPosition();
         const enemyType = this.selectEnemyType();
 
-        // Create enemy
-        const enemy = new Enemy(this.scene, spawnPosition.x, spawnPosition.y, enemyType);
+        // Create enemy using EntityFactory
+        const enemy = this.scene.entityFactory.createEnemy(spawnPosition.x, spawnPosition.y, enemyType);
 
         // Add to system manager and physics group
         this.scene.systemManager.addGameObject(enemy);

@@ -22,9 +22,9 @@
 - [x] **Extract Animation Logic** - Created AnimationManager class, removed from Player
 - [x] **Simplify Component System** - Focused on essential components only
 - [x] **Extract Input System** - Created InputHandler class, moved keyboard handling from Player
+- [x] **Extract Physics Management** - Created PhysicsManager for collision, knockback, and physics setup
+- [x] **Create Entity Factory** - Created EntityFactory for centralized entity creation and configuration
 - [ ] **Create Weapon System** - Separate weapon sprites that attach to skeleton hand position
-- [ ] **Extract Physics Management** - Move collision box logic to dedicated PhysicsManager
-- [ ] **Create Entity Factory** - Centralized entity creation and configuration
 
 ### 🗡️ Weapon Implementation
 - [ ] **Spear Weapon Class** - Separate spear sprite with positioning system
@@ -63,8 +63,8 @@
 - [ ] **Code Linting** - Set up ESLint configuration for consistent code style
 
 ### 🌐 Deployment
-- [ ] **Commit and Push Changes** - Commit recent improvements and push to repository
-- [ ] **Update Studio Welcome Page** - Update main Studio page to reflect Noteleks game progress
+- [x] **Commit and Push Changes** - Commit recent improvements and push to repository
+- [x] **Update Studio Welcome Page** - Updated main Studio page to reflect Noteleks game progress
 - [ ] **Update Legal Pages** - Update Studio legal pages for game content, terms of use, privacy policy
 - [ ] **Build Optimization** - Optimize bundle size and loading performance
 - [ ] **Asset Compression** - Compress images and audio files
@@ -113,6 +113,8 @@
 - [x] **Input system extraction** - Created InputHandler class, separated from Player
 - [x] **Knockback physics fix** - Fixed enemy knockback with proper force values and physics body configuration
 - [x] **Dead code removal** - Removed unused methods, backup files, debug files, and unused managers
+- [x] **Physics management extraction** - Created PhysicsManager for collision detection, knockback effects, and physics body setup
+- [x] **Entity factory creation** - Created EntityFactory for centralized entity creation with templates and configuration
 
 ## Current Priority Focus
 
@@ -124,9 +126,8 @@
 
 ### 🔧 Technical Improvements (Medium Priority)
 1. **Object Pooling for Enemies** - Implement enemy object pooling to reduce garbage collection
-2. **Physics Management** - Extract collision logic to PhysicsManager
-3. **Sound System** - Add audio feedback for actions
-4. **Particle Effects** - Visual feedback for combat and interactions
+2. **Sound System** - Add audio feedback for actions
+3. **Particle Effects** - Visual feedback for combat and interactions
 
 ## Notes
 - Player.js refactoring is largely complete with direct controls

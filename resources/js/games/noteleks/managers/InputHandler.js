@@ -1,3 +1,5 @@
+import PhysicsManager from './PhysicsManager.js';
+
 /**
  * InputHandler - Manages keyboard input for the player
  * Extracted from Player class for better separation of concerns
@@ -8,6 +10,7 @@ class InputHandler {
         this.keys = null;
         this.lastAttackTime = 0;
         this.attackCooldown = 500; // milliseconds
+        this.physicsManager = new PhysicsManager(scene);
         
         this.setupKeys();
     }
@@ -70,15 +73,15 @@ class InputHandler {
         if (this.scene.gameState !== 'playing') return;
 
         // Reset horizontal velocity
-        player.sprite.body.setVelocityX(0);
+        this.physicsManager.setVelocityX(player.sprite, 0);
 
         // Handle horizontal movement
         if (inputState.left) {
-            player.sprite.body.setVelocityX(-160);
+            this.physicsManager.setVelocityX(player.sprite, -160);
             player.sprite.setFlipX(true);
             player.playAnimation('run');
         } else if (inputState.right) {
-            player.sprite.body.setVelocityX(160);
+            this.physicsManager.setVelocityX(player.sprite, 160);
             player.sprite.setFlipX(false);
             player.playAnimation('run');
         } else {
@@ -86,8 +89,8 @@ class InputHandler {
         }
 
         // Handle jump
-        if (inputState.up && player.sprite.body.touching.down) {
-            player.sprite.body.setVelocityY(-330);
+        if (inputState.up && this.physicsManager.isTouchingDown(player.sprite)) {
+            this.physicsManager.setVelocityY(player.sprite, -330);
             player.playAnimation('jump');
         }
 
@@ -136,6 +139,7 @@ class InputHandler {
     destroy() {
         this.keys = null;
         this.scene = null;
+        this.physicsManager = null;
     }
 }
 

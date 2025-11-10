@@ -4,6 +4,7 @@ import MovementComponent from '../components/MovementComponent.js';
 import PhysicsComponent from '../components/PhysicsComponent.js';
 import GameConfig from '../config/GameConfig.js';
 import GameObject from '../core/GameObject.js';
+import PhysicsManager from '../managers/PhysicsManager.js';
 
 /**
  * Enemy Entity
@@ -15,6 +16,9 @@ class Enemy extends GameObject {
         this.type = type;
         this.config = GameConfig.enemies.types[type] || GameConfig.enemies.types.zombie;
 
+        // Physics manager
+        this.physicsManager = new PhysicsManager(scene);
+        
         this.createEnemy();
         this.setupComponents();
     }
@@ -24,13 +28,8 @@ class Enemy extends GameObject {
         this.sprite = this.scene.physics.add.sprite(this.x, this.y, 'enemy');
         this.sprite.setTint(this.config.color);
 
-        // Configure physics body for proper knockback
-        if (this.sprite.body) {
-            this.sprite.body.setCollideWorldBounds(true);
-            this.sprite.body.setBounce(0.1);
-            this.sprite.body.setMass(GameConfig.combat.knockback.enemyMass);
-            this.sprite.body.setDrag(GameConfig.combat.knockback.enemyDrag);
-        }
+        // Setup physics using PhysicsManager
+        this.physicsManager.setupEnemyPhysics(this.sprite);
 
         // Store reference to this enemy class in the sprite
         this.sprite.enemyRef = this;
@@ -60,8 +59,8 @@ class Enemy extends GameObject {
         // Setup component callbacks
         this.setupComponentCallbacks();
 
-        // Setup physics colliders
-        this.scene.physics.add.collider(this.sprite, this.scene.platforms);
+        // Setup physics colliders using PhysicsManager
+        this.physicsManager.setupCollision(this.sprite, this.scene.platforms);
     }
 
     setupComponentCallbacks() {

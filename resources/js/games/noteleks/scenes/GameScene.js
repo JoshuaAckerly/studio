@@ -6,7 +6,8 @@ import { GameStateUtils } from '../utils/GameUtils.js';
 import EnemyManager from '../managers/EnemyManager.js';
 
 import PlatformManager from '../managers/PlatformManager.js';
-import GameObjectFactory from '../factories/GameObjectFactory.js';
+import PhysicsManager from '../managers/PhysicsManager.js';
+import EntityFactory from '../factories/EntityFactory.js';
 import GameUI from '../GameUI.js';
 import SystemManager from '../systems/SystemManager.js';
 import WeaponManager from '../WeaponManager.js';
@@ -24,11 +25,12 @@ class GameScene extends Phaser.Scene {
         this.enemyManager = null;
 
         this.platformManager = null;
+        this.physicsManager = null;
         this.weaponManager = null;
         this.gameUI = null;
 
         this.systemManager = new SystemManager(this);
-        this.gameObjectFactory = new GameObjectFactory(this);
+        this.entityFactory = new EntityFactory(this);
     }
 
     preload() {
@@ -142,7 +144,7 @@ class GameScene extends Phaser.Scene {
 
     initializeManagers() {
         this.enemyManager = new EnemyManager(this);
-
+        this.physicsManager = new PhysicsManager(this);
         this.platformManager = new PlatformManager(this);
 
         this.weaponManager = new WeaponManager(this);
@@ -247,30 +249,21 @@ class GameScene extends Phaser.Scene {
     }
 
     async setupGameObjects() {
-        if (!(GameConfig && GameConfig.useSpine)) {
-            const playerConfig = GameConfig.player || { startPosition: { x: 100, y: 100 } };
-            this.player = new Player(this, playerConfig.startPosition.x, playerConfig.startPosition.y);
-            return;
-        }
-
-        const maxWaitMs = 2000;
-        const eventFired = await new Promise((resolve) => {
-            let resolved = false;
-            const onReady = () => { if (resolved) return; resolved = true; resolve(true); };
-            this.events.once('spine-ready', onReady);
-            setTimeout(() => { if (resolved) return; resolved = true; resolve(false); }, maxWaitMs);
-        });
-
-        if (!eventFired) {
-            try { AssetManager.setupSpineData(this); } catch (e) {}
-        }
-
         const playerConfig = GameConfig.player || { startPosition: { x: 100, y: 100 } };
-        this.player = new Player(this, playerConfig.startPosition.x, playerConfig.startPosition.y);
+        
+        // Use EntityFactory to create player
+        this.player = this.entityFactory.createPlayer(
+            playerConfig.startPosition.x, 
+            playerConfig.startPosition.y
+        );
     }
 
     setupCollisions() {
-        try { if (this.player && this.platforms) this.physics.add.collider(this.player.sprite, this.platforms); } catch (e) {}
+        try { 
+            if (this.player && this.platforms) {
+                this.physicsManager.setupCollision(this.player.sprite, this.platforms);
+            }
+        } catch (e) {}
         try { if (this.enemyManager) this.enemyManager.setupCollisions(this.player, this.weaponManager); } catch (e) {}
     }
 
@@ -373,6 +366,7 @@ class GameScene extends Phaser.Scene {
         try { this.enemyManager && this.enemyManager.shutdown(); } catch (e) {}
 
         try { this.platformManager && this.platformManager.shutdown(); } catch (e) {}
+        try { this.physicsManager = null; } catch (e) {}
         try { this.systemManager && this.systemManager.shutdown(); } catch (e) {}
     }
 }
