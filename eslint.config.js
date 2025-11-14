@@ -40,6 +40,28 @@ export default [
             'react-hooks/exhaustive-deps': 'warn',
         },
     },
+    // Node.js files
+    {
+        files: ['**/*.{js,mjs,cjs}', 'jest.config.cjs', 'scripts/**/*'],
+        languageOptions: {
+            globals: {
+                ...globals.node,
+            },
+        },
+    },
+    // Test files
+    {
+        files: ['**/__tests__/**/*', '**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}'],
+        languageOptions: {
+            globals: {
+                ...globals.jest,
+            },
+        },
+        rules: {
+            '@typescript-eslint/no-explicit-any': 'off',
+            '@typescript-eslint/no-require-imports': 'off',
+        },
+    },
     {
         ignores: ['vendor', 'node_modules', 'public', 'bootstrap/ssr', 'tailwind.config.js', 'resources/views/**/*.blade.php'],
     },

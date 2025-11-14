@@ -5,6 +5,10 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
+    server: {
+        port: 5177,
+        host: '127.0.0.1'
+    },
     plugins: [
         laravel({
             input: [
@@ -12,11 +16,23 @@ export default defineConfig({
                 'resources/js/app.tsx',
                 'resources/js/games/noteleks/main-modular.js'
             ],
+            ssr: 'resources/js/ssr.tsx',
             refresh: true,
         }),
         react(),
         tailwindcss(),
     ],
+    esbuild: {
+        jsx: 'automatic',
+    },
+    resolve: {
+        alias: {
+            'ziggy-js': path.resolve(__dirname, 'vendor/tightenco/ziggy'),
+        },
+    },
+    ssr: {
+        noExternal: ['react', 'react-dom', '@inertiajs/react', '@inertiajs/core'],
+    },
     build: {
         // Raise warning limit slightly and add manual chunking to avoid huge vendor bundles
         chunkSizeWarningLimit: 1000, // kB

@@ -17,8 +17,8 @@ return [
 
     'ssr' => [
         'enabled' => true,
-        'url' => 'http://127.0.0.1:13714',
-        // 'bundle' => base_path('bootstrap/ssr/ssr.mjs'),
+        'url' => 'http://127.0.0.1:' . env('INERTIA_SSR_PORT', 13718),
+        'bundle' => base_path('bootstrap/ssr/ssr.js'),
 
     ],
 
