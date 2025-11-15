@@ -28,10 +28,13 @@ export default defineConfig({
     resolve: {
         alias: {
             'ziggy-js': path.resolve(__dirname, 'vendor/tightenco/ziggy'),
+            'react': path.resolve(__dirname, 'node_modules/react'),
+            'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
         },
+        dedupe: ['react', 'react-dom'],
     },
     ssr: {
-        noExternal: ['react', 'react-dom', '@inertiajs/react', '@inertiajs/core'],
+        noExternal: ['@inertiajs/react', '@inertiajs/core'],
     },
     build: {
         // Raise warning limit slightly and add manual chunking to avoid huge vendor bundles
