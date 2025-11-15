@@ -16,7 +16,7 @@ export const GameConfig = {
     // Physics settings
     physics: {
         gravity: { x: 0, y: 300 },
-        debug: true,
+        debug: false,
     },
 
     // Player settings
@@ -33,6 +33,7 @@ export const GameConfig = {
     // Enemy settings
     enemies: {
         spawnInterval: 3000, // milliseconds
+        maxEnemies: 5, // Maximum number of enemies allowed at once
         spawnDistance: {
             minFromEdge: 50,
             maxFromEdge: 200,

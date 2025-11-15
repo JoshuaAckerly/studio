@@ -30,10 +30,7 @@ class AIComponent extends Component {
         
         // Don't move if stunned
         if (this.isStunned) {
-            const movementComponent = this.gameObject.getComponent('movement');
-            if (movementComponent) {
-                movementComponent.stopHorizontal();
-            }
+            // While stunned, don't apply AI movement but let physics handle velocity
             return;
         }
 
@@ -148,11 +145,7 @@ class AIComponent extends Component {
         this.isStunned = true;
         this.stunEndTime = Date.now() + duration;
         
-        // Stop movement immediately
-        const movementComponent = this.gameObject.getComponent('movement');
-        if (movementComponent) {
-            movementComponent.stopHorizontal();
-        }
+        // Don't stop movement here - let physics handle the knockback velocity
     }
     
     /**

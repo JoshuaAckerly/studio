@@ -75,23 +75,32 @@ class InputHandler {
         // Reset horizontal velocity
         this.physicsManager.setVelocityX(player.sprite, 0);
 
+        // Check if player is on ground
+        const isOnGround = this.physicsManager.isTouchingDown(player.sprite);
+
         // Handle horizontal movement
         if (inputState.left) {
             this.physicsManager.setVelocityX(player.sprite, -160);
             player.sprite.setFlipX(true);
-            player.playAnimation('run');
+            if (isOnGround) {
+                player.playAnimation('run');
+            }
         } else if (inputState.right) {
             this.physicsManager.setVelocityX(player.sprite, 160);
             player.sprite.setFlipX(false);
-            player.playAnimation('run');
-        } else {
+            if (isOnGround) {
+                player.playAnimation('run');
+            }
+        } else if (isOnGround) {
             player.playAnimation('idle');
         }
 
-        // Handle jump
-        if (inputState.up && this.physicsManager.isTouchingDown(player.sprite)) {
+        // Handle jump - play jump animation while in air
+        if (!isOnGround) {
+            player.playAnimation('jump', false);
+        } else if (inputState.up) {
             this.physicsManager.setVelocityY(player.sprite, -330);
-            player.playAnimation('jump');
+            player.playAnimation('jump', false);
         }
 
         // Handle attack

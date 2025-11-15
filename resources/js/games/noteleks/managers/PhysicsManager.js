@@ -103,7 +103,9 @@ class PhysicsManager {
         const knockbackConfig = GameConfig.combat.knockback;
         const attackDirection = direction === 'left' ? -1 : 1;
 
-        console.log('[PhysicsManager] Applying knockback:', knockbackConfig.forceX * attackDirection);
+        if (GameConfig.debug.enablePlayerDebugOverlay) {
+            console.log('[PhysicsManager] Applying knockback:', knockbackConfig.forceX * attackDirection);
+        }
 
         // Ensure target body has proper physics properties for knockback
         targetSprite.body.setMass(knockbackConfig.enemyMass);
@@ -113,7 +115,9 @@ class PhysicsManager {
         targetSprite.body.setVelocityX(knockbackConfig.forceX * attackDirection);
         targetSprite.body.setVelocityY(knockbackConfig.forceY);
 
-        console.log('[PhysicsManager] Target velocity set to:', targetSprite.body.velocity.x, targetSprite.body.velocity.y);
+        if (GameConfig.debug.enablePlayerDebugOverlay) {
+            console.log('[PhysicsManager] Target velocity set to:', targetSprite.body.velocity.x, targetSprite.body.velocity.y);
+        }
     }
 
     /**

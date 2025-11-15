@@ -22,8 +22,12 @@ class Player extends GameObject {
         this._isAttacking = false;
         this.animationManager = null;
         
+        // Knockback state
+        this.isKnockedBack = false;
+        this.knockbackEndTime = 0;
+        
         // Input handler
-        this.inputHandler = new InputHandler(scene);
+        this.inputHandler = new InputHandler(scene)
         
         // Physics manager
         this.physicsManager = new PhysicsManager(scene);
@@ -36,7 +40,9 @@ class Player extends GameObject {
     createPlayer() {
         // Use WebP sprite
         this.sprite = this.scene.physics.add.sprite(this.x, this.y, 'skeleton-idle-0');
-        console.log('[Player] WebP sprite created - Dimensions:', this.sprite.width, 'x', this.sprite.height);
+        if (GameConfig.debug.enablePlayerDebugOverlay) {
+            console.log('[Player] WebP sprite created - Dimensions:', this.sprite.width, 'x', this.sprite.height);
+        }
         
         this.sprite.playerRef = this;
         this.sprite.setOrigin(0.5, 1);
@@ -110,10 +116,18 @@ class Player extends GameObject {
         if (this.scene.gameState !== 'playing') return;
         if (!this.sprite || !this.sprite.body) return;
 
-        // Get input state from InputHandler
-        const inputState = this.inputHandler.getInputState();
-        if (inputState) {
-            this.inputHandler.processPlayerInput(this, inputState);
+        // Check if knockback has expired
+        if (this.isKnockedBack && Date.now() > this.knockbackEndTime) {
+            this.isKnockedBack = false;
+        }
+
+        // Only process input if not knocked back
+        if (!this.isKnockedBack) {
+            // Get input state from InputHandler
+            const inputState = this.inputHandler.getInputState();
+            if (inputState) {
+                this.inputHandler.processPlayerInput(this, inputState);
+            }
         }
         
         // Update InputHandler
@@ -135,14 +149,18 @@ class Player extends GameObject {
             if (aiComponent) {
                 const knockbackConfig = GameConfig.combat.knockback;
                 aiComponent.stun(knockbackConfig.stunDuration);
-                console.log('[Player] Enemy stunned for', knockbackConfig.stunDuration, 'ms');
+                if (GameConfig.debug.enablePlayerDebugOverlay) {
+                    console.log('[Player] Enemy stunned for', knockbackConfig.stunDuration, 'ms');
+                }
             }
             
             // Apply damage
             const damage = 1;
             const score = enemy.takeDamage(damage);
             
-            console.log('[Player] Hit enemy, health remaining:', enemy.getHealth());
+            if (GameConfig.debug.enablePlayerDebugOverlay) {
+                console.log('[Player] Hit enemy, health remaining:', enemy.getHealth());
+            }
             
             if (score && this.scene.addScore) {
                 this.scene.addScore(score);
@@ -180,6 +198,16 @@ class Player extends GameObject {
     isAlive() {
         const healthComponent = this.getComponent('health');
         return healthComponent ? healthComponent.isAlive() : false;
+    }
+
+    applyKnockback(direction, duration = 500) {
+        this.isKnockedBack = true;
+        this.knockbackEndTime = Date.now() + duration;
+        
+        // Apply knockback through physics manager
+        if (this.sprite && this.physicsManager) {
+            this.physicsManager.applyKnockback(this.sprite, direction);
+        }
     }
 
     reset(x, y) {

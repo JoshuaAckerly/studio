@@ -97,7 +97,7 @@ class LoadingScene extends Phaser.Scene {
             this.anims.create({
                 key: 'player-attack',
                 frames: attackFrames,
-                frameRate: 8,
+                frameRate: 6,
                 repeat: 0
             });
             

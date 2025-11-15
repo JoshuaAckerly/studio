@@ -21,7 +21,6 @@ class AnimationManager {
             if (this.scene.anims.exists(animationKey)) {
                 this.sprite.play(animationKey);
                 this.currentAnimation = animationKey;
-                console.log('[AnimationManager] Playing:', animationKey);
             } else {
                 console.warn('[AnimationManager] Animation not found:', animationKey);
             }

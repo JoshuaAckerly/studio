@@ -44,6 +44,11 @@ export class EnemyManager {
     spawnEnemy() {
         if (this.scene.gameState !== 'playing') return;
 
+        // Check if we've reached the maximum number of enemies
+        if (this.config.maxEnemies && this.getEnemyCount() >= this.config.maxEnemies) {
+            return;
+        }
+
         const spawnPosition = this.calculateSpawnPosition();
         const enemyType = this.selectEnemyType();
 
@@ -124,6 +129,10 @@ export class EnemyManager {
 
         if (!enemy || !player) return;
 
+        // Check if enemy is already stunned (prevents multiple collision triggers)
+        const aiComponent = enemy.getComponent('ai');
+        if (aiComponent && aiComponent.getIsStunned()) return;
+
         // Player takes damage
         const damageResult = player.takeDamage(enemy.getDamageAmount());
 
@@ -132,8 +141,26 @@ export class EnemyManager {
             this.scene.gameUI.updateHealth(player.getHealth());
         }
 
-        // Remove enemy
-        this.removeEnemy(enemy);
+        // Determine knockback directions
+        const enemyDirection = enemySprite.x > playerSprite.x ? 'right' : 'left';
+        const playerDirection = enemySprite.x > playerSprite.x ? 'left' : 'right';
+
+        // Apply knockback to enemy using PhysicsManager
+        if (this.scene.player && this.scene.player.physicsManager) {
+            this.scene.player.physicsManager.applyKnockback(enemySprite, enemyDirection);
+        }
+
+        // Apply knockback to player (with shorter duration than enemy)
+        if (player.applyKnockback) {
+            player.applyKnockback(playerDirection, 300);
+        }
+
+        // Stun the enemy for 1 second (pause movement)
+        if (aiComponent) {
+            aiComponent.stun(1000);
+        }
+
+        // Enemy does NOT die from collision - just knockback and stun
 
         // Check for game over
         if (damageResult.died) {
