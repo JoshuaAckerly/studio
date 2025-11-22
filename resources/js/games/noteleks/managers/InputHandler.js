@@ -106,7 +106,7 @@ class InputHandler {
         // Handle attack
         if (inputState.attack) {
             this.registerAttack();
-            player.playAnimation('attack');
+            player.playAnimation('attack', false);
             player.createMeleeHitbox();
         }
     }

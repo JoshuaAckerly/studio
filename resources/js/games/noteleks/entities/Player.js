@@ -65,7 +65,10 @@ class Player extends GameObject {
         let animKey = null;
         if (name === 'idle') animKey = 'player-idle';
         else if (name === 'run') animKey = 'player-run';
-        else if (name === 'attack') animKey = 'player-attack';
+        else if (name === 'attack') {
+            animKey = 'player-attack';
+            loop = false; // Attack should never loop
+        }
         else if (name === 'jump') animKey = 'player-jump';
         
         if (animKey) {

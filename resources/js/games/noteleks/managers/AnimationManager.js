@@ -6,6 +6,22 @@ class AnimationManager {
         this.sprite = sprite;
         this.scene = scene;
         this.currentAnimation = null;
+        this.setupAnimationListeners();
+    }
+
+    /**
+     * Setup animation event listeners
+     */
+    setupAnimationListeners() {
+        if (!this.sprite) return;
+        
+        // Listen for animation complete events
+        this.sprite.on('animationcomplete', (animation) => {
+            // When attack animation completes, return to idle
+            if (animation.key === 'player-attack') {
+                this.play('player-idle', true);
+            }
+        });
     }
 
     /**
