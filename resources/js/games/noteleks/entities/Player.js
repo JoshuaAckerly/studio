@@ -8,6 +8,7 @@ import GameObject from '../core/GameObject.js';
 import AnimationManager from '../managers/AnimationManager.js';
 import InputHandler from '../managers/InputHandler.js';
 import PhysicsManager from '../managers/PhysicsManager.js';
+import SpineBoneReader from '../utils/SpineBoneReader.js';
 
 /**
  * Player Entity - Clean Version
@@ -20,7 +21,12 @@ class Player extends GameObject {
         // Animation states
         this._isJumping = false;
         this._isAttacking = false;
+        this._attackLocked = false; // Lock player during attack
         this.animationManager = null;
+        
+        // Weapon sprite
+        this.weaponSprite = null;
+        this.boneReader = null;
         
         // Knockback state
         this.isKnockedBack = false;
@@ -56,6 +62,129 @@ class Player extends GameObject {
         // Initialize animation manager
         this.animationManager = new AnimationManager(this.sprite, this.scene);
         this.animationManager.play('player-idle', true);
+        
+        // Listen for animation complete to reset attack state
+        this.sprite.on('animationcomplete', (animation) => {
+            if (animation.key === 'player-attack') {
+                this._isAttacking = false;
+                this._attackLocked = false;
+                console.log('[Player] Attack animation completed, unlocking player');
+            }
+        });
+        
+        // Create weapon sprite
+        this.createWeaponSprite();
+    }
+
+    createWeaponSprite() {
+        try {
+            if (!this.scene.textures.exists('spear')) {
+                console.warn('[Player] Spear texture not loaded');
+                return;
+            }
+            
+            // Load Spine bone data for accurate positioning
+            this.loadSpineBoneData();
+            
+            // Create spear sprite attached to player
+            this.weaponSprite = this.scene.add.sprite(0, 0, 'spear');
+            this.weaponSprite.setOrigin(0, 0.5); // Pivot at base of spear (left side, center height)
+            this.weaponSprite.setDepth(99); // Just behind player
+            this.weaponSprite.setScale(0.15); // Adjust size to match player scale
+            
+            console.log('[Player] Weapon sprite created with bone tracking');
+        } catch (e) {
+            console.error('[Player] Failed to create weapon sprite:', e);
+        }
+    }
+    
+    async loadSpineBoneData() {
+        try {
+            // Load the Spine JSON file
+            const response = await fetch('/games/noteleks/sprites/Skeleton.json');
+            const spineData = await response.json();
+            
+            this.boneReader = new SpineBoneReader(spineData);
+            console.log('[Player] Spine bone data loaded successfully');
+        } catch (e) {
+            console.warn('[Player] Could not load Spine bone data, using fallback positioning:', e.message);
+        }
+    }
+
+    updateWeaponPosition() {
+        if (!this.weaponSprite || !this.sprite) return;
+        
+        // Get player's current animation state from actual playing animation
+        const currentAnim = this.sprite.anims?.currentAnim?.key || 'player-idle';
+        const isAttacking = currentAnim.includes('attack');
+        const isRunning = currentAnim.includes('run');
+        const facingRight = !this.sprite.flipX;
+        
+        // Get current animation progress (0 to 1)
+        const animProgress = this.sprite.anims?.getProgress() || 0;
+        
+        let offsetX, offsetY, rotation;
+        
+        if (this.boneReader) {
+            // Use Spine bone data for accurate hand position
+            let state = 'idle';
+            if (isAttacking) state = 'attack';
+            else if (isRunning) state = 'run';
+            
+            // Map game states to Spine animation names and get duration
+            const animMap = {
+                'idle': { name: 'Idle', duration: 0.8 },
+                'attack': { name: 'Attack1', duration: 0.3 },
+                'run': { name: 'Run', duration: 0.8 },
+                'jump': { name: 'Jump', duration: 0.4 }
+            };
+            
+            const animInfo = animMap[state] || animMap['idle'];
+            const animTime = animProgress * animInfo.duration; // Convert progress to actual time
+            
+            const boneTransform = this.boneReader.getBoneTransform('Handl', animInfo.name, animTime);
+            
+            // Debug logging (only log occasionally to avoid spam)
+            if (Math.random() < 0.02) {
+                console.log(`[Player] State: ${state}, Anim: ${animInfo.name}, Progress: ${animProgress.toFixed(2)}, Time: ${animTime.toFixed(3)}`);
+                console.log(`[Player] Bone transform:`, boneTransform);
+            }
+            
+            // Convert Spine coordinates to Phaser (Spine uses different coordinate system)
+            // Scale down from Spine's coordinate space and apply player scale
+            const spineScale = GameConfig.player.scale * 0.05; // Match the root bone scale from Spine
+            
+            offsetX = boneTransform.x * spineScale;
+            offsetY = -boneTransform.y * spineScale; // Y is inverted in Phaser
+            rotation = (boneTransform.rotation * Math.PI) / 180; // Convert to radians from Spine
+            
+            // Flip for left-facing
+            if (!facingRight) {
+                offsetX = -offsetX;
+                rotation = -rotation; // Mirror the rotation
+            }
+        } else {
+            // Fallback to manual positioning if bone data not available
+            console.warn('[Player] Using fallback weapon positioning - Spine bone data not loaded');
+            if (isAttacking) {
+                offsetX = facingRight ? 50 : -50;
+                offsetY = -35;
+                rotation = facingRight ? 0 : Math.PI;
+            } else {
+                offsetX = facingRight ? 20 : -20;
+                offsetY = -50;
+                rotation = facingRight ? -Math.PI / 3 : Math.PI + Math.PI / 3;
+            }
+        }
+        
+        // Apply position and rotation from Spine bone data
+        this.weaponSprite.setPosition(
+            this.sprite.x + offsetX,
+            this.sprite.y + offsetY
+        );
+        this.weaponSprite.setRotation(rotation);
+        
+        // No manual flipping - rotation handles orientation
     }
 
     playAnimation(name, loop = true) {
@@ -63,13 +192,25 @@ class Player extends GameObject {
         
         // Map game animation names to player animation names
         let animKey = null;
-        if (name === 'idle') animKey = 'player-idle';
-        else if (name === 'run') animKey = 'player-run';
+        if (name === 'idle') {
+            animKey = 'player-idle';
+            this._isAttacking = false;
+        }
+        else if (name === 'run') {
+            animKey = 'player-run';
+            this._isAttacking = false;
+        }
         else if (name === 'attack') {
             animKey = 'player-attack';
             loop = false; // Attack should never loop
+            this._isAttacking = true;
+            this._attackLocked = true;
+            console.log('[Player] Attack started, locking player');
         }
-        else if (name === 'jump') animKey = 'player-jump';
+        else if (name === 'jump') {
+            animKey = 'player-jump';
+            this._isAttacking = false;
+        }
         
         if (animKey) {
             this.animationManager.play(animKey, loop);
@@ -124,17 +265,23 @@ class Player extends GameObject {
             this.isKnockedBack = false;
         }
 
-        // Only process input if not knocked back
-        if (!this.isKnockedBack) {
+        // Only process input if not knocked back AND not attack-locked
+        if (!this.isKnockedBack && !this._attackLocked) {
             // Get input state from InputHandler
             const inputState = this.inputHandler.getInputState();
             if (inputState) {
                 this.inputHandler.processPlayerInput(this, inputState);
             }
+        } else if (this._attackLocked) {
+            // Stop movement during attack
+            this.physicsManager.setVelocityX(this.sprite, 0);
         }
         
         // Update InputHandler
         this.inputHandler.update();
+        
+        // Update weapon position to follow player
+        this.updateWeaponPosition();
     }
 
 
@@ -242,6 +389,12 @@ class Player extends GameObject {
     }
 
     destroy() {
+        // Clean up weapon sprite
+        if (this.weaponSprite) {
+            this.weaponSprite.destroy();
+            this.weaponSprite = null;
+        }
+        
         // Clean up InputHandler
         if (this.inputHandler) {
             this.inputHandler.destroy();

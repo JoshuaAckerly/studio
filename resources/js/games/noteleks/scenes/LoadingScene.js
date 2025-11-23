@@ -44,6 +44,9 @@ class LoadingScene extends Phaser.Scene {
                 this.load.image(`skeleton-jumpattack-${i}`, `/games/noteleks/sprites/Skeleton-JumpAttack_${i}.webp`);
             }
             
+            // Load weapon sprites
+            this.load.image('spear', '/games/noteleks/sprites/Spear.png');
+            
             // Show progress
             this.load.on('progress', (p) => {
                 if (this._progressText) this._progressText.setText('Loading: ' + Math.round(p * 100) + '%');

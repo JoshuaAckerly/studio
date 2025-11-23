@@ -9,7 +9,7 @@ class InputHandler {
         this.scene = scene;
         this.keys = null;
         this.lastAttackTime = 0;
-        this.attackCooldown = 500; // milliseconds
+        this.attackCooldown = 300; // milliseconds - matches animation duration
         this.physicsManager = new PhysicsManager(scene);
         
         this.setupKeys();
