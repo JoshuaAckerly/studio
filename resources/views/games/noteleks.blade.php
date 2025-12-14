@@ -348,11 +348,18 @@
 
         /* Mobile button styling */
         @media (max-width: 768px) {
+            #game-controls {
+                flex-direction: column;
+                gap: 6px;
+                width: auto;
+            }
+
             #game-controls button {
-                padding: 14px 28px;
-                font-size: 16px;
-                min-width: 100px;
-                min-height: 48px; /* Touch-friendly size */
+                padding: 8px 12px;
+                font-size: 13px;
+                min-width: 80px;
+                min-height: 36px; /* Touch-friendly but more compact */
+                white-space: nowrap;
             }
         }
         
@@ -390,15 +397,17 @@
             #mobile-controls-area .center-column {
                 flex: 0 0 auto;
                 display: flex;
-                align-items: flex-end;
+                align-items: center;
                 justify-content: center;
                 padding-bottom: 8px;
+                max-width: 100px; /* Limit center column width */
             }
 
             #mobile-controls-area #game-controls {
                 display: flex !important;
                 align-items: center;
-                gap: 8px;
+                flex-direction: column;
+                gap: 4px;
                 /* Ensure the injected controls flow inside the mobile area (not absolutely positioned) */
                 position: static !important;
                 top: auto !important;
