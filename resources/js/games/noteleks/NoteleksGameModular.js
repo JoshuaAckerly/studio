@@ -32,9 +32,6 @@ class NoteleksGame {
             // Expose a global flag for debug/QA toggles
             window.noteleks_lowQuality = (lowMem || lowCores || smallScreenUA) ? true : false;
             GameConfig.lowQuality = !!window.noteleks_lowQuality;
-            if (GameConfig.lowQuality) {
-                console.info('[NoteleksGame] Low-quality mode enabled by device heuristics', this._detectedDeviceInfo);
-            }
         } catch (e) {
             // ignore detection errors
             GameConfig.lowQuality = false;
@@ -145,8 +142,6 @@ class NoteleksGame {
     }
 
     async initialize(containerId = 'phaser-game') {
-        console.info('[NoteleksGame] initialize start, containerId=%s', containerId);
-
         // Verify Phaser is available
         if (typeof Phaser === 'undefined') {
             const msg = 'Phaser is not available. Cannot initialize game.';
@@ -180,12 +175,10 @@ class NoteleksGame {
                 // ignore adjustments
             }
         }
-        console.info('[NoteleksGame] Creating Phaser.Game with final config (plugins may be registered by Phaser)');
         this.game = new Phaser.Game({
             ...finalConfig,
             parent: containerId,
         });
-        console.info('[NoteleksGame] Phaser.Game instance created:', !!this.game);
         // Phaser will auto-add the scene(s) declared in config.scene and start them.
 
         // If a mobile-only crash previously happened and was captured, reveal it
@@ -196,13 +189,7 @@ class NoteleksGame {
             // ignore
         }
 
-        // Game ready event
-        this.game.events.once('ready', () => {
-            console.log('[NoteleksGame] Game ready');
-        });
-
         // Add game event listeners
-        console.info('[NoteleksGame] Installing event listeners');
         this.setupEventListeners();
 
         return true;

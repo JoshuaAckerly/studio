@@ -115,8 +115,6 @@ class LoadingScene extends Phaser.Scene {
                 frameRate: 15,
                 repeat: 0
             });
-            
-            console.log('[LoadingScene] Created WebP animations');
         } catch (e) {
             console.error('[LoadingScene] Failed to create animations:', e.message);
         }

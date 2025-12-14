@@ -166,16 +166,6 @@ class GameScene extends Phaser.Scene {
         try { this.physics.world.setBounds(0, 0, GameConfig.screen.width, GameConfig.screen.height); } catch (e) {}
         try { 
             AssetManager.createPlaceholderTextures(this, GameConfig);
-            console.log('[GameScene] Created placeholder textures');
-            
-            // Animations are created by AssetManager in LoadingScene
-            
-            // Verify skeleton texture exists
-            if (this.textures.exists('skeleton')) {
-                console.log('[GameScene] Skeleton texture exists and ready');
-            } else {
-                console.warn('[GameScene] Skeleton texture missing!');
-            }
         } catch (e) { console.error('[GameScene] Failed to create placeholder textures:', e.message); }
         try { this.add.image(GameConfig.screen.width / 2, GameConfig.screen.height / 2, 'background'); } catch (e) {}
 
@@ -245,8 +235,6 @@ class GameScene extends Phaser.Scene {
                     repeat: 0
                 });
             }
-            
-            console.log('[GameScene] Created WebP player animations');
         } catch (e) {
             console.error('[GameScene] Failed to create WebP animations:', e.message);
         }

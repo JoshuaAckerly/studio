@@ -18,7 +18,6 @@ async function bootstrap() {
             window.noteleksGame = game;
         }
         
-        console.log('[Noteleks] Game initialized successfully');
         return game;
     } catch (e) {
         console.error('[Noteleks] Failed to initialize game:', e.message);

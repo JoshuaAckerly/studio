@@ -46,10 +46,6 @@ class Player extends GameObject {
     createPlayer() {
         // Use WebP sprite
         this.sprite = this.scene.physics.add.sprite(this.x, this.y, 'skeleton-idle-0');
-        if (GameConfig.debug.enablePlayerDebugOverlay) {
-            console.log('[Player] WebP sprite created - Dimensions:', this.sprite.width, 'x', this.sprite.height);
-        }
-        
         this.sprite.playerRef = this;
         this.sprite.setOrigin(0.5, 1);
         this.sprite.setScale(GameConfig.player.scale);
@@ -68,7 +64,6 @@ class Player extends GameObject {
             if (animation.key === 'player-attack') {
                 this._isAttacking = false;
                 this._attackLocked = false;
-                console.log('[Player] Attack animation completed, unlocking player');
             }
         });
         
@@ -91,8 +86,6 @@ class Player extends GameObject {
             this.weaponSprite.setOrigin(0, 0.5); // Pivot at base of spear (left side, center height)
             this.weaponSprite.setDepth(99); // Just behind player
             this.weaponSprite.setScale(0.15); // Adjust size to match player scale
-            
-            console.log('[Player] Weapon sprite created with bone tracking');
         } catch (e) {
             console.error('[Player] Failed to create weapon sprite:', e);
         }
@@ -105,7 +98,6 @@ class Player extends GameObject {
             const spineData = await response.json();
             
             this.boneReader = new SpineBoneReader(spineData);
-            console.log('[Player] Spine bone data loaded successfully');
         } catch (e) {
             console.warn('[Player] Could not load Spine bone data, using fallback positioning:', e.message);
         }
@@ -205,7 +197,6 @@ class Player extends GameObject {
             loop = false; // Attack should never loop
             this._isAttacking = true;
             this._attackLocked = true;
-            console.log('[Player] Attack started, locking player');
         }
         else if (name === 'jump') {
             animKey = 'player-jump';
@@ -304,18 +295,11 @@ class Player extends GameObject {
             if (aiComponent) {
                 const knockbackConfig = GameConfig.combat.knockback;
                 aiComponent.stun(knockbackConfig.stunDuration);
-                if (GameConfig.debug.enablePlayerDebugOverlay) {
-                    console.log('[Player] Enemy stunned for', knockbackConfig.stunDuration, 'ms');
-                }
             }
             
             // Apply damage
             const damage = 1;
             const score = enemy.takeDamage(damage);
-            
-            if (GameConfig.debug.enablePlayerDebugOverlay) {
-                console.log('[Player] Hit enemy, health remaining:', enemy.getHealth());
-            }
             
             if (score && this.scene.addScore) {
                 this.scene.addScore(score);
