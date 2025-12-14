@@ -306,10 +306,8 @@ class TouchInputManager {
         if (!this.isMobile) return;
         
         this.controlsVisible = visible;
-        const mobileArea = document.getElementById('mobile-controls-area');
-        if (mobileArea) {
-            mobileArea.style.display = visible ? 'flex' : 'none';
-        }
+        // CSS now handles visibility on mobile, no need to override
+        // The mobile-controls-area is automatically shown via @media queries
     }
     
     /**

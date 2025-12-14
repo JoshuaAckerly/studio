@@ -208,6 +208,11 @@
             display: block;
         }
 
+        /* Hide mobile controls on desktop by default */
+        #mobile-controls-area {
+            display: none;
+        }
+
         /* Mobile Game Boy Style Layout */
         @media (max-width: 768px) and (orientation: portrait) {
             body {
@@ -254,26 +259,51 @@
         }
 
         @media (max-width: 768px) and (orientation: landscape) {
-            #game-container {
-                /* Landscape layout */
-                flex-direction: row;
-                padding: 5px;
+            body {
+                height: 100vh;
+                overflow: hidden;
+                position: fixed;
+                width: 100%;
                 background: #2a2a2a;
             }
 
-            #phaser-game {
-                width: 100%;
+            #game-container {
+                /* Landscape layout - side by side */
+                flex-direction: row;
+                padding: 5px;
+                background: #2a2a2a;
                 height: 100vh;
-                border: none;
-                border-radius: 0;
+                gap: 5px;
+            }
+
+            #phaser-game {
+                width: 65%;
+                height: 100vh;
+                border: 2px solid #1a1a1a;
+                border-radius: 8px;
+                background: #000;
                 margin: 0;
             }
 
+            #mobile-controls-area {
+                display: flex !important;
+                flex-direction: column;
+                width: 35%;
+                height: 100%;
+                justify-content: space-around;
+                align-items: center;
+                padding: 10px;
+                gap: 10px;
+            }
 
-
-
-
-
+            #mobile-controls-area .left-column,
+            #mobile-controls-area .right-column,
+            #mobile-controls-area .center-column {
+                flex: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
         }
         
         #phaser-game canvas {
@@ -298,19 +328,32 @@
         }
         
         #game-controls button {
-            padding: 10px 20px;
+            padding: 12px 24px;
             background: rgba(74, 222, 128, 0.9);
-            border: none;
+            border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 8px;
             color: white;
             font-weight: bold;
+            font-size: 14px;
             cursor: pointer;
             backdrop-filter: blur(5px);
-            transition: background-color 0.2s;
+            transition: all 0.2s;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
         
         #game-controls button:hover {
             background: rgba(74, 222, 128, 1);
+        }
+
+        /* Mobile button styling */
+        @media (max-width: 768px) {
+            #game-controls button {
+                padding: 14px 28px;
+                font-size: 16px;
+                min-width: 100px;
+                min-height: 48px; /* Touch-friendly size */
+            }
         }
         
         #game-info {
@@ -323,12 +366,8 @@
                 background: #2a2a2a;
             }
 
-
-            
-
-
             #mobile-controls-area {
-                display: none; /* Hidden by default, shown only on mobile via JS */
+                display: flex !important; /* Always show on mobile */
                 width: 100%;
                 gap: 12px;
                 align-items: flex-end; /* push controls down inside the area */
