@@ -181,14 +181,6 @@ class NoteleksGame {
         });
         // Phaser will auto-add the scene(s) declared in config.scene and start them.
 
-        // If a mobile-only crash previously happened and was captured, reveal it
-        // in the page so the developer can copy the error payload from the device.
-        try {
-            this._showStoredErrorIfAny(container);
-        } catch (e) {
-            // ignore
-        }
-
         // Add game event listeners
         this.setupEventListeners();
 
@@ -196,78 +188,8 @@ class NoteleksGame {
     }
 
     _showStoredErrorIfAny(container) {
-        try {
-            const raw = localStorage.getItem('noteleks_last_error');
-            if (!raw) return;
-            let payload = null;
-            try { payload = JSON.parse(raw); } catch (e) { payload = { raw }; }
-
-            // Log to console for remote debugging tools
-            try { console.warn('[NoteleksGame] previous mobile error captured:', payload); } catch (e) {}
-
-            // Create a lightweight banner element at the top of the container so
-            // users can copy the error from the device screen and paste it into
-            // a bug report. The banner includes a clear button.
-            const div = document.createElement('div');
-            div.style.position = 'absolute';
-            div.style.left = '8px';
-            div.style.right = '8px';
-            div.style.top = '8px';
-            div.style.zIndex = 999999;
-            div.style.background = 'rgba(0,0,0,0.85)';
-            div.style.color = '#fff';
-            div.style.padding = '8px';
-            div.style.fontSize = '12px';
-            div.style.borderRadius = '6px';
-            div.style.maxHeight = '40vh';
-            div.style.overflow = 'auto';
-            div.id = 'noteleks-error-banner';
-
-            const pre = document.createElement('pre');
-            pre.style.whiteSpace = 'pre-wrap';
-            pre.style.margin = '0 0 6px 0';
-            pre.textContent = JSON.stringify(payload, null, 2);
-
-            const controls = document.createElement('div');
-            controls.style.display = 'flex';
-            controls.style.gap = '8px';
-
-            const clearBtn = document.createElement('button');
-            clearBtn.textContent = 'Clear saved error';
-            clearBtn.style.fontSize = '12px';
-            clearBtn.onclick = () => {
-                try { localStorage.removeItem('noteleks_last_error'); } catch (e) {}
-                const el = document.getElementById('noteleks-error-banner');
-                if (el && el.parentNode) el.parentNode.removeChild(el);
-            };
-
-            const copyBtn = document.createElement('button');
-            copyBtn.textContent = 'Copy to clipboard';
-            copyBtn.style.fontSize = '12px';
-            copyBtn.onclick = async () => {
-                try {
-                    await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
-                    copyBtn.textContent = 'Copied';
-                } catch (e) {
-                    try { alert('Copy failed — long-press the error text to copy.'); } catch (x) {}
-                }
-            };
-
-            controls.appendChild(copyBtn);
-            controls.appendChild(clearBtn);
-            div.appendChild(pre);
-            div.appendChild(controls);
-
-            // Append to the provided container if possible, otherwise to body
-            try {
-                const host = (container && typeof container.appendChild === 'function') ? container : document.body;
-                host.appendChild(div);
-            } catch (e) {
-                try { document.body.appendChild(div); } catch (e) {}
-            }
-        } catch (e) {
-            // ignore anything in error reporting
-        }
+        // Debug banner removed - errors are still logged to localStorage for debugging
+        return;
     }
 
     setupEventListeners() {
