@@ -328,7 +328,7 @@
 
 
             #mobile-controls-area {
-                display: flex;
+                display: none; /* Hidden by default, shown only on mobile via JS */
                 width: 100%;
                 gap: 12px;
                 align-items: flex-end; /* push controls down inside the area */
