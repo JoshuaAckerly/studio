@@ -2,8 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>Noteleks Heroes Beyond Light - {{ config('app.name') }}</title>
+    
+    <!-- Preconnect to CDN for faster Phaser loading on mobile -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
     
     <script>
         // Silence console output when app.debug is false (production).
@@ -70,7 +76,9 @@
     </script>
     @endif
     
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js" defer></script>
+    <!-- Spine plugin must load after Phaser -->
+    <script src="/libs/spine/spine-plugin-iife.js" defer></script>
 
     <!-- Enable Noteleks in-page debug hooks when present so we can see
          the on-page logger and diagnostic overlays during troubleshooting. -->
@@ -142,9 +150,6 @@
 
     </script>
 
-    <!-- Local development shim for Spine plugin (safe no-op). Replace with
-        the official Spine Phaser plugin IIFE for full runtime support. -->
-    <script src="/libs/spine/spine-plugin-iife.js"></script>
     @vite('resources/js/games/noteleks/main-modular.js')
     <style>
         * {
@@ -420,8 +425,8 @@
             A recreation of my original mobile game, now playable in your browser with advanced Spine 2D animations.
             Control Noteleks as you battle through graveyard enemies with an arsenal of weapons.
         </p>
-        <p><strong>Controls:</strong> WASD/Arrows to move, Space/Click to attack, Up/W to jump, P to pause, R to restart</p>
-        <p><strong>New Features:</strong> Modular codebase with separate classes for Player, Enemies, Weapons, and UI management!</p>
+        <p><strong>Controls:</strong> WASD/Arrows to move, Space/Click to attack, Up/W to jump (press twice for double jump!), P to pause, R to restart</p>
+        <p><strong>New Features:</strong> Double jump ability! Modular codebase with separate classes for Player, Enemies, Weapons, and UI management!</p>
     </div>
 
     <script>

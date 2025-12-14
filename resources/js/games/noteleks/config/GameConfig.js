@@ -24,6 +24,9 @@ export const GameConfig = {
         startPosition: { x: 400, y: 300 },
         speed: 160,
         jumpPower: 330,
+        doubleJumpEnabled: true,
+        doubleJumpPower: 280,  // Second jump is slightly weaker
+        maxJumps: 2,
         health: 100,
         maxHealth: 100,
         scale: 0.3,

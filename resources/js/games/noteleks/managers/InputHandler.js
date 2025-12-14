@@ -11,6 +11,7 @@ class InputHandler {
         this.lastAttackTime = 0;
         this.attackCooldown = 300; // milliseconds - matches animation duration
         this.physicsManager = new PhysicsManager(scene);
+        this.lastJumpKeyState = false; // Track jump key state for edge detection
         
         this.setupKeys();
     }
@@ -27,7 +28,8 @@ class InputHandler {
     getInputState() {
         if (!this.keys) return null;
 
-        return {
+        // Get keyboard input
+        const keyboardState = {
             left: this.keys.LEFT.isDown || this.keys.A.isDown,
             right: this.keys.RIGHT.isDown || this.keys.D.isDown,
             up: this.keys.UP.isDown || this.keys.W.isDown,
@@ -46,6 +48,21 @@ class InputHandler {
                 space: this.keys.SPACE.isDown
             }
         };
+
+        // Merge with touch input if available
+        if (this.scene.inputManager && this.scene.inputManager.isMobileDevice()) {
+            const touchState = this.scene.inputManager.getTouchState();
+            return {
+                left: keyboardState.left || touchState.left,
+                right: keyboardState.right || touchState.right,
+                up: keyboardState.up || touchState.jump,
+                down: keyboardState.down || touchState.down,
+                attack: (keyboardState.attack || touchState.attack) && this.canAttack(),
+                raw: keyboardState.raw
+            };
+        }
+
+        return keyboardState;
     }
 
     /**
@@ -95,11 +112,23 @@ class InputHandler {
             player.playAnimation('idle');
         }
 
-        // Handle jump - play jump animation while in air
+        // Handle jump with double jump support - detect key press edge
+        const jumpKeyPressed = inputState.up;
+        const jumpKeyJustPressed = jumpKeyPressed && !this.lastJumpKeyState;
+        
+        // Update the key state for next frame
+        this.lastJumpKeyState = jumpKeyPressed;
+
+        if (jumpKeyJustPressed) {
+            // Try to jump (will work for first and second jump)
+            const movementComponent = player.getComponent('movement');
+            if (movementComponent && movementComponent.jump()) {
+                player.playAnimation('jump', false);
+            }
+        }
+
+        // Play jump animation while in air
         if (!isOnGround) {
-            player.playAnimation('jump', false);
-        } else if (inputState.up) {
-            this.physicsManager.setVelocityY(player.sprite, -330);
             player.playAnimation('jump', false);
         }
 

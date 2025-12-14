@@ -7,7 +7,10 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
     server: {
         port: 5177,
-        host: '127.0.0.1'
+        host: '0.0.0.0', // Allow access from network
+        hmr: {
+            host: 'studio.test'
+        }
     },
     plugins: [
         laravel({

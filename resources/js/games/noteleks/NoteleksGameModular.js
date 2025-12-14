@@ -108,6 +108,11 @@ class NoteleksGame {
     }
 
     createGameConfig() {
+        // Verify Phaser is available before creating config
+        if (typeof Phaser === 'undefined') {
+            throw new Error('Phaser is not loaded. Make sure phaser.min.js loads before the game module.');
+        }
+        
         // Simple game config without Spine plugin
         return {
             type: Phaser.AUTO,
@@ -141,6 +146,13 @@ class NoteleksGame {
 
     async initialize(containerId = 'phaser-game') {
         console.info('[NoteleksGame] initialize start, containerId=%s', containerId);
+
+        // Verify Phaser is available
+        if (typeof Phaser === 'undefined') {
+            const msg = 'Phaser is not available. Cannot initialize game.';
+            console.error('[NoteleksGame]', msg);
+            throw new Error(msg);
+        }
 
         // Check if container exists
         const container = document.getElementById(containerId);

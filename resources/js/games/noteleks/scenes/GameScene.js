@@ -11,6 +11,7 @@ import EntityFactory from '../factories/EntityFactory.js';
 import GameUI from '../GameUI.js';
 import SystemManager from '../systems/SystemManager.js';
 import WeaponManager from '../WeaponManager.js';
+import TouchInputManager from '../managers/TouchInputManager.js';
 
 /**
  * Minimal, robust GameScene replacement.
@@ -28,6 +29,7 @@ class GameScene extends Phaser.Scene {
         this.physicsManager = null;
         this.weaponManager = null;
         this.gameUI = null;
+        this.inputManager = null;
 
         this.systemManager = new SystemManager(this);
         this.entityFactory = new EntityFactory(this);
@@ -148,11 +150,13 @@ class GameScene extends Phaser.Scene {
         this.platformManager = new PlatformManager(this);
 
         this.weaponManager = new WeaponManager(this);
+        this.inputManager = new TouchInputManager(this);
         this.gameUI = new GameUI(this);
 
 
         try {
             this.systemManager.registerSystem('weaponManager', this.weaponManager);
+            this.systemManager.registerSystem('inputManager', this.inputManager);
             this.systemManager.registerSystem('gameUI', this.gameUI);
             this.systemManager.initialize();
         } catch (e) {}
@@ -304,6 +308,7 @@ class GameScene extends Phaser.Scene {
     }
 
     handleGameplayUpdate() {
+        try { this.inputManager && this.inputManager.update(); } catch (e) {}
         try { this.systemManager.update && this.systemManager.update(16); } catch (e) {}
         try {
             if (this.player) {
@@ -364,7 +369,7 @@ class GameScene extends Phaser.Scene {
 
     shutdown() {
         try { this.enemyManager && this.enemyManager.shutdown(); } catch (e) {}
-
+        try { this.inputManager && this.inputManager.destroy(); } catch (e) {}
         try { this.platformManager && this.platformManager.shutdown(); } catch (e) {}
         try { this.physicsManager = null; } catch (e) {}
         try { this.systemManager && this.systemManager.shutdown(); } catch (e) {}

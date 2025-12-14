@@ -226,8 +226,13 @@ class Player extends GameObject {
             collideWorldBounds: true,
         }));
 
-        // Add movement component
-        this.addComponent('movement', new MovementComponent(config.speed, config.jumpPower));
+        // Add movement component with double jump support
+        this.addComponent('movement', new MovementComponent(
+            config.speed, 
+            config.jumpPower,
+            config.doubleJumpPower,
+            config.maxJumps
+        ));
 
         // Add health component
         this.addComponent('health', new HealthComponent(config.health, config.maxHealth));
@@ -370,10 +375,11 @@ class Player extends GameObject {
             healthComponent.reset();
         }
 
-        // Reset movement
+        // Reset movement and jumps
         const movementComponent = this.getComponent('movement');
         if (movementComponent) {
             movementComponent.stopHorizontal();
+            movementComponent.resetJumps();
         }
 
         // Reset sprite

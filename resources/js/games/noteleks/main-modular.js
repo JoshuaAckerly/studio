@@ -33,16 +33,16 @@ if (typeof window !== 'undefined') {
     if (hasGameContainer) {
         const startGame = async () => {
             // Wait for Phaser and Spine to be available
-            const maxWait = 3000; // 3 seconds
-            const interval = 100;
+            const maxWait = 10000; // 10 seconds for slow mobile connections
+            const interval = 50; // Check more frequently
             let waited = 0;
 
             const checkReady = () => {
-                return new Promise((resolve) => {
+                return new Promise((resolve, reject) => {
                     const timer = setInterval(() => {
                         if (window.Phaser) {
                             clearInterval(timer);
-                            console.log('[Noteleks] Phaser detected, starting game');
+                            console.log('[Noteleks] Phaser detected after ' + waited + 'ms, starting game');
                             resolve(true);
                             return;
                         }
@@ -50,26 +50,37 @@ if (typeof window !== 'undefined') {
                         waited += interval;
                         if (waited >= maxWait) {
                             clearInterval(timer);
-                            console.warn('[Noteleks] Phaser not detected, starting anyway');
-                            resolve(false);
+                            const msg = '[Noteleks] Phaser not detected after ' + maxWait + 'ms. Check network connection.';
+                            console.error(msg);
+                            reject(new Error(msg));
                         }
                     }, interval);
                 });
             };
 
-            await checkReady();
-            
             try {
+                await checkReady();
                 await bootstrap();
             } catch (e) {
                 console.error('[Noteleks] Bootstrap failed:', e.message);
+                // Display error to user on mobile
+                const container = document.getElementById('phaser-game');
+                if (container) {
+                    container.innerHTML = '<div style="color: white; padding: 20px; text-align: center; font-family: Arial;">' +
+                        '<h2>Failed to load game</h2>' +
+                        '<p>' + e.message + '</p>' +
+                        '<p>Please check your internet connection and refresh the page.</p>' +
+                        '</div>';
+                }
             }
         };
 
-        if (document.readyState === 'complete' || document.readyState === 'interactive') {
-            startGame();
+        // Wait for DOM to be ready before checking for Phaser
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', startGame, { once: true });
         } else {
-            window.addEventListener('load', startGame, { once: true });
+            // DOM already loaded, wait a bit for scripts to load
+            setTimeout(startGame, 100);
         }
     } else {
         console.log('[Noteleks] Game container not found, skipping auto-start');
