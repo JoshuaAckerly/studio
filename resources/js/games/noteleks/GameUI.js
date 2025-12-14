@@ -207,7 +207,6 @@ class GameUI {
             this.gameOverContainer.add(this.finalScoreText);
 
             // Instructions
-            const isMobile = this.detectMobile();
             const instructionText = isMobile ? 'Tap to restart or use browser back to quit' : 'Press R to restart or ESC to quit';
 
             const instructionsText = this.scene.add.text(0, 30, instructionText, {
