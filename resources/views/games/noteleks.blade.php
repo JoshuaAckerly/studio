@@ -350,15 +350,15 @@
         @media (max-width: 768px) {
             #game-controls {
                 flex-direction: column;
-                gap: 6px;
+                gap: 4px;
                 width: auto;
             }
 
             #game-controls button {
-                padding: 8px 12px;
-                font-size: 13px;
-                min-width: 80px;
-                min-height: 36px; /* Touch-friendly but more compact */
+                padding: 6px 10px;
+                font-size: 11px;
+                min-width: 65px;
+                min-height: 32px; /* Smaller but still touch-friendly */
                 white-space: nowrap;
             }
         }
@@ -399,8 +399,8 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                padding-bottom: 8px;
-                max-width: 100px; /* Limit center column width */
+                padding-bottom: 0;
+                max-width: 75px; /* Smaller center column */
             }
 
             #mobile-controls-area #game-controls {
