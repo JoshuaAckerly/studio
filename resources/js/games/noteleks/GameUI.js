@@ -70,13 +70,15 @@ class GameUI {
             this.weaponText.setScrollFactor(0);
             this.weaponText.setDepth(1000);
 
-            // Game over screen (initially hidden)
-            this.gameOverContainer = this.scene.add.container(400, 300);
-    // Ensure Game Over UI is on top of all other UI and game objects
-    // UI elements use depth ~1000; set the container higher so it always renders above.
-    this.gameOverContainer.setDepth(2000);
-    this.gameOverContainer.setScrollFactor(0);
-    this.gameOverContainer.setVisible(false);
+            // Game over screen (initially hidden) - positioned at center of screen
+            const centerX = this.scene.scale.width / 2;
+            const centerY = this.scene.scale.height / 2;
+            this.gameOverContainer = this.scene.add.container(centerX, centerY);
+            // Ensure Game Over UI is on top of all other UI and game objects
+            // UI elements use depth ~1000; set the container higher so it always renders above.
+            this.gameOverContainer.setDepth(2000);
+            this.gameOverContainer.setScrollFactor(0);
+            this.gameOverContainer.setVisible(false);
 
             this.createGameOverScreen();
 
@@ -171,10 +173,15 @@ class GameUI {
         // Most game over UI is canvas-backed. Guard it so we can fall back to DOM
         // if canvas text creation fails for any reason.
         try {
+            // Responsive sizing based on screen width
+            const isMobile = this.detectMobile();
+            const bgWidth = isMobile ? Math.min(this.scene.scale.width * 0.9, 400) : 600;
+            const bgHeight = isMobile ? Math.min(this.scene.scale.height * 0.6, 300) : 400;
+            
             // Background
             const gameOverBg = this.scene.add.graphics();
             gameOverBg.fillStyle(0x000000, 0.8);
-            gameOverBg.fillRect(-300, -200, 600, 400);
+            gameOverBg.fillRect(-bgWidth/2, -bgHeight/2, bgWidth, bgHeight);
             this.gameOverContainer.add(gameOverBg);
 
             // Game Over text
@@ -372,6 +379,10 @@ class GameUI {
 
     showGameOver() {
         this.finalScoreText.setText(`Final Score: ${this.score}`);
+        
+        // Update position to stay centered in current viewport
+        this.updateGameOverPosition();
+        
         this.gameOverContainer.setVisible(true);
 
         // Animate game over screen
@@ -472,6 +483,15 @@ class GameUI {
         this.updateHealth(this.maxHealth);
         this.hideGameOver();
         this.hidePauseScreen();
+    }
+
+    // Update game over position to stay centered
+    updateGameOverPosition() {
+        if (this.gameOverContainer) {
+            const centerX = this.scene.scale.width / 2;
+            const centerY = this.scene.scale.height / 2;
+            this.gameOverContainer.setPosition(centerX, centerY);
+        }
     }
 
     // Lightweight DOM overlay fallback for pause indicator (used when renderer.gl isn't available)
