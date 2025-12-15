@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="{{ ($appearance ?? 'system') === 'dark' ? 'dark' : '' }}">
+<html lang="<?php echo e(str_replace('_', '-', app()->getLocale())); ?>" class="<?php echo e(($appearance ?? 'system') === 'dark' ? 'dark' : ''); ?>">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        {{-- Inline script to detect system dark mode preference and apply it immediately --}}
+        
         <script>
             (function() {
-                const appearance = '{{ $appearance ?? "system" }}';
+                const appearance = '<?php echo e($appearance ?? "system"); ?>';
 
                 if (appearance === 'system') {
                     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -19,7 +19,7 @@
             })();
         </script>
 
-        {{-- Inline style to set the HTML background color based on our theme in app.css --}}
+        
         <style>
             html {
                 background-color: oklch(1 0 0);
@@ -30,26 +30,26 @@
             }
         </style>
 
-        <title inertia>{{ config('app.name', 'Laravel') }}</title>
+        <title inertia><?php echo e(config('app.name', 'Laravel')); ?></title>
 
         <!-- Google Analytics -->
-        @if(config('services.google_analytics.tracking_id'))
-        <script async src="https://www.googletagmanager.com/gtag/js?id={{ config('services.google_analytics.tracking_id') }}"></script>
+        <?php if(config('services.google_analytics.tracking_id')): ?>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=<?php echo e(config('services.google_analytics.tracking_id')); ?>"></script>
         <script>
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
-            gtag('config', '{{ config('services.google_analytics.tracking_id') }}');
+            gtag('config', '<?php echo e(config('services.google_analytics.tracking_id')); ?>');
         </script>
-        @endif
+        <?php endif; ?>
 
         <link rel="icon" href="/favicon.ico" sizes="any">
 
-        {{-- Structured Data (JSON-LD) for SEO --}}
+        
         <script type="application/ld+json">
         {
-            "@@context": "https://schema.org",
-            "@@type": "Organization",
+            "@context": "https://schema.org",
+            "@type": "Organization",
             "name": "GraveYard Jokes Studio",
             "url": "https://studio.graveyardjokes.com",
             "logo": "https://studio.graveyardjokes.com/images/logo.png",
@@ -60,12 +60,12 @@
 
         <script type="application/ld+json">
         {
-            "@@context": "https://schema.org",
-            "@@type": "WebSite",
+            "@context": "https://schema.org",
+            "@type": "WebSite",
             "name": "GraveYard Jokes Studio",
             "url": "https://studio.graveyardjokes.com",
             "potentialAction": {
-                "@@type": "SearchAction",
+                "@type": "SearchAction",
                 "target": "https://studio.graveyardjokes.com/?s={search_term_string}",
                 "query-input": "required name=search_term_string"
             }
@@ -75,12 +75,13 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
 
-        @routes
-        @viteReactRefresh
-        @vite(['resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
-        @inertiaHead
+        <?php echo app('Tighten\Ziggy\BladeRouteGenerator')->generate(); ?>
+        <?php echo app('Illuminate\Foundation\Vite')->reactRefresh(); ?>
+        <?php echo app('Illuminate\Foundation\Vite')(['resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"]); ?>
+        <?php if (!isset($__inertiaSsrDispatched)) { $__inertiaSsrDispatched = true; $__inertiaSsrResponse = app(\Inertia\Ssr\Gateway::class)->dispatch($page); }  if ($__inertiaSsrResponse) { echo $__inertiaSsrResponse->head; } ?>
     </head>
     <body class="font-sans antialiased">
-        @inertia
+        <?php if (!isset($__inertiaSsrDispatched)) { $__inertiaSsrDispatched = true; $__inertiaSsrResponse = app(\Inertia\Ssr\Gateway::class)->dispatch($page); }  if ($__inertiaSsrResponse) { echo $__inertiaSsrResponse->body; } else { ?><div id="app" data-page="<?php echo e(json_encode($page)); ?>"></div><?php } ?>
     </body>
 </html>
+<?php /**PATH C:\Users\acker\Herd\studio\resources\views/app.blade.php ENDPATH**/ ?>
