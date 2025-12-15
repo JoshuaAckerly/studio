@@ -1,30 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <!-- Generated sitemap: includes primary public pages. Base URL: https://studio.graveyardjokes.com/ -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <!-- Generated sitemap for GraveYard Jokes Studio -->
+  <!-- Base URL: https://studio.graveyardjokes.com/ -->
+  <!-- Last Updated: 2025-12-15 -->
+  
+  <!-- Homepage - Main entry point -->
   <url>
     <loc>https://studio.graveyardjokes.com/</loc>
+    <lastmod>2025-12-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
+  
+  <!-- Video Log - Frequently updated creative process documentation -->
   <url>
     <loc>https://studio.graveyardjokes.com/video-log</loc>
+    <lastmod>2025-12-15</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.9</priority>
   </url>
+  
+  <!-- Illustrations Gallery - Visual artwork collection -->
   <url>
     <loc>https://studio.graveyardjokes.com/illustrations</loc>
+    <lastmod>2025-12-15</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.9</priority>
   </url>
+  
+  <!-- Noteleks Heroes Game - Interactive game page -->
   <url>
     <loc>https://studio.graveyardjokes.com/noteleks</loc>
+    <lastmod>2025-12-15</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <!-- The following route serves dynamic game assets. Individual files are not enumerated here. If you want every asset indexed, provide a list or allow crawling of the exact file URLs. -->
-  <url>
-    <loc>https://studio.graveyardjokes.com/games/noteleks/spine/characters/</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.8</priority>
   </url>
 </urlset>

@@ -45,6 +45,32 @@
 
         <link rel="icon" href="/favicon.ico" sizes="any">
 
+        {{-- Structured Data (JSON-LD) for SEO --}}
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name": "GraveYard Jokes Studio",
+            "url": "https://studio.graveyardjokes.com",
+            "logo": "https://studio.graveyardjokes.com/images/logo.png",
+            "description": "Creative studio showcasing original music, game development, visual art, and creative growth documentation.",
+            "sameAs": []
+        }
+        </script>
+
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "GraveYard Jokes Studio",
+            "url": "https://studio.graveyardjokes.com",
+            "potentialAction": {
+                "@type": "SearchAction",
+                "target": "https://studio.graveyardjokes.com/?s={search_term_string}",
+                "query-input": "required name=search_term_string"
+            }
+        }
+        </script>
 
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
