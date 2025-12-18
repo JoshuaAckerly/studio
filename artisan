@@ -1,3 +1,5 @@
+define('LARAVEL_START', microtime(true));
+
 #!/usr/bin/env php
 <?php
 
@@ -6,13 +8,20 @@ use Symfony\Component\Console\Input\ArgvInput;
 
 define('LARAVEL_START', microtime(true));
 
-// Register the Composer autoloader...
 require __DIR__.'/vendor/autoload.php';
 
-// Bootstrap Laravel and handle the command...
 /** @var Application $app */
 $app = require_once __DIR__.'/bootstrap/app.php';
 
-$status = $app->handleCommand(new ArgvInput);
+$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+$kernel->bootstrap();
 
+// Get all commands from the kernel and ensure they have Laravel app set
+foreach ($kernel->all() as $command) {
+	if (method_exists($command, 'setLaravel') && !$command->getLaravel()) {
+		$command->setLaravel($app);
+	}
+}
+
+$status = $app->handleCommand(new ArgvInput);
 exit($status);
