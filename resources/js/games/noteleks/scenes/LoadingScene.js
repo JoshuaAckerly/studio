@@ -1,6 +1,6 @@
 /* global Phaser */
 import GameConfig from '../config/GameConfig.js';
-import AssetManager from '../utils/AssetManagerSimple.js';
+
 
 class LoadingScene extends Phaser.Scene {
     constructor() {
@@ -8,14 +8,14 @@ class LoadingScene extends Phaser.Scene {
     }
 
     preload() {
-        try { this.cameras.main.setBackgroundColor(GameConfig.screen.backgroundColor); } catch (e) {}
+        try { this.cameras.main.setBackgroundColor(GameConfig.screen.backgroundColor); } catch { /* ignore */ }
 
         // Show a simple progress text
         try {
             const w = (GameConfig && GameConfig.screen && GameConfig.screen.width) || this.cameras.main.width;
             const h = (GameConfig && GameConfig.screen && GameConfig.screen.height) || this.cameras.main.height;
             this._progressText = this.add.text(w / 2, h / 2, 'Loading...', { font: '16px Arial', fill: '#ffffff' }).setOrigin(0.5);
-        } catch (e) { /* ignore */ }
+        } catch { /* ignore */ }
 
         // Load WebP animation frames directly
         try {
@@ -115,8 +115,8 @@ class LoadingScene extends Phaser.Scene {
                 frameRate: 15,
                 repeat: 0
             });
-        } catch (e) {
-            console.error('[LoadingScene] Failed to create animations:', e.message);
+        } catch {
+            // Failed to create animations
         }
     }
 }

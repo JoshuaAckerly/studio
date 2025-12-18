@@ -52,7 +52,7 @@ export default defineConfig({
 
                     // Split node_modules into per-package chunks to avoid a single huge vendor bundle
                     if (id.includes('node_modules')) {
-                        const partsSplit = id.split(/node_modules[\/\\]/);
+                        const partsSplit = id.split(/node_modules[/]/);
                         if (!partsSplit || partsSplit.length < 2) return;
                         const parts = partsSplit[1].split(path.sep);
                         let pkg = parts[0];

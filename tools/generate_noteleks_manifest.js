@@ -3,8 +3,8 @@
 // Scans public/games/noteleks/sprites and writes manifest.json with
 // frameSequences mapping baseUrl -> ordered filenames.
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 const spritesDir = path.resolve(__dirname, '..', 'public', 'games', 'noteleks', 'sprites');
 const outFile = path.join(spritesDir, 'manifest.json');
@@ -96,4 +96,4 @@ function main() {
     console.log('Wrote manifest to', outFile);
 }
 
-if (require.main === module) main();
+if (process.argv[1] === new URL(import.meta.url).pathname) main();

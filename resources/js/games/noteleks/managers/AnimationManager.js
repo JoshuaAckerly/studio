@@ -27,7 +27,7 @@ class AnimationManager {
     /**
      * Play an animation on the sprite
      */
-    play(animationKey, loop = true) {
+    play(animationKey, _loop = true) {
         if (!this.sprite || !this.sprite.play) return;
         
         // Allow attack animation to restart

@@ -1,6 +1,5 @@
 /* global Phaser */
 import GameConfig from '../config/GameConfig.js';
-import Player from '../entities/Player.js';
 import AssetManager from '../utils/AssetManagerSimple.js';
 import { GameStateUtils } from '../utils/GameUtils.js';
 import EnemyManager from '../managers/EnemyManager.js';
@@ -44,14 +43,14 @@ class GameScene extends Phaser.Scene {
 
         // Queue Spine raw assets only when configured
         if (GameConfig && GameConfig.useSpine && GameConfig.assets && GameConfig.assets.spine) {
-            try { this.load.text('noteleks-atlas-text', GameConfig.assets.spine.atlas); } catch (e) {}
-            try { this.load.json('noteleks-skeleton-data', GameConfig.assets.spine.json); } catch (e) {}
-            try { this.load.image('noteleks-texture', GameConfig.assets.spine.png); } catch (e) {}
+            try { this.load.text('noteleks-atlas-text', GameConfig.assets.spine.atlas); } catch { /* ignore */ }
+            try { this.load.json('noteleks-skeleton-data', GameConfig.assets.spine.json); } catch { /* ignore */ }
+            try { this.load.image('noteleks-texture', GameConfig.assets.spine.png); } catch { /* ignore */ }
         }
 
         if (GameConfig && GameConfig.useSpine) {
             this.load.once('complete', () => {
-                try { AssetManager.setupSpineData(this); } catch (e) { console.warn('[GameScene] setupSpineData failed on loader complete'); }
+                try { AssetManager.setupSpineData(this); } catch { console.warn('[GameScene] setupSpineData failed on loader complete'); }
             });
         }
     }
@@ -64,64 +63,56 @@ class GameScene extends Phaser.Scene {
 
         // try an early setup (no-op if spine disabled)
         if (GameConfig && GameConfig.useSpine) {
-            try { AssetManager.setupSpineData(this); } catch (e) { /* ignore */ }
+            try { AssetManager.setupSpineData(this); } catch { /* ignore */ }
         }
-
         this.initializeManagers();
         this.createGameWorld();
         await this.setupGameObjects();
-    // Ensure an animated fallback is created once both the player and
-    // the fallback animation exist. This bridges timing races where
-    // AssetManager prepared animations after the Player was constructed.
-    try { this._ensurePlayerAnimatedFallback(); } catch (e) {}
+        try { this._ensurePlayerAnimatedFallback(); } catch { /* ignore */ }
         this.setupCollisions();
         this.registerInputHandlers();
         this.startGame();
-
-        try { this.events.emit('noteleks:scene-ready'); } catch (e) {}
+        try { this.events.emit('noteleks:scene-ready'); } catch { /* ignore */ }
     }
 
     _ensurePlayerAnimatedFallback() {
         try {
-            const scene = this;
             const tryCreate = () => {
                 try {
-                    if (!scene || !scene.anims) return false;
-                    if (!scene.anims.exists || !scene.anims.exists('player-idle')) return false;
+                    if (!this || !this.anims) return false;
+                    if (!this.anims.exists || !this.anims.exists('player-idle')) return false;
                     const p = (typeof window !== 'undefined') ? window.noteleksPlayer : null;
                     if (!p || !p.sprite) return false;
 
                     // Avoid recreating
                     if (p._persistentFallbackSprite && p._persistentFallbackSprite.scene) return true;
 
-                    const fx = (p.sprite && typeof p.sprite.x === 'number') ? p.sprite.x : (scene.cameras && scene.cameras.main && scene.cameras.main.centerX) || 0;
-                    const fy = (p.sprite && typeof p.sprite.y === 'number') ? p.sprite.y : (scene.cameras && scene.cameras.main && scene.cameras.main.centerY) || 0;
+                    const fx = (p.sprite && typeof p.sprite.x === 'number') ? p.sprite.x : (this.cameras && this.cameras.main && this.cameras.main.centerX) || 0;
+                    const fy = (p.sprite && typeof p.sprite.y === 'number') ? p.sprite.y : (this.cameras && this.cameras.main && this.cameras.main.centerY) || 0;
 
                     let baseTex = null;
-                    if (scene.textures.exists('skeleton-idle-frame-0')) baseTex = 'skeleton-idle-frame-0';
-                    else if (scene.textures.exists('skeleton-idle')) baseTex = 'skeleton-idle';
-                    else if (scene.textures.exists('skeleton')) baseTex = 'skeleton';
+                    if (this.textures.exists('skeleton-idle-frame-0')) baseTex = 'skeleton-idle-frame-0';
+                    else if (this.textures.exists('skeleton-idle')) baseTex = 'skeleton-idle';
+                    else if (this.textures.exists('skeleton')) baseTex = 'skeleton';
 
-                    const spr = scene.add.sprite(fx, fy, baseTex || null).setOrigin(0.5, 1);
+                    const spr = this.add.sprite(fx, fy, baseTex || null).setOrigin(0.5, 1);
                     try {
                         // Prefer the Player's applied scale (which may be an override from setDisplayHeight)
                         const baseScale = (p && typeof p.getAppliedScale === 'function') ? p.getAppliedScale() : ((GameConfig && GameConfig.player && typeof GameConfig.player.scale === 'number') ? GameConfig.player.scale : 1);
                         if (spr && typeof spr.setScale === 'function') spr.setScale(baseScale);
-                    } catch (e) {}
-                    try { if (spr && spr.play) spr.play('player-idle'); } catch (e) {}
+                    } catch { /* ignore */ }
+                    try { if (spr && spr.play) spr.play('player-idle'); } catch { /* ignore */ }
                     if (spr && spr.setDepth) spr.setDepth(501);
-                    try { if (p.sprite && typeof p.sprite.setVisible === 'function') p.sprite.setVisible(false); } catch (e) {}
+                    try { if (p.sprite && typeof p.sprite.setVisible === 'function') p.sprite.setVisible(false); } catch { /* ignore */ }
                     p._persistentFallbackSprite = spr;
                     // If a precise target pixel height is configured, ask the Player
                     // to compute and apply the final scale so the on-screen height
                     // matches exactly (this handles timing races where AssetManager
                     // prepared animations after the Player constructor ran).
-                    try { if (GameConfig && GameConfig.player && GameConfig.player.targetPixelHeight && p && typeof p.setDisplayHeight === 'function') p.setDisplayHeight(GameConfig.player.targetPixelHeight); } catch (e) {}
+                    try { if (GameConfig && GameConfig.player && GameConfig.player.targetPixelHeight && p && typeof p.setDisplayHeight === 'function') p.setDisplayHeight(GameConfig.player.targetPixelHeight); } catch { /* ignore */ }
                     console.info('[GameScene] Created persistent animated fallback for player (player-idle) using', baseTex);
                     return true;
-                } catch (e) {
-                    return false;
-                }
+                } catch { return false; }
             };
 
             // Try right away, then poll briefly if needed
@@ -135,13 +126,11 @@ class GameScene extends Phaser.Scene {
                             clearInterval(iv);
                             return;
                         }
-                    } catch (e) {}
+                    } catch { /* ignore */ }
                     if (attempts >= 30) clearInterval(iv);
                 }, 200);
             }
-        } catch (e) {
-            // ignore
-        }
+        } catch { /* ignore */ }
     }
 
     initializeManagers() {
@@ -159,19 +148,19 @@ class GameScene extends Phaser.Scene {
             this.systemManager.registerSystem('inputManager', this.inputManager);
             this.systemManager.registerSystem('gameUI', this.gameUI);
             this.systemManager.initialize();
-        } catch (e) {}
+        } catch { /* ignore */ }
     }
 
     createGameWorld() {
-        try { this.physics.world.setBounds(0, 0, GameConfig.screen.width, GameConfig.screen.height); } catch (e) {}
+        try { this.physics.world.setBounds(0, 0, GameConfig.screen.width, GameConfig.screen.height); } catch { /* ignore */ }
         try { 
             AssetManager.createPlaceholderTextures(this, GameConfig);
-        } catch (e) { console.error('[GameScene] Failed to create placeholder textures:', e.message); }
-        try { this.add.image(GameConfig.screen.width / 2, GameConfig.screen.height / 2, 'background'); } catch (e) {}
+        } catch { /* ignore */ }
+        try { this.add.image(GameConfig.screen.width / 2, GameConfig.screen.height / 2, 'background'); } catch { /* ignore */ }
 
-        try { this.platformManager.initialize(); } catch (e) {}
-        try { this.platforms = this.platformManager.getPlatforms(); } catch (e) { this.platforms = null; }
-        try { this.enemyManager.initialize(); } catch (e) {}
+        try { this.platformManager.initialize(); } catch { /* ignore */ }
+        try { this.platforms = this.platformManager.getPlatforms(); } catch { this.platforms = null; }
+        try { this.enemyManager.initialize(); } catch { /* ignore */ }
     }
 
     createBasicAnimations() {
@@ -235,9 +224,7 @@ class GameScene extends Phaser.Scene {
                     repeat: 0
                 });
             }
-        } catch (e) {
-            console.error('[GameScene] Failed to create WebP animations:', e.message);
-        }
+        } catch { /* ignore */ }
     }
 
     async setupGameObjects() {
@@ -251,12 +238,12 @@ class GameScene extends Phaser.Scene {
     }
 
     setupCollisions() {
-        try { 
+        try {
             if (this.player && this.platforms) {
                 this.physicsManager.setupCollision(this.player.sprite, this.platforms);
             }
-        } catch (e) {}
-        try { if (this.enemyManager) this.enemyManager.setupCollisions(this.player, this.weaponManager); } catch (e) {}
+        } catch { /* ignore */ }
+        try { if (this.enemyManager) this.enemyManager.setupCollisions(this.player, this.weaponManager); } catch { /* ignore */ }
     }
 
     registerInputHandlers() {
@@ -281,29 +268,23 @@ class GameScene extends Phaser.Scene {
 
             // When paused, allow pause-specific input handling
             if (this.gameState === GameStateUtils.STATES.PAUSED) {
-                try { this.handlePausedInput(); } catch (e) {}
+                try { this.handlePausedInput(); } catch { /* ignore */ }
                 return;
             }
 
             // When game over, listen for restart/quit input
             if (this.gameState === GameStateUtils.STATES.GAME_OVER) {
-                try { this.handleGameOverInput(); } catch (e) {}
+                try { this.handleGameOverInput(); } catch { /* ignore */ }
                 return;
             }
-        } catch (e) {
-            // swallow update errors to avoid breaking the main loop
-        }
+        } catch { /* ignore */ }
     }
 
     handleGameplayUpdate() {
-        try { this.inputManager && this.inputManager.update(); } catch (e) {}
-        try { this.systemManager.update && this.systemManager.update(16); } catch (e) {}
-        try {
-            if (this.player) {
-                this.player.update();
-            }
-        } catch (e) {}
-        try { this.enemyManager && this.enemyManager.update && this.enemyManager.update(this.player); } catch (e) {}
+        try { if (this.inputManager) this.inputManager.update(); } catch { /* ignore */ }
+        try { if (this.systemManager && this.systemManager.update) this.systemManager.update(16); } catch { /* ignore */ }
+        try { if (this.player) this.player.update(); } catch { /* ignore */ }
+        try { if (this.enemyManager && this.enemyManager.update) this.enemyManager.update(this.player); } catch { /* ignore */ }
     }
 
     handleGameOverInput() { 
@@ -316,51 +297,47 @@ class GameScene extends Phaser.Scene {
     showLoadingScreen() {
         try {
             this.add.text(GameConfig.screen.width / 2, GameConfig.screen.height / 2, 'Loading Noteleks Heroes...', { fontSize: '24px', fill: '#4ade80', fontFamily: 'Arial' }).setOrigin(0.5);
-        } catch (e) {}
+        } catch { /* ignore */ }
     }
 
-    addScore(points) { try { this.gameUI && this.gameUI.addScore(points); } catch (e) {} }
+    addScore(points) { try { if (this.gameUI) this.gameUI.addScore(points); } catch { /* ignore */ } }
 
     pauseGame() {
         if (this.gameState === GameStateUtils.STATES.PLAYING) {
             this.gameState = GameStateUtils.STATES.PAUSED;
-            try { this.physics && this.physics.pause(); } catch (e) {}
-            try { this.systemManager && this.systemManager.pause(); } catch (e) {}
-            try { this.gameUI && this.gameUI.showPauseScreen(); } catch (e) {}
+            try { if (this.physics) this.physics.pause(); } catch { /* ignore */ }
+            try { if (this.systemManager) this.systemManager.pause(); } catch { /* ignore */ }
+            try { if (this.gameUI) this.gameUI.showPauseScreen(); } catch { /* ignore */ }
         }
     }
-
     resumeGame() {
         if (this.gameState === GameStateUtils.STATES.PAUSED) {
             this.gameState = GameStateUtils.STATES.PLAYING;
-            try { this.physics && this.physics.resume(); } catch (e) {}
-            try { this.systemManager && this.systemManager.resume(); } catch (e) {}
-            try { this.gameUI && this.gameUI.hidePauseScreen(); } catch (e) {}
+            try { if (this.physics) this.physics.resume(); } catch { /* ignore */ }
+            try { if (this.systemManager) this.systemManager.resume(); } catch { /* ignore */ }
+            try { if (this.gameUI) this.gameUI.hidePauseScreen(); } catch { /* ignore */ }
         }
     }
-
     gameOver() {
         this.gameState = GameStateUtils.STATES.GAME_OVER;
-        try { this.physics && this.physics.pause(); } catch (e) {}
-        try { this.gameUI && this.gameUI.showGameOver(); } catch (e) {}
-        try { this.enemyManager && this.enemyManager.stopSpawning(); } catch (e) {}
+        try { if (this.physics) this.physics.pause(); } catch { /* ignore */ }
+        try { if (this.gameUI) this.gameUI.showGameOver(); } catch { /* ignore */ }
+        try { if (this.enemyManager) this.enemyManager.stopSpawning(); } catch { /* ignore */ }
     }
-
     restartGame() {
         this.gameState = GameStateUtils.STATES.PLAYING;
-        try { this.enemyManager && this.enemyManager.reset(); } catch (e) {}
-        try { this.weaponManager && this.weaponManager.getWeaponsGroup && this.weaponManager.getWeaponsGroup().clear(true, true); } catch (e) {}
-        try { this.gameUI && this.gameUI.reset(); } catch (e) {}
-        try { const playerConfig = GameConfig.player || { startPosition: { x: 100, y: 100 } }; this.player && this.player.reset && this.player.reset(playerConfig.startPosition.x, playerConfig.startPosition.y); } catch (e) {}
-        try { this.physics && this.physics.resume(); } catch (e) {}
+        try { if (this.enemyManager) this.enemyManager.reset(); } catch { /* ignore */ }
+        try { if (this.weaponManager && this.weaponManager.getWeaponsGroup) this.weaponManager.getWeaponsGroup().clear(true, true); } catch { /* ignore */ }
+        try { if (this.gameUI) this.gameUI.reset(); } catch { /* ignore */ }
+        try { const playerConfig = GameConfig.player || { startPosition: { x: 100, y: 100 } }; if (this.player && this.player.reset) this.player.reset(playerConfig.startPosition.x, playerConfig.startPosition.y); } catch { /* ignore */ }
+        try { if (this.physics) this.physics.resume(); } catch { /* ignore */ }
     }
-
     shutdown() {
-        try { this.enemyManager && this.enemyManager.shutdown(); } catch (e) {}
-        try { this.inputManager && this.inputManager.destroy(); } catch (e) {}
-        try { this.platformManager && this.platformManager.shutdown(); } catch (e) {}
-        try { this.physicsManager = null; } catch (e) {}
-        try { this.systemManager && this.systemManager.shutdown(); } catch (e) {}
+        try { if (this.enemyManager) this.enemyManager.shutdown(); } catch { /* ignore */ }
+        try { if (this.inputManager) this.inputManager.destroy(); } catch { /* ignore */ }
+        try { if (this.platformManager) this.platformManager.shutdown(); } catch { /* ignore */ }
+        try { this.physicsManager = null; } catch { /* ignore */ }
+        try { if (this.systemManager) this.systemManager.shutdown(); } catch { /* ignore */ }
     }
 }
 

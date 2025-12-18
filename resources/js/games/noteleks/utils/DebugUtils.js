@@ -10,7 +10,7 @@ const DebugUtils = {
     isPlayerDebugEnabled() {
         try {
             if (typeof window !== 'undefined' && window.noteleksDebug === true) return true;
-        } catch (e) {}
+        } catch { /* ignore */ }
 
         return !!(GameConfig && GameConfig.debug && GameConfig.debug.enablePlayerDebugOverlay);
     },
@@ -26,7 +26,7 @@ const DebugUtils = {
         try {
             const msg = String(message);
             return GameConfig.debug.suppressLogPrefixes.some(prefix => msg.indexOf(prefix) !== -1);
-        } catch (e) {
+        } catch {
             return false;
         }
     },

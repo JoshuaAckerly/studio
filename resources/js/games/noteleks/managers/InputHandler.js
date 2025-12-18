@@ -162,7 +162,7 @@ class InputHandler {
         if (this.isEscapePressed()) {
             try {
                 if (typeof window !== 'undefined') window.location.href = '/';
-            } catch (e) {}
+            } catch { /* ignore navigation errors */ }
         }
         
         // Handle restart in game over state

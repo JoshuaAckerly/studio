@@ -14,9 +14,9 @@ async function convertFile(filePath) {
   const src = await fs.readFile(filePath, 'utf8');
   let data;
   try {
-    data = JSON.parse(src);
-  } catch (err) {
-    console.error(`Skipping ${filePath}: invalid JSON (${err.message})`);
+    data = JSON.parse(src); // Parsing the JSON data
+  } catch {
+    console.error(`Skipping ${filePath}: invalid JSON`);
     return;
   }
 
@@ -34,7 +34,7 @@ async function convertFile(filePath) {
       try {
         const cfgRaw = await fs.readFile(packConfigPath, 'utf8');
         packConfig = JSON.parse(cfgRaw);
-      } catch (e) {
+      } catch {
         // no pack-config present or invalid -> treat as no packing requested
       }
 
@@ -54,7 +54,7 @@ async function convertFile(filePath) {
         try {
           const v = child_process.execSync('texturepacker --version', { stdio: 'pipe' }).toString().trim();
           return v || true;
-        } catch (err) {
+        } catch {
           return false;
         }
       })();
@@ -133,7 +133,7 @@ async function convertPaths(paths) {
     let stat;
     try {
       stat = await fs.stat(p);
-    } catch (err) {
+    } catch {
       console.error(`Path not found: ${p}`);
       continue;
     }

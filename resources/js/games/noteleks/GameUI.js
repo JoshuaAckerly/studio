@@ -87,12 +87,10 @@ class GameUI {
 
             // Create mobile UI elements if needed
             this.createMobileUIElements();
-        } catch (e) {
+        } catch {
             // If any canvas/text/texture creation fails, fall back to DOM-only UI.
             // This will avoid repeated WebGL createTexture / bindTexture errors
             // in environments where the GL context is in a transient/bad state.
-             
-            console.warn('Canvas-backed UI initialization failed; switching to DOM fallback.', e && e.message ? e.message : e);
             this._usingDOMUI = true;
             this._createDOMUI();
         }
@@ -122,7 +120,7 @@ class GameUI {
                         });
                         this._domMobilePauseEl = btn;
                     }
-                } catch (err) {
+                } catch {
                     // ignore DOM fallback errors
                 }
                 return;
@@ -244,11 +242,9 @@ class GameUI {
                     this.scene.restartGame();
                 });
             }
-        } catch (err) {
+        } catch {
             // Canvas-backed game over UI failed; create a DOM-based fallback
             // so the game still presents the end state without causing GL errors.
-             
-            console.warn('GameOver UI creation failed, falling back to DOM UI:', err && err.message ? err.message : err);
             this._usingDOMUI = true;
             this._createDOMUI(true);
         }
@@ -310,7 +306,7 @@ class GameUI {
                     this._domGameOverEl = go;
                 }
             }
-        } catch (e) {
+        } catch {
             // best-effort DOM fallback; ignore failures
         }
     }
@@ -424,12 +420,10 @@ class GameUI {
                     // Renderer or gl not available: create a lightweight DOM fallback overlay instead
                     this._createPauseDOMOverlay(pauseMessage);
                 }
-            } catch (e) {
+            } catch {
                 // Swallow texture creation errors and fall back to DOM overlay.
                 // This prevents WebGL createTexture exceptions from bubbling into the app logs.
                 // Preserve a console warning to aid future debugging.
-                 
-                console.warn('Pause text creation failed, using DOM fallback:', e && e.message ? e.message : e);
                 this._createPauseDOMOverlay(pauseMessage);
             }
         }
@@ -465,13 +459,13 @@ class GameUI {
         // Only perform DOM sync when explicitly enabled in config (keeps UI in-canvas by default)
         try {
             if (!DebugUtils.shouldSyncDOM()) return;
-        } catch (e) {
+        } catch {
+            /* ignore */
             return;
         }
 
         // Update DOM elements if they exist
         const scoreElement = document.getElementById('score-value');
-
         if (scoreElement) scoreElement.textContent = this.score;
     }
 
@@ -519,10 +513,8 @@ class GameUI {
             root.appendChild(overlay);
             this._pauseDOMOverlayCreated = true;
             this._pauseDOMOverlayEl = overlay;
-        } catch (e) {
-            // If DOM overlay creation fails, don't block the game — just mark as not created.
-             
-            console.warn('Failed to create pause DOM overlay:', e && e.message ? e.message : e);
+        } catch {
+            // If DOM overlay creation fails, don't block the game  just mark as not created.
             this._pauseDOMOverlayCreated = false;
             this._pauseDOMOverlayEl = null;
         }

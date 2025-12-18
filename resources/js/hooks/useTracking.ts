@@ -1,8 +1,9 @@
+// The function useTracking does not exist in this file.
 import { useEffect } from 'react';
 
 // Declare gtag for TypeScript
 declare global {
-    function gtag(...args: unknown[]): void;
+    function gtag(..._args: unknown[]): void;
 }
 
 interface VisitData {

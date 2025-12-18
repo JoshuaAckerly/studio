@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import fs from 'fs/promises';
 import path from 'path';
-import { pathToFileURL } from 'url';
+
 import puppeteer from 'puppeteer';
 
 function usage() {
@@ -65,7 +65,7 @@ function parseArgs() {
                     buf = await fs.readFile(abs);
                     usedRel = rel;
                     break;
-                } catch (e) {
+                } catch {
                     // try next candidate
                 }
             }
@@ -135,7 +135,7 @@ function parseArgs() {
                 const dy = cy;
                 try {
                     ctx.drawImage(img, dx, dy, fw, fh);
-                } catch (e) {
+                } catch {
                     // Fallback: draw without scaling if drawImage failed
                     const dw = img.naturalWidth || img.width;
                     const dh = img.naturalHeight || img.height;

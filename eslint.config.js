@@ -4,11 +4,35 @@ import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 import globals from 'globals';
 import typescript from 'typescript-eslint';
+import tsParser from '@typescript-eslint/parser';
 
 /** @type {import('eslint').Linter.Config[]} */
 export default [
     js.configs.recommended,
     ...typescript.configs.recommended,
+    // TypeScript files: use parser with project
+    {
+        files: ['**/*.ts', '**/*.tsx'],
+        languageOptions: {
+            parser: tsParser,
+            parserOptions: {
+                project: './tsconfig.json',
+                sourceType: 'module',
+                ecmaVersion: 'latest'
+            }
+        }
+    },
+    // JS files: use parser without project
+    {
+        files: ['**/*.js'],
+        languageOptions: {
+            parser: tsParser,
+            parserOptions: {
+                sourceType: 'module',
+                ecmaVersion: 'latest'
+            }
+        }
+    },
     {
         ...react.configs.flat.recommended,
         ...react.configs.flat['jsx-runtime'], // Required for React 17+
@@ -24,6 +48,7 @@ export default [
             'react/no-unescaped-entities': 'off',
             '@typescript-eslint/no-unused-vars': ['error', { 'argsIgnorePattern': '^_' }],
             'no-redeclare': ['error', { 'builtinGlobals': false }],
+            'no-empty': ['error', { 'allowEmptyCatch': true }],
         },
         settings: {
             react: {

@@ -32,7 +32,7 @@ class NoteleksGame {
             // Expose a global flag for debug/QA toggles
             window.noteleks_lowQuality = (lowMem || lowCores || smallScreenUA) ? true : false;
             GameConfig.lowQuality = !!window.noteleks_lowQuality;
-        } catch (e) {
+        } catch {
             // ignore detection errors
             GameConfig.lowQuality = false;
         }
@@ -58,19 +58,19 @@ class NoteleksGame {
                         cores: navigator.hardwareConcurrency || null,
                         ts: Date.now(),
                     };
-                    try { localStorage.setItem('noteleks_last_error', JSON.stringify(payload)); } catch (e) {}
+                    try { localStorage.setItem('noteleks_last_error', JSON.stringify(payload)); } catch { /* ignore localStorage errors */ }
                     // Try sendBeacon as a best-effort remote capture (server endpoint optional)
                     try {
                         if (navigator && typeof navigator.sendBeacon === 'function') {
                             const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
                             navigator.sendBeacon('/__noteleks_error', blob);
                         }
-                    } catch (e) {}
-                } catch (e) {
+                    } catch { /* ignore sendBeacon errors */ }
+                } catch {
                     // ignore storage/set errors
                 }
                 if (typeof originalOnError === 'function') {
-                    try { originalOnError(message, source, lineno, colno, error); } catch (e) {}
+                    try { originalOnError(message, source, lineno, colno, error); } catch { /* ignore originalOnError errors */ }
                 }
                 // Do not suppress the default handler return value (let it run normally)
                 return false;
@@ -88,18 +88,18 @@ class NoteleksGame {
                         cores: navigator.hardwareConcurrency || null,
                         ts: Date.now(),
                     };
-                    try { localStorage.setItem('noteleks_last_error', JSON.stringify(payload)); } catch (e) {}
+                    try { localStorage.setItem('noteleks_last_error', JSON.stringify(payload)); } catch { /* ignore localStorage errors */ }
                     try {
                         if (navigator && typeof navigator.sendBeacon === 'function') {
                             const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
                             navigator.sendBeacon('/__noteleks_error', blob);
                         }
-                    } catch (e) {}
-                } catch (e) {
+                    } catch { /* ignore sendBeacon errors */ }
+                } catch {
                     // ignore
                 }
             });
-        } catch (e) {
+        } catch {
             // ignore any errors while installing handlers (best-effort)
         }
     }
@@ -171,7 +171,7 @@ class NoteleksGame {
                 finalConfig.resolution = 1; // keep device resolution low
                 // Ensure we do not attempt to register the Spine plugin
                 finalConfig.plugins = undefined;
-            } catch (e) {
+            } catch {
                 // ignore adjustments
             }
         }
@@ -187,7 +187,7 @@ class NoteleksGame {
         return true;
     }
 
-    _showStoredErrorIfAny(container) {
+    _showStoredErrorIfAny(_container) {
         // Debug banner removed - errors are still logged to localStorage for debugging
         return;
     }
@@ -261,7 +261,7 @@ class NoteleksGame {
         try {
             const success = await game.initialize(containerId);
             return success ? game : null;
-        } catch (e) {
+        } catch {
             return null;
         }
     }

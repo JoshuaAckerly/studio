@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+/* eslint-disable @typescript-eslint/no-require-imports */
+ 
 // CommonJS manifest generator for Noteleks sprite assets.
 // Use this variant when the repo uses "type": "module" in package.json.
 

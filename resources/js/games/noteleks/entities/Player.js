@@ -247,7 +247,7 @@ class Player extends GameObject {
 
         // Attack component callbacks
         const attackComponent = this.getComponent('attack');
-        attackComponent.onAttack((target, facing, damage) => {
+        attackComponent.onAttack(() => {
             // Handle attack logic here if needed
         });
     }

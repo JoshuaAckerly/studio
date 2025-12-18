@@ -27,14 +27,16 @@ export class AssetManager {
                         graphics.generateTexture(key, textureConfig.width, textureConfig.height);
                         graphics.destroy();
                     }
-                } catch (e) {
+                } catch {
                     // ignore per-texture failures
                 }
             });
-        } catch (e) {
+        } catch {
             // ignore
         }
     }
+
+    // ...existing code...
 
     /**
      * Queue assets declared in a build-time manifest into the Scene loader.
@@ -62,7 +64,7 @@ export class AssetManager {
                         .replace(/_$/, '')
                         .replace(/[^a-zA-Z0-9]+/g, '-')
                         .toLowerCase();
-                } catch (e) {
+                } catch {
                     return null;
                 }
             };
@@ -74,7 +76,7 @@ export class AssetManager {
                     sequences[animKey] = files.length || 0;
 
                     // baseDir: directory portion of the manifest key
-                    const baseDir = String(baseUrlRaw).replace(/[^\\\/]*$/, '');
+                    const baseDir = String(baseUrlRaw).replace(/[^/]*$/, '');
 
                     for (let i = 0; i < files.length; i++) {
                         try {
@@ -88,11 +90,11 @@ export class AssetManager {
                             }
                             const key = `${animKey}-${i}`;
                             scene.load.image(key, fullUrl);
-                        } catch (e) {
+                        } catch {
                             // ignore per-file enqueue failures
                         }
                     }
-                } catch (e) {
+                } catch {
                     // ignore per-sequence failures
                 }
             }
@@ -131,7 +133,7 @@ export class AssetManager {
                                         const srcImg = scene.textures.get(firstKey).getSourceImage();
                                         if (srcImg) scene.textures.addImage(animKey, srcImg);
                                     }
-                                } catch (e) { }
+                                } catch { /* ignore */ }
 
                                 // Create alias if mapped
                                 const alias = aliasMap[animKey];
@@ -142,14 +144,14 @@ export class AssetManager {
                                             const framesCopy = baseAnim.frames.map(f => ({ key: f.textureKey, frame: f.frame ? f.frame.name : f.frame }));
                                             scene.anims.create({ key: alias, frames: framesCopy, frameRate: 12, repeat: -1 });
                                         }
-                                    } catch (e) { }
+                                    } catch { /* ignore */ }
                                 }
-                            } catch (e) { }
+                            } catch { /* ignore */ }
                         }
-                    } catch (e) { }
+                    } catch { /* ignore */ }
                 });
-            } catch (e) { }
-        } catch (e) {
+            } catch { /* ignore */ }
+        } catch {
             // ignore top-level failures
         }
     }
@@ -164,7 +166,7 @@ export class AssetManager {
         for (let i = 0; i < frameCount; i++) {
             const key = `${animKey}-${i}`;
             frameKeys.push(key);
-            try { scene.load.image(key, `${baseUrl}${i}.webp`); } catch (e) { }
+            try { scene.load.image(key, `${baseUrl}${i}.webp`); } catch { /* ignore */ }
         }
         try {
             scene.load.once('complete', () => {
@@ -173,9 +175,9 @@ export class AssetManager {
                         const frames = frameKeys.map(k => ({ key: k }));
                         scene.anims.create({ key: animKey, frames, frameRate, repeat });
                     }
-                } catch (e) { }
+                } catch { /* ignore */ }
             });
-        } catch (e) { }
+        } catch { /* ignore */ }
     }
 
     /**
@@ -184,17 +186,18 @@ export class AssetManager {
      * expanded to perform plugin-specific cache population. For the simplified
      * flow we return false.
      */
-    static setupSpineData(scene) {
+    static setupSpineData(_scene) {
+         
         try {
             if (GameConfig && GameConfig.useSpine === false) return false;
             return false;
-        } catch (e) {
-            return false;
+        } catch {
+            console.log('AssetManagerSimple.setupSpineData: fallback error ignored');
+            return;
         }
     }
+     
 }
-
 // Developer convenience
-try { if (typeof window !== 'undefined') window.AssetManager = AssetManager; } catch (e) { }
-
+try { if (typeof window !== 'undefined') window.AssetManager = AssetManager; } catch {}
 export default AssetManager;
