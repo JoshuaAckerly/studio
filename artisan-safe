@@ -16,9 +16,9 @@ $kernel->bootstrap();
 
 // Get all commands and ensure they have Laravel app set
 
-use Illuminate\Support\Facades\Artisan;
 
-foreach (Artisan::all() as $command) {
+// Get all commands from the kernel and ensure they have Laravel app set
+foreach ($kernel->all() as $command) {
     if (method_exists($command, 'setLaravel') && !$command->getLaravel()) {
         $command->setLaravel($app);
     }
