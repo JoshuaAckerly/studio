@@ -31,3 +31,7 @@ s3config.*
 # Local CI/test artifacts
 artifacts/
 tmp/
+
+# Ignore Laravel logs and compiled views
+/storage/logs/*
+/storage/framework/views/*
