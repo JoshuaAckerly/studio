@@ -1,0 +1,26 @@
+#!/usr/bin/env php
+<?php
+
+use Illuminate\Foundation\Application;
+use Symfony\Component\Console\Input\ArgvInput;
+
+define('LARAVEL_START', microtime(true));
+
+require __DIR__.'/vendor/autoload.php';
+
+/** @var Application $app */
+$app = require_once __DIR__.'/bootstrap/app.php';
+
+$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+$kernel->bootstrap();
+
+// Get all commands and ensure they have Laravel app set
+$artisan = $kernel->getArtisan();
+foreach ($artisan->all() as $command) {
+    if (method_exists($command, 'setLaravel') && !$command->getLaravel()) {
+        $command->setLaravel($app);
+    }
+}
+
+$status = $app->handleCommand(new ArgvInput);
+exit($status);
