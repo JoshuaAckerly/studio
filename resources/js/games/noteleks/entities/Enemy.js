@@ -79,6 +79,27 @@ class Enemy extends GameObject {
         // Update all components
         super.update(16); // 16ms for 60fps
 
+        // Prevent enemy from leaving the world bounds
+        if (this.sprite && this.sprite.body) {
+            const bounds = this.scene.physics.world.bounds;
+            // Clamp X
+            if (this.sprite.x < bounds.x) {
+                this.sprite.x = bounds.x;
+                this.sprite.body.setVelocityX(0);
+            } else if (this.sprite.x > bounds.right) {
+                this.sprite.x = bounds.right;
+                this.sprite.body.setVelocityX(0);
+            }
+            // Clamp Y (optional: if you want to keep enemies from falling below the world)
+            if (this.sprite.y > bounds.bottom) {
+                this.sprite.y = bounds.bottom;
+                this.sprite.body.setVelocityY(0);
+            } else if (this.sprite.y < bounds.y) {
+                this.sprite.y = bounds.y;
+                this.sprite.body.setVelocityY(0);
+            }
+        }
+
         // Set AI target to player - validate that player is an object with the expected structure
         const aiComponent = this.getComponent('ai');
         if (aiComponent && player && typeof player === 'object' && player.getPosition) {
