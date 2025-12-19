@@ -14,6 +14,9 @@ class GameUI {
         this._usingDOMUI = false;
         this._textCache = Object.create(null);
 
+        this.roundText = null;
+        this.roundTransitionText = null;
+
         this.initializeUI();
     }
 
@@ -32,6 +35,19 @@ class GameUI {
             });
             this.scoreText.setScrollFactor(0); // Fixed position
             this.scoreText.setDepth(1000); // Ensure UI is on top
+
+            // Round display (top center)
+            const centerX = this.scene.scale.width / 2;
+            this.roundText = this.scene.add.text(centerX, 16, 'Round: 1', {
+                fontSize: '28px',
+                fill: '#ffd700',
+                fontFamily: 'Arial Black',
+                stroke: '#000000',
+                strokeThickness: 3,
+            });
+            this.roundText.setOrigin(0.5, 0);
+            this.roundText.setScrollFactor(0);
+            this.roundText.setDepth(1000);
 
             // Health label
             this.healthLabel = this.scene.add.text(16, 50, 'Health', {
@@ -53,11 +69,11 @@ class GameUI {
             this.healthBarBg.setScrollFactor(0);
             this.healthBarBg.setDepth(1000); // Ensure it's on top
 
-        // Health bar
-        this.healthBar = this.scene.add.graphics();
-        this.healthBar.setScrollFactor(0);
-        this.healthBar.setDepth(1001); // Higher than background
-        this.updateHealthBar(); // Update after setting scroll factor
+            // Health bar
+            this.healthBar = this.scene.add.graphics();
+            this.healthBar.setScrollFactor(0);
+            this.healthBar.setDepth(1001); // Higher than background
+            this.updateHealthBar(); // Update after setting scroll factor
 
             // Weapon indicator
             this.weaponText = this.scene.add.text(16, 100, '', {
@@ -71,7 +87,6 @@ class GameUI {
             this.weaponText.setDepth(1000);
 
             // Game over screen (initially hidden) - positioned at center of screen
-            const centerX = this.scene.scale.width / 2;
             const centerY = this.scene.scale.height / 2;
             this.gameOverContainer = this.scene.add.container(centerX, centerY);
             // Ensure Game Over UI is on top of all other UI and game objects
@@ -93,6 +108,44 @@ class GameUI {
             // in environments where the GL context is in a transient/bad state.
             this._usingDOMUI = true;
             this._createDOMUI();
+        }
+    }
+
+    // Show round transition (e.g., "Round 2") for a short time
+    showRound(roundNum) {
+        if (!this.roundTransitionText) {
+            const centerX = this.scene.scale.width / 2;
+            const centerY = 80;
+            this.roundTransitionText = this.scene.add.text(centerX, centerY, '', {
+                fontSize: '48px',
+                fill: '#ffd700',
+                fontFamily: 'Arial Black',
+                stroke: '#000000',
+                strokeThickness: 6,
+            });
+            this.roundTransitionText.setOrigin(0.5, 0);
+            this.roundTransitionText.setScrollFactor(0);
+            this.roundTransitionText.setDepth(2000);
+        }
+        this.roundTransitionText.setText(`Round ${roundNum}`);
+        this.roundTransitionText.setVisible(true);
+        this.scene.tweens.add({
+            targets: this.roundTransitionText,
+            alpha: { from: 1, to: 0 },
+            duration: 1200,
+            onComplete: () => {
+                this.roundTransitionText.setVisible(false);
+                this.roundTransitionText.setAlpha(1);
+            },
+        });
+
+        this.updateRound(roundNum);
+    }
+
+    // Update the persistent round display
+    updateRound(roundNum) {
+        if (this.roundText) {
+            this.roundText.setText(`Round: ${roundNum}`);
         }
     }
 
@@ -527,6 +580,7 @@ class GameUI {
     _hidePauseDOMOverlay() {
         if (this._pauseDOMOverlayEl) this._pauseDOMOverlayEl.style.display = 'none';
     }
+
 
     getScore() {
         return this.score;

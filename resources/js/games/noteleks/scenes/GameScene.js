@@ -32,6 +32,14 @@ class GameScene extends Phaser.Scene {
 
         this.systemManager = new SystemManager(this);
         this.entityFactory = new EntityFactory(this);
+
+        // --- ROUND SYSTEM ---
+        this.currentRound = 1;
+        this.maxRounds = 10;
+        this.enemiesToSpawn = 0;
+        this.enemiesSpawnedThisRound = 0;
+        this.roundActive = false;
+        this.roundInTransition = false;
     }
 
     preload() {
@@ -72,6 +80,7 @@ class GameScene extends Phaser.Scene {
         this.setupCollisions();
         this.registerInputHandlers();
         this.startGame();
+        this.startNextRound();
         try { this.events.emit('noteleks:scene-ready'); } catch { /* ignore */ }
     }
 
@@ -263,6 +272,7 @@ class GameScene extends Phaser.Scene {
             // When playing, run the main gameplay update
             if (this.gameState === GameStateUtils.STATES.PLAYING) {
                 this.handleGameplayUpdate();
+                this.handleRoundLogic();
                 return;
             }
 
@@ -278,6 +288,59 @@ class GameScene extends Phaser.Scene {
                 return;
             }
         } catch { /* ignore */ }
+    }
+
+    // --- ROUND SYSTEM ---
+    startNextRound() {
+        if (this.currentRound > this.maxRounds) {
+            this.handleVictory();
+            return;
+        }
+        this.roundActive = false;
+        this.roundInTransition = true;
+        // Example: 3 + round*2 enemies per round
+        this.enemiesToSpawn = 3 + this.currentRound * 2;
+        this.enemiesSpawnedThisRound = 0;
+        if (this.enemyManager) {
+            this.enemyManager.clearAllEnemies();
+        }
+        // Optionally show round UI here
+        if (this.gameUI && this.gameUI.showRound) {
+            this.gameUI.showRound(this.currentRound);
+        }
+        // Delay before round starts
+        this.time.delayedCall(1500, () => {
+            this.roundActive = true;
+            this.roundInTransition = false;
+        });
+    }
+
+    handleRoundLogic() {
+        if (!this.roundActive || this.roundInTransition) return;
+        // Spawn enemies for this round
+        if (this.enemiesSpawnedThisRound < this.enemiesToSpawn) {
+            // Only spawn if not exceeding maxEnemies
+            if (this.enemyManager && this.enemyManager.getEnemyCount() < GameConfig.enemies.maxEnemies) {
+                this.enemyManager.spawnEnemy();
+                this.enemiesSpawnedThisRound++;
+            }
+        } else {
+            // All enemies spawned, check if all defeated
+            if (this.enemyManager && this.enemyManager.getEnemyCount() === 0) {
+                this.currentRound++;
+                this.startNextRound();
+            }
+        }
+    }
+
+    handleVictory() {
+        this.gameState = GameStateUtils.STATES.GAME_OVER;
+        if (this.gameUI && this.gameUI.showVictory) {
+            this.gameUI.showVictory();
+        } else {
+            this.add.text(GameConfig.screen.width / 2, GameConfig.screen.height / 2, 'Victory! All rounds complete!', { fontSize: '32px', fill: '#fff', fontFamily: 'Arial' }).setOrigin(0.5);
+        }
+        if (this.enemyManager) this.enemyManager.stopSpawning();
     }
 
     handleGameplayUpdate() {
@@ -320,17 +383,31 @@ class GameScene extends Phaser.Scene {
     }
     gameOver() {
         this.gameState = GameStateUtils.STATES.GAME_OVER;
+        // Reset round state
+        this.currentRound = 1;
+        this.enemiesToSpawn = 0;
+        this.enemiesSpawnedThisRound = 0;
+        this.roundActive = false;
+        this.roundInTransition = false;
         try { if (this.physics) this.physics.pause(); } catch { /* ignore */ }
         try { if (this.gameUI) this.gameUI.showGameOver(); } catch { /* ignore */ }
         try { if (this.enemyManager) this.enemyManager.stopSpawning(); } catch { /* ignore */ }
     }
     restartGame() {
         this.gameState = GameStateUtils.STATES.PLAYING;
+        // Reset round state
+        this.currentRound = 1;
+        this.enemiesToSpawn = 0;
+        this.enemiesSpawnedThisRound = 0;
+        this.roundActive = false;
+        this.roundInTransition = false;
         try { if (this.enemyManager) this.enemyManager.reset(); } catch { /* ignore */ }
         try { if (this.weaponManager && this.weaponManager.getWeaponsGroup) this.weaponManager.getWeaponsGroup().clear(true, true); } catch { /* ignore */ }
         try { if (this.gameUI) this.gameUI.reset(); } catch { /* ignore */ }
         try { const playerConfig = GameConfig.player || { startPosition: { x: 100, y: 100 } }; if (this.player && this.player.reset) this.player.reset(playerConfig.startPosition.x, playerConfig.startPosition.y); } catch { /* ignore */ }
         try { if (this.physics) this.physics.resume(); } catch { /* ignore */ }
+        // Start first round again
+        this.startNextRound();
     }
     shutdown() {
         try { if (this.enemyManager) this.enemyManager.shutdown(); } catch { /* ignore */ }

@@ -17,21 +17,11 @@ export class EnemyManager {
     initialize() {
         // Create enemies physics group
         this.enemies = this.scene.physics.add.group();
-
-        // Start spawning enemies
-        this.startSpawning();
+        // Do NOT start automatic spawning. Spawning is now controlled by GameScene round logic.
     }
 
     startSpawning() {
-        this.spawnTimer = this.scene.time.addEvent({
-            delay: this.config.spawnInterval,
-            callback: this.spawnEnemy,
-            callbackScope: this,
-            loop: true,
-        });
-
-        // Spawn first enemy immediately
-        this.spawnEnemy();
+        // Deprecated: No longer used. Spawning is controlled by GameScene.
     }
 
     stopSpawning() {
@@ -39,6 +29,7 @@ export class EnemyManager {
             this.spawnTimer.remove();
             this.spawnTimer = null;
         }
+        // No-op otherwise
     }
 
     spawnEnemy() {
@@ -204,7 +195,7 @@ export class EnemyManager {
         this.stopSpawning();
         this.clearAllEnemies();
         this.spawnCount = 0;
-        this.startSpawning();
+        // Do NOT start automatic spawning. Spawning is controlled by GameScene.
     }
 
     shutdown() {
