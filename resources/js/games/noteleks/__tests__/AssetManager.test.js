@@ -1,4 +1,4 @@
-import AssetManager from '../utils/AssetManager';
+import AssetManager from '../utils/AssetManagerSimple.js';
 
 describe('AssetManager', () => {
   let mockScene;

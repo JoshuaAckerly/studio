@@ -142,12 +142,12 @@ export default function Welcome() {
                             <span className="sr-only">Creative Studio</span>
                             <img
                                 alt="GraveYard Jokes Studio Logo"
-                                src={`${cdn}/images/GraveYardJokesLogoJester.svg`}
+                                src={`${cdn}/GraveYardJokesLogoJester.svg`}
                                 className="h-16 w-auto dark:hidden"
                             />
                             <img
                                 alt="GraveYard Jokes Studio Logo"
-                                src={`${cdn}/images/GraveYardJokesLogoJester.svg`}
+                                src={`${cdn}/GraveYardJokesLogoJester.svg`}
                                 className="h-16 w-auto not-dark:hidden"
                             />
                         </a>
@@ -178,12 +178,12 @@ export default function Welcome() {
                                 <span className="sr-only">GraveYard Jokes Studios</span>
                                 <img
                                     alt="GraveYard Jokes Studios Logo"
-                                    src={`${cdn}/images/GraveYardJokesLogoJester.svg`}
+                                    src={`${cdn}/GraveYardJokesLogoJester.svg`}
                                     className="h-24 w-auto dark:hidden"
                                 />
                                 <img
                                     alt="GraveYard Jokes Studios Logo"
-                                    src={`${cdn}/images/GraveYardJokesLogoJester.svg`}
+                                    src={`${cdn}/GraveYardJokesLogoJester.svg`}
                                     className="h-24 w-auto not-dark:hidden"
                                 />
                             </a>
@@ -366,8 +366,8 @@ export default function Welcome() {
             <footer className="relative mx-auto mt-32 max-w-7xl px-6 lg:px-8">
                 <div className="border-t border-gray-900/10 py-16 sm:py-24 lg:py-32 dark:border-white/10">
                     <div className="xl:grid xl:grid-cols-3 xl:gap-8">
-                        <img alt="GraveYard Jokes Studios" src={`${cdn}/images/GraveYardJokesLogoJester.svg`} className="h-18 dark:hidden" />
-                        <img alt="GraveYard Jokes Studios" src={`${cdn}/images/GraveYardJokesLogoJester.svg`} className="h-18 not-dark:hidden" />
+                        <img alt="GraveYard Jokes Studios" src={`${cdn}/GraveYardJokesLogoJester.svg`} className="h-18 dark:hidden" />
+                        <img alt="GraveYard Jokes Studios" src={`${cdn}/GraveYardJokesLogoJester.svg`} className="h-18 not-dark:hidden" />
                         <div className="mt-16 grid grid-cols-2 gap-8 xl:col-span-2 xl:mt-0">
                             <div className="md:grid md:grid-cols-2 md:gap-8">
                                 <div>
