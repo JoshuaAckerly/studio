@@ -6,7 +6,7 @@ import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
     server: {
-        port: 5177,
+        port: 5175,
         host: '0.0.0.0', // Allow access from network
         hmr: {
             host: 'studio.test'
