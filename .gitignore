@@ -35,3 +35,6 @@ tmp/
 # Ignore Laravel logs and compiled views
 /storage/logs/*
 /storage/framework/views/*
+
+# Entire storage folder (generated files)
+/storage
