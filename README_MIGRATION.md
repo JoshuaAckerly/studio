@@ -39,7 +39,7 @@ Quick start (local)
 
 Notes about environments and region
 
-- Windows shells sometimes include stray whitespace when setting environment variables inline; if you hit "InvalidRegionException", check `AWS_DEFAULT_REGION` for trailing spaces. The script reads from `.env` preferentially.
+- The script reads from `.env` preferentially.
 
 - The script will use `AWS_ACCESS_KEY_ID_ADMIN` from `.env` if present. If you prefer not to store admin creds in `.env`, run the script with inline env vars or rely on ~/.aws/credentials.
 
@@ -63,7 +63,7 @@ If you want to prevent accidental commits that introduce the legacy `images/Illu
 git config core.hooksPath .githooks
 ```
 
-This will run a pre-commit hook that executes `scripts/check_legacy_prefix.ps1` and blocks commits if disallowed occurrences are found. Windows users who use PowerShell hooks are supported by the included `.githooks/pre-commit.ps1` file.
+This will run a pre-commit hook that executes `scripts/check_legacy_prefix.ps1` and blocks commits if disallowed occurrences are found.
 
 Template hooks
 ----------------

@@ -8,48 +8,27 @@ Why local-only?
 - Starting MinIO in CI increases runner complexity and lengthens runs.
 - Local runs are faster for debugging and allow developers to iterate on storage integration behavior.
 
-Quickstart — run MinIO locally (Docker)
+Quickstart — run MinIO locally (Linux VM)
 
-PowerShell (Windows):
+```bash
+# Install MinIO server and client
+wget https://dl.min.io/server/minio/release/linux-amd64/minio
+wget https://dl.min.io/client/mc/release/linux-amd64/mc
+chmod +x minio mc
+sudo mv minio mc /usr/local/bin/
 
-```powershell
-# Start MinIO (background)
-docker run -d --name minio -p 9000:9000 -p 9001:9001 \
-  -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin \
-  minio/minio:RELEASE.2025-02-01T00-00-00Z server /data --console-address ":9001"
+# Create data directory and start MinIO
+mkdir -p ~/minio-data
+export MINIO_ROOT_USER=minioadmin
+export MINIO_ROOT_PASSWORD=minioadmin
+minio server ~/minio-data --console-address ":9001" &
 ```
 
-Convenience one-liners (PowerShell + bash)
-
-PowerShell (start if missing, wait for health, then run tests):
-
-```powershell
-# Start MinIO if it's not running
-if (-not (docker ps --filter name=minio --format "{{.Names}}" | Select-String -Quiet 'minio')) {
-  docker run -d --name minio -p 9000:9000 -p 9001:9001 -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin minio/minio:RELEASE.2025-02-01T00-00-00Z server /data --console-address ":9001"
-}
-
-# Wait for MinIO health endpoint (up to 60s)
-$max = 60
-for ($i = 0; $i -lt $max; $i++) {
-  try {
-    $r = Invoke-RestMethod -Uri http://127.0.0.1:9000/minio/health/live -TimeoutSec 2 -ErrorAction Stop
-    if ($r) { Write-Host 'MinIO healthy'; break }
-  } catch { }
-  Start-Sleep -Seconds 1
-}
-
-# Run integration tests
-vendor\bin\phpunit --group integration
-```
-
-Bash (start if missing, wait for health, then run tests):
+Convenience commands (bash)
 
 ```bash
 # Start MinIO if it's not running
-docker ps --filter name=minio --format '{{.Names}}' | grep -q minio || \
-  docker run -d --name minio -p 9000:9000 -p 9001:9001 -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin \
-    minio/minio:RELEASE.2025-02-01T00-00-00Z server /data --console-address ":9001"
+pgrep -f "minio server" || (export MINIO_ROOT_USER=minioadmin && export MINIO_ROOT_PASSWORD=minioadmin && minio server ~/minio-data --console-address ":9001" &)
 
 # Wait for health (up to 60s)
 for i in {1..60}; do
@@ -57,15 +36,8 @@ for i in {1..60}; do
   sleep 1
 done
 
+# Run integration tests
 vendor/bin/phpunit --group integration
-```
-
-Linux / macOS (bash):
-
-```bash
-docker run -d --name minio -p 9000:9000 -p 9001:9001 \
-  -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin \
-  minio/minio:RELEASE.2025-02-01T00-00-00Z server /data --console-address ":9001"
 ```
 
 Create the test bucket (mc)
@@ -98,20 +70,20 @@ Troubleshooting tips
   - `AWS_ENDPOINT=http://127.0.0.1:9000`
   - `AWS_USE_PATH_STYLE_ENDPOINT=true`
 
-- If MinIO health checks fail, confirm the container is running:
+- If MinIO health checks fail, confirm the server is running:
 
-```powershell
-# Windows
-docker ps --filter name=minio
+```bash
+# Check if MinIO process is running
+pgrep -f "minio server"
 
-# check health
+# Check health
 curl http://127.0.0.1:9000/minio/health/live
 ```
 
-- To remove the MinIO container:
+- To stop MinIO:
 
-```powershell
-docker rm -f minio || true
+```bash
+pkill -f "minio server"
 ```
 
 Contact

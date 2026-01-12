@@ -2,24 +2,25 @@ Running integration tests (MinIO)
 ================================
 
 The integration tests in this repository expect an S3-compatible endpoint (MinIO) running locally.
-Two helper scripts are provided to start MinIO in Docker and create a test bucket:
 
-- `scripts/start_minio.sh` — POSIX shell script for macOS/Linux
-- `scripts/Start-Minio.ps1` — PowerShell script for Windows
-
-Start MinIO (example, bash):
+Start MinIO:
 
 ```bash
-./scripts/start_minio.sh
+# Install MinIO if not already installed
+wget https://dl.min.io/server/minio/release/linux-amd64/minio
+chmod +x minio
+sudo mv minio /usr/local/bin/
+
+# Create data directory
+mkdir -p ~/minio-data
+
+# Start MinIO server
+export MINIO_ROOT_USER=minioadmin
+export MINIO_ROOT_PASSWORD=minioadmin
+minio server ~/minio-data --console-address ":9001" &
 ```
 
-Or in PowerShell:
-
-```powershell
-.\scripts\Start-Minio.ps1
-```
-
-After MinIO is running export the env vars (bash):
+After MinIO is running export the env vars:
 
 ```bash
 export AWS_BUCKET=test-bucket

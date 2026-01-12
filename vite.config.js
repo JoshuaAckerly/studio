@@ -6,10 +6,10 @@ import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
     server: {
-        port: 5175,
-        host: '0.0.0.0', // Allow access from network
+        port: 8084,
+        host: '10.0.1.30', // Allow access from network
         hmr: {
-            host: 'studio.test'
+            host: '10.0.1.30'
         }
     },
     plugins: [

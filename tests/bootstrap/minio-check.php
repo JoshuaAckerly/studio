@@ -61,7 +61,7 @@ if ($shouldRun) {
         $client->listObjectsV2(['Bucket' => $bucket, 'MaxKeys' => 1]);
     } catch (Throwable $e) {
         fwrite(STDERR, "Integration bootstrap failure: S3 bucket '{$bucket}' not accessible.\n");
-        fwrite(STDERR, "Ensure MinIO is running and the bucket exists (scripts/Start-Minio.ps1 or scripts/start_minio.sh).\n");
+        fwrite(STDERR, "Ensure MinIO is running: 'minio server ~/minio-data --console-address \":9001\"' and bucket exists.\n");
         // Diagnostic info
         fwrite(STDERR, "Exception: " . get_class($e) . " - " . $e->getMessage() . "\n");
         if ($e instanceof Aws\Exception\AwsException && method_exists($e, 'getResponse')) {
