@@ -16,6 +16,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Configure Git
+        run: |
+          git config --global user.email "ci@example.com"
+          git config --global user.name "CI Runner"
+          git config --global core.autocrlf false
+
       - name: Install Pester
         shell: pwsh
         run: |
