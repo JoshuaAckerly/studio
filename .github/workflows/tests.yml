@@ -55,6 +55,12 @@ jobs:
       - name: Generate Application Key
         run: php artisan key:generate
 
+      - name: Create Storage Directories
+        run: |
+          mkdir -p storage/framework/{cache,sessions,views,testing}
+          mkdir -p bootstrap/cache
+          chmod -R 775 storage bootstrap/cache
+
       - name: Tests
         run: ./vendor/bin/phpunit --testsuite Unit,Feature
         env:
