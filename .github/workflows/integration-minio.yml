@@ -41,6 +41,12 @@ jobs:
           echo "APP_URL=http://localhost" >> .env.ci
           cat .env.ci
 
+      - name: Create Storage Directories
+        run: |
+          mkdir -p storage/framework/{cache,sessions,views,testing}
+          mkdir -p bootstrap/cache
+          chmod -R 775 storage bootstrap/cache
+
       - name: Download and start MinIO server
         run: |
           wget https://dl.min.io/server/minio/release/linux-amd64/minio
