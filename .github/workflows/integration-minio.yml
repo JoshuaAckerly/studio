@@ -7,18 +7,6 @@ jobs:
   integration-minio:
     name: Integration (start MinIO and run tests)
     runs-on: ubuntu-latest
-    services:
-      minio:
-        image: minio/minio:RELEASE.2025-09-07T16-13-09Z
-        ports:
-          - 9000:9000
-        options: >-
-          --health-cmd "curl -fsS http://127.0.0.1:9000/minio/health/ready || exit 1"
-          --health-interval 5s --health-timeout 2s --health-retries 12
-        env:
-          MINIO_ROOT_USER: minioadmin
-          MINIO_ROOT_PASSWORD: minioadmin
-        command: server /data
 
     env:
       # these will be used by the app during the job
@@ -52,6 +40,22 @@ jobs:
           echo "APP_KEY=$APP_KEY" > .env.ci
           echo "APP_URL=http://localhost" >> .env.ci
           cat .env.ci
+
+      - name: Download and start MinIO server
+        run: |
+          wget https://dl.min.io/server/minio/release/linux-amd64/minio
+          chmod +x minio
+          mkdir -p /tmp/minio-data
+          export MINIO_ROOT_USER=minioadmin
+          export MINIO_ROOT_PASSWORD=minioadmin
+          ./minio server /tmp/minio-data &
+          # Wait for MinIO to be ready
+          for i in {1..30}; do
+            if curl -fs http://127.0.0.1:9000/minio/health/ready; then
+              break
+            fi
+            sleep 1
+          done
 
       - name: Start MinIO client (mc) and create bucket
         run: |
