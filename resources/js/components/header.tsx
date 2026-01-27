@@ -6,6 +6,7 @@ const Header: React.FC = () => {
         { name: 'Home', href: '/' },
         { name: 'Games', href: '/games' },
         { name: 'About', href: '/about' },
+        { name: 'Login', href: 'http://localhost:8007/login' },
     ];
 
     return (
