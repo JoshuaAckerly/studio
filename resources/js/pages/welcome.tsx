@@ -3,12 +3,14 @@
 import { Dialog, DialogPanel } from '@headlessui/react';
 import { ArrowPathIcon, Bars3Icon, CubeIcon, FingerPrintIcon, MusicalNoteIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
+
 import { Head } from '@inertiajs/react';
+import { getProjectUrl } from '../env';
 
 const navigation = [
     { name: '3D Art', href: '#3d' },
     { name: 'Music', href: '#music' },
-    { name: 'Games', href: '#games' },
+    { name: 'Games', href: getProjectUrl('studio') },
     { name: 'Gallery', href: '/illustrations' },
     { name: 'Video Logs', href: '/video-log' },
     { name: 'About', href: '#about' },
@@ -106,6 +108,7 @@ const footerNavigation = {
 export default function Welcome() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const cdn = import.meta.env.VITE_ASSET_URL as string;
+    const studioUrl = getProjectUrl('studio');
 
     // Tracking is handled by the main layout to avoid duplicate events
     return (
@@ -114,25 +117,25 @@ export default function Welcome() {
                 <title>GraveYard Jokes Studio - Creative Arts, Music & Game Development</title>
                 <meta name="description" content="Creative studio showcasing original music, game development, visual art, and creative growth. Building Noteleks Heroes, creating collaborative music, and documenting the artistic journey." />
                 <meta name="keywords" content="game development, original music, creative studio, Noteleks Heroes, 2D platformer, visual art, illustrations, video logs, indie games" />
-                
+
                 {/* Open Graph */}
                 <meta property="og:title" content="GraveYard Jokes Studio - Creative Arts, Music & Game Development" />
                 <meta property="og:description" content="Creative studio showcasing original music, game development, visual art, and creative growth. Building Noteleks Heroes and documenting the artistic journey." />
                 <meta property="og:type" content="website" />
-                <meta property="og:url" content="https://studio.graveyardjokes.com/" />
-                <meta property="og:image" content="https://studio.graveyardjokes.com/images/og-image.jpg" />
+                <meta property="og:url" content={studioUrl} />
+                <meta property="og:image" content={`${studioUrl}images/og-image.jpg`} />
                 <meta property="og:site_name" content="GraveYard Jokes Studio" />
-                
+
                 {/* Twitter Card */}
                 <meta name="twitter:card" content="summary_large_image" />
                 <meta name="twitter:title" content="GraveYard Jokes Studio - Creative Arts & Game Development" />
                 <meta name="twitter:description" content="Creative studio showcasing original music, game development, visual art, and creative growth." />
-                <meta name="twitter:image" content="https://studio.graveyardjokes.com/images/og-image.jpg" />
-                
+                <meta name="twitter:image" content={`${studioUrl}images/og-image.jpg`} />
+
                 {/* Additional Meta */}
                 <meta name="author" content="GraveYard Jokes" />
                 <meta name="robots" content="index, follow" />
-                <link rel="canonical" href="https://studio.graveyardjokes.com/" />
+                <link rel="canonical" href={studioUrl} />
             </Head>
             {/* Header */}
             <header className="absolute inset-x-0 top-0 z-50">

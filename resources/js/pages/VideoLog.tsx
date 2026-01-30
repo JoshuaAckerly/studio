@@ -5,6 +5,7 @@ import MainLayout from '@/layouts/main';
 import { Dialog } from '@headlessui/react';
 import { useEffect, useState } from 'react';
 import { Head } from '@inertiajs/react';
+import { getProjectUrl } from '../env';
 
 interface VideoItem {
     id: number;
@@ -59,21 +60,18 @@ export default function VideoLog() {
                 <title>Video Log - Creative Process Documentation | GraveYard Jokes Studio</title>
                 <meta name="description" content="Watch behind-the-scenes videos documenting our creative journey, game development process, music creation, and studio updates. A chronological log of creative growth." />
                 <meta name="keywords" content="video log, creative process, game development videos, music creation, studio updates, behind the scenes, creative journey" />
-                
                 {/* Open Graph */}
                 <meta property="og:title" content="Video Log - Creative Process Documentation" />
                 <meta property="og:description" content="Watch behind-the-scenes videos documenting our creative journey, game development process, and music creation." />
                 <meta property="og:type" content="website" />
-                <meta property="og:url" content="https://studio.graveyardjokes.com/video-log" />
-                <meta property="og:image" content="https://studio.graveyardjokes.com/images/og-video-log.jpg" />
-                
+                <meta property="og:url" content={getProjectUrl('studio') + '/video-log'} />
+                <meta property="og:image" content={getProjectUrl('studio') + '/images/og-video-log.jpg'} />
                 {/* Twitter Card */}
                 <meta name="twitter:card" content="summary_large_image" />
                 <meta name="twitter:title" content="Video Log - Creative Process Documentation" />
                 <meta name="twitter:description" content="Behind-the-scenes videos documenting our creative journey and game development process." />
-                <meta name="twitter:image" content="https://studio.graveyardjokes.com/images/og-video-log.jpg" />
-                
-                <link rel="canonical" href="https://studio.graveyardjokes.com/video-log" />
+                <meta name="twitter:image" content={getProjectUrl('studio') + '/images/og-video-log.jpg'} />
+                <link rel="canonical" href={getProjectUrl('studio') + '/video-log'} />
             </Head>
             <div className="mx-auto max-w-5xl">
                 <h1 className="mb-4 text-3xl font-semibold">Video Log</h1>
