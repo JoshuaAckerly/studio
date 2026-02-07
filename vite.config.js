@@ -10,6 +10,10 @@ export default defineConfig({
         host: '10.0.1.30', // Allow access from network
         hmr: {
             host: '10.0.1.30'
+        },
+        cors: {
+            origin: ['http://studio.graveyardjokes.local'],
+            credentials: true
         }
     },
     plugins: [
