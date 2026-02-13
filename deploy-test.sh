@@ -22,7 +22,7 @@ git pull origin testing
 
 # Install/Update PHP dependencies
 echo "🐘 Installing PHP dependencies..."
-composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+composer install --no-interaction --prefer-dist --no-progress --optimize-autoloader --classmap-authoritative --no-dev
 
 # Install/Update Node dependencies
 echo "📦 Installing Node dependencies..."
@@ -30,7 +30,7 @@ npm ci
 
 # Build frontend assets with SSR
 echo "🎨 Building frontend assets and SSR bundle..."
-npm run build
+npm run build:ssr
 
 # Stop existing SSR process
 echo "🛑 Stopping existing SSR process..."

@@ -22,7 +22,7 @@ git pull origin main
 
 # Install/Update PHP dependencies (production mode)
 echo "🐘 Installing PHP dependencies..."
-composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+composer install --no-interaction --prefer-dist --no-progress --optimize-autoloader --classmap-authoritative --no-dev
 
 # Install/Update Node dependencies
 echo "📦 Installing Node dependencies..."
@@ -45,8 +45,8 @@ php artisan event:cache
 
 # Set permissions
 echo "🔒 Setting permissions..."
-chown -R www-data:www-data storage bootstrap/cache
-chmod -R 775 storage bootstrap/cache
+sudo chown -R www-data:www-data storage bootstrap/cache
+sudo chmod -R 775 storage bootstrap/cache
 
 # Restart PHP-FPM
 echo "🔄 Restarting PHP-FPM..."
