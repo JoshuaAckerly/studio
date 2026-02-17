@@ -54,34 +54,27 @@ class VideoLogService
     $useS3 = ($defaultDisk === 's3') || (!app()->environment('testing') && (bool) env('AWS_BUCKET'));
 
         if (! $useS3) {
-            // Static fallback (same items the controller returned previously)
-            return [
-                new VideoLog([
-                    'id' => 1,
-                    'title' => 'Studio Update — Composing Session',
-                    'date' => '2025-10-10',
-                    'thumbnail' => '/images/vlogs/session-thumbnail.jpg',
-                    'url' => '/videos/session.mp4',
-                    'description' => 'A look into the music composing session with new synth textures.'
-                ]),
-                new VideoLog([
-                    'id' => 2,
-                    'title' => '3D Character Concept Walkthrough',
-                    'date' => '2025-09-28',
-                    'thumbnail' => '/images/vlogs/3d-thumbnail.jpg',
-                    'url' => '/videos/3d-concept.mp4',
-                    'description' => 'Discussing the 2D to 3D pipeline and collaborations.'
-                ]),
-            ];
+            return $this->staticFallbackItems();
         }
 
         $files = [];
 
-        try {
-            $files = $this->s3->files($this->videoPrefix);
-        } catch (\Throwable $e) {
-            // If listing fails, return empty list
-            return [];
+        foreach ($this->candidateVideoPrefixes() as $prefix) {
+            try {
+                $candidateFiles = $this->s3->files($prefix);
+            } catch (\Throwable $e) {
+                $candidateFiles = [];
+            }
+
+            $candidateVideos = array_filter($candidateFiles, function ($f) {
+                $ext = Str::lower(pathinfo($f, PATHINFO_EXTENSION));
+                return in_array($ext, ['mp4', 'webm', 'mov', 'm4v']);
+            });
+
+            if (! empty($candidateVideos)) {
+                $files = $candidateFiles;
+                break;
+            }
         }
 
         // Filter video extensions
@@ -89,6 +82,10 @@ class VideoLogService
             $ext = Str::lower(pathinfo($f, PATHINFO_EXTENSION));
             return in_array($ext, ['mp4', 'webm', 'mov', 'm4v']);
         });
+
+        if (empty($videos)) {
+            return $this->staticFallbackItems();
+        }
 
         // Optionally sort by last modified if available
         usort($videos, function ($a, $b) {
@@ -102,10 +99,19 @@ class VideoLogService
         });
 
         $imageFiles = [];
-        try {
-            $imageFiles = $this->s3->files($this->imagePrefix);
-        } catch (\Throwable $e) {
-            // ignore
+        $selectedImagePrefix = $this->imagePrefix;
+        foreach ($this->candidateImagePrefixes() as $prefix) {
+            try {
+                $candidateImages = $this->s3->files($prefix);
+            } catch (\Throwable $e) {
+                $candidateImages = [];
+            }
+
+            if (! empty($candidateImages)) {
+                $imageFiles = $candidateImages;
+                $selectedImagePrefix = $prefix;
+                break;
+            }
         }
 
         $items = [];
@@ -116,7 +122,7 @@ class VideoLogService
             // Find a per-video thumbnail
             $thumbnailKey = null;
             foreach (['jpg', 'jpeg', 'png', 'webp', 'gif'] as $ext) {
-                $candidate = $this->imagePrefix . '/' . $basename . '.' . $ext;
+                $candidate = $selectedImagePrefix . '/' . $basename . '.' . $ext;
                 try {
                     if ($this->s3->exists($candidate)) {
                         $thumbnailKey = $candidate;
@@ -151,5 +157,66 @@ class VideoLogService
     protected function makeS3Url(string $path): string
     {
         return $this->urlGenerator->url($path);
+    }
+
+    /**
+     * @return string[]
+     */
+    protected function candidateVideoPrefixes(): array
+    {
+        $prefixes = [$this->videoPrefix, 'video-logs', 'studio/video-logs', 'studio/videos'];
+
+        if (str_starts_with($this->videoPrefix, 'studio/')) {
+            $prefixes[] = substr($this->videoPrefix, strlen('studio/'));
+        } else {
+            $prefixes[] = 'studio/' . ltrim($this->videoPrefix, '/');
+        }
+
+        return array_values(array_unique(array_filter(array_map(function ($prefix) {
+            return trim((string) $prefix, '/');
+        }, $prefixes))));
+    }
+
+    /**
+     * @return string[]
+     */
+    protected function candidateImagePrefixes(): array
+    {
+        $prefixes = [$this->imagePrefix, 'images/vlogs', 'studio/images/vlogs'];
+
+        if (str_starts_with($this->imagePrefix, 'studio/')) {
+            $prefixes[] = substr($this->imagePrefix, strlen('studio/'));
+        } else {
+            $prefixes[] = 'studio/' . ltrim($this->imagePrefix, '/');
+        }
+
+        return array_values(array_unique(array_filter(array_map(function ($prefix) {
+            return trim((string) $prefix, '/');
+        }, $prefixes))));
+    }
+
+    /**
+     * @return VideoLog[]
+     */
+    protected function staticFallbackItems(): array
+    {
+        return [
+            new VideoLog([
+                'id' => 1,
+                'title' => 'Studio Update — Composing Session',
+                'date' => '2025-10-10',
+                'thumbnail' => '/images/vlogs/session-thumbnail.jpg',
+                'url' => '/videos/session.mp4',
+                'description' => 'A look into the music composing session with new synth textures.'
+            ]),
+            new VideoLog([
+                'id' => 2,
+                'title' => '3D Character Concept Walkthrough',
+                'date' => '2025-09-28',
+                'thumbnail' => '/images/vlogs/3d-thumbnail.jpg',
+                'url' => '/videos/3d-concept.mp4',
+                'description' => 'Discussing the 2D to 3D pipeline and collaborations.'
+            ]),
+        ];
     }
 }

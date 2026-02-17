@@ -1,12 +1,19 @@
 import React from 'react';
 import ApplicationLogo from './ApplicationLogo';
+import { getLoginUrl } from '../env';
 
-const Header: React.FC = () => {
+interface HeaderProps {
+    minimalNav?: boolean;
+}
+
+const Header: React.FC<HeaderProps> = ({ minimalNav = false }) => {
     const navLinks = [
         { name: 'Home', href: '/' },
-        { name: 'Games', href: '/games' },
-        { name: 'About', href: '/about' },
-        { name: 'Login', href: require('../env').getLoginUrl('studio') },
+        ...(minimalNav ? [] : [
+            { name: 'Games', href: '/games' },
+            { name: 'About', href: '/about' },
+        ]),
+        { name: 'Login', href: getLoginUrl('studio') },
     ];
 
     return (
@@ -29,12 +36,14 @@ const Header: React.FC = () => {
                         </a>
                     ))}
 
-                    <a
-                        href="/play"
-                        className="ml-4 inline-flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground shadow-sm hover:opacity-95"
-                    >
-                        Play Now
-                    </a>
+                    {!minimalNav && (
+                        <a
+                            href="/play"
+                            className="ml-4 inline-flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground shadow-sm hover:opacity-95"
+                        >
+                            Play Now
+                        </a>
+                    )}
                 </nav>
 
                 {/* Mobile menu button placeholder - keeps header balanced on small screens */}

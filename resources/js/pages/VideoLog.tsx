@@ -55,7 +55,7 @@ export default function VideoLog() {
     };
 
     return (
-        <MainLayout>
+        <MainLayout minimalNav>
             <Head>
                 <title>Video Log - Creative Process Documentation | GraveYard Jokes Studio</title>
                 <meta name="description" content="Watch behind-the-scenes videos documenting our creative journey, game development process, music creation, and studio updates. A chronological log of creative growth." />
