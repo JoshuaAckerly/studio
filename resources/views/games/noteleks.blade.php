@@ -32,7 +32,10 @@
         gtag('js', new Date());
         
         var trackingId = '{{ config('services.google_analytics.tracking_id') }}';
-        gtag('config', trackingId);
+        gtag('config', trackingId, {
+            cookie_domain: '.graveyardjokes.com',
+            cookie_flags: 'SameSite=None;Secure'
+        });
         
         // Track game access
         gtag('event', 'game_access', {
@@ -55,7 +58,26 @@
 
                 console.log('🎮 Tracking game visit:', visitData);
 
-                const response = await fetch('/api/track-visit', {
+                const host = window.location.hostname;
+                const isMainLocal = host === 'localhost' || host === '127.0.0.1' || host === 'graveyardjokes.local';
+                const isMainTest = host === 'graveyardjokes.test';
+                const isMainProd = host === 'graveyardjokes.com' || host === 'www.graveyardjokes.com';
+                const isLocalSubdomain = host.endsWith('.graveyardjokes.local');
+                const isTestSubdomain = host.endsWith('.graveyardjokes.test');
+
+                let trackingUrl = '/api/track-visit';
+                if (isLocalSubdomain) {
+                    trackingUrl = 'http://graveyardjokes.local/api/track-visit';
+                } else if (isTestSubdomain) {
+                    trackingUrl = 'https://graveyardjokes.test/api/track-visit';
+                } else if (!isMainLocal && !isMainTest && !isMainProd) {
+                    trackingUrl = 'https://graveyardjokes.com/api/track-visit';
+                }
+
+                visitData.page_path = window.location.pathname;
+                visitData.page_url = window.location.href;
+
+                const response = await fetch(trackingUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
