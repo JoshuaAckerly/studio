@@ -33,7 +33,7 @@ class VideoLogService
             $this->s3 = Storage::disk('s3');
         } else {
             $this->s3 = $s3OrGenerator ?? Storage::disk('s3');
-            $this->urlGenerator = $maybeGenerator ?? new StorageUrlGenerator($this->s3, env('CLOUDFRONT_DOMAIN') ?: null);
+            $this->urlGenerator = $maybeGenerator ?? new StorageUrlGenerator($this->s3, config('media.cloudfront_domain') ?: null);
         }
 
     $this->videoPrefix = config('media.video_prefix', 'video-logs');
@@ -50,8 +50,9 @@ class VideoLogService
     {
         // Decide whether to use S3: use S3 when the default disk is 's3', or when an AWS_BUCKET is configured
         // and we're not in testing. This mirrors the previous controller logic.
-    $defaultDisk = config('filesystems.default');
-    $useS3 = ($defaultDisk === 's3') || (!app()->environment('testing') && (bool) env('AWS_BUCKET'));
+    $defaultDisk = (string) config('filesystems.default');
+    $s3Bucket = (string) config('filesystems.disks.s3.bucket');
+    $useS3 = ($defaultDisk === 's3') || (!app()->environment('testing') && $s3Bucket !== '');
 
         if (! $useS3) {
             return $this->staticFallbackItems();
@@ -200,21 +201,26 @@ class VideoLogService
      */
     protected function staticFallbackItems(): array
     {
+        $sessionVideo = $this->makeS3Url('studio/video-logs/session.mp4');
+        $conceptVideo = $this->makeS3Url('studio/video-logs/3d-concept.mp4');
+        $sessionThumbnail = $this->makeS3Url('studio/images/vlogs/session-thumbnail.jpg');
+        $conceptThumbnail = $this->makeS3Url('studio/images/vlogs/3d-thumbnail.jpg');
+
         return [
             new VideoLog([
                 'id' => 1,
                 'title' => 'Studio Update — Composing Session',
                 'date' => '2025-10-10',
-                'thumbnail' => '/images/vlogs/session-thumbnail.jpg',
-                'url' => '/videos/session.mp4',
+                'thumbnail' => $sessionThumbnail,
+                'url' => $sessionVideo,
                 'description' => 'A look into the music composing session with new synth textures.'
             ]),
             new VideoLog([
                 'id' => 2,
                 'title' => '3D Character Concept Walkthrough',
                 'date' => '2025-09-28',
-                'thumbnail' => '/images/vlogs/3d-thumbnail.jpg',
-                'url' => '/videos/3d-concept.mp4',
+                'thumbnail' => $conceptThumbnail,
+                'url' => $conceptVideo,
                 'description' => 'Discussing the 2D to 3D pipeline and collaborations.'
             ]),
         ];
