@@ -18,6 +18,10 @@ Route::get('/illustrations', function () {
     return Inertia::render('Illustrations');
 })->name('illustrations');
 
+Route::redirect('/contact', '/', 301);
+Route::redirect('/privacy', '/', 301);
+Route::redirect('/terms', '/', 301);
+
 // Noteleks Game
 Route::get('/noteleks', function () {
     return view('games.noteleks');
