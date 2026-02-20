@@ -28,6 +28,11 @@ composer install --no-interaction --prefer-dist --no-progress --optimize-autoloa
 echo "📦 Installing Node dependencies..."
 npm ci --production=false
 
+if [ ! -x node_modules/.bin/vite ]; then
+    echo "⚠️ Vite binary missing after npm ci, installing vite locally..."
+    npm install --no-save vite
+fi
+
 # Build frontend assets with SSR
 echo "🎨 Building frontend assets and SSR bundle..."
 npm run build:ssr
@@ -55,11 +60,14 @@ sudo systemctl reload php${PHP_VERSION}-fpm
 # Manage SSR process with PM2
 echo "🌟 Managing SSR server with PM2..."
 if pm2 list | grep -q "$PROJECT_NAME-ssr"; then
-    pm2 restart $PROJECT_NAME-ssr
+    pm2 restart "$PROJECT_NAME-ssr" --update-env || {
+        pm2 delete "$PROJECT_NAME-ssr" >/dev/null 2>&1 || true
+        pm2 start bootstrap/ssr/ssr.js --name "$PROJECT_NAME-ssr" -- --port=$SSR_PORT
+    }
 else
     pm2 start bootstrap/ssr/ssr.js --name "$PROJECT_NAME-ssr" -- --port=$SSR_PORT
-    pm2 save
 fi
+pm2 save
 
 # Restart queue workers if configured
 if grep -q "QUEUE_CONNECTION=redis\|QUEUE_CONNECTION=database" .env; then
