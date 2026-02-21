@@ -3,14 +3,8 @@ import EntityFactory from '../factories/EntityFactory';
 describe('EntityFactory', () => {
   let factory;
   let mockScene;
-  let mockPlayer;
-  let mockEnemy;
 
   beforeEach(() => {
-    mockPlayer = jest.fn();
-    mockEnemy = jest.fn();
-    jest.mock('../entities/Player.js', () => mockPlayer, { virtual: true });
-    jest.mock('../entities/Enemy.js', () => mockEnemy, { virtual: true });
     const mockBody = {
       setCollideWorldBounds: jest.fn(),
       setBounce: jest.fn(),
@@ -47,7 +41,7 @@ describe('EntityFactory', () => {
   });
 
   afterEach(() => {
-    jest.resetModules();
+    jest.restoreAllMocks();
   });
 
   it('initializes with templates', () => {

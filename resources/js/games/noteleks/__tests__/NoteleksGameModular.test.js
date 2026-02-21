@@ -1,11 +1,15 @@
+let NoteleksGame;
 
-// Ensure Phaser is globally mocked before importing anything else
-global.Phaser = {
+const createPhaserMock = () => ({
   AUTO: 0,
   Scale: { FIT: 1, CENTER_BOTH: 2 },
-  Game: jest.fn().mockImplementation(() => ({ events: { once: jest.fn() }, scene: { getScene: jest.fn().mockReturnValue({ gameState: 'playing', pauseGame: jest.fn(), resumeGame: jest.fn() }) }, destroy: jest.fn() }))
-};
-import NoteleksGame from '../NoteleksGameModular.js';
+  Scene: class {},
+  Game: jest.fn().mockImplementation(() => ({
+    events: { once: jest.fn() },
+    scene: { getScene: jest.fn().mockReturnValue({ gameState: 'playing', pauseGame: jest.fn(), resumeGame: jest.fn() }) },
+    destroy: jest.fn()
+  }))
+});
 
 describe('NoteleksGame', () => {
   let game;
@@ -13,13 +17,14 @@ describe('NoteleksGame', () => {
   let origWindow;
   let origDocument;
 
+  beforeAll(async () => {
+    global.Phaser = createPhaserMock();
+    ({ default: NoteleksGame } = await import('../NoteleksGameModular.js'));
+  });
+
   beforeEach(() => {
     origPhaser = global.Phaser;
-    global.Phaser = {
-      AUTO: 0,
-      Scale: { FIT: 1, CENTER_BOTH: 2 },
-      Game: jest.fn().mockImplementation(() => ({ events: { once: jest.fn() }, scene: { getScene: jest.fn().mockReturnValue({ gameState: 'playing', pauseGame: jest.fn(), resumeGame: jest.fn() }) }, destroy: jest.fn() }))
-    };
+    global.Phaser = createPhaserMock();
     origWindow = global.window;
     global.window = { addEventListener: jest.fn(), onerror: null, noteleks_lowQuality: false, navigator: { userAgent: '', deviceMemory: 4, hardwareConcurrency: 4, sendBeacon: jest.fn() }, localStorage: { setItem: jest.fn() } };
     origDocument = global.document;
@@ -39,8 +44,7 @@ describe('NoteleksGame', () => {
 
   it('createGameConfig throws if Phaser is undefined', () => {
     global.Phaser = undefined;
-    game = new NoteleksGame();
-    expect(() => game.createGameConfig()).toThrow();
+    expect(() => new NoteleksGame()).toThrow();
   });
 
   it('initialize returns false if container not found', async () => {
