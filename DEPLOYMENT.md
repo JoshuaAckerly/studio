@@ -28,7 +28,7 @@ The production deployment script will:
 
 ## 🧪 Test Server Deployment
 
-For deploying to the polyrepo test server, see the main [TEST_DEPLOYMENT.md](../TEST_DEPLOYMENT.md) guide.
+For deploying to the polyrepo test server, see the main [docs/standards/TEST_DEPLOYMENT.md](../TEST_DEPLOYMENT.md) guide.
 
 ### Quick Deploy to Test Server
 

@@ -79,7 +79,7 @@ If running multiple projects together:
 
 ```bash
 # From the polyrepo root
-./manage-all-projects.sh start
+./scripts/manage-all-projects.sh start
 ```
 
 ## 🎮 Game Development Features
