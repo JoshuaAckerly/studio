@@ -26,6 +26,26 @@ The production deployment script will:
 - Restart PHP-FPM and SSR server via PM2
 - Restart queue workers if configured
 
+### Portfolio Batched Deploy (All Sites)
+
+If you're releasing all portfolio sites from the Ubuntu server, run the shared batched script from `/var/www`:
+
+```bash
+cd /var/www
+bash scripts/deploy-all-batched.sh
+```
+
+By default this includes a post-deploy verification hook (`bash scripts/manage-all-projects.sh update`).
+
+Emergency-only bypass:
+
+```bash
+cd /var/www
+bash scripts/deploy-all-batched.sh --skip-verify
+```
+
+Use `--skip-verify` only when necessary and run health checks immediately after deploy.
+
 ## 🧪 Test Server Deployment
 
 For deploying to the polyrepo test server, see the main [docs/standards/TEST_DEPLOYMENT.md](../TEST_DEPLOYMENT.md) guide.
