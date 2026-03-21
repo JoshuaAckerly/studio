@@ -1,0 +1,66 @@
+---
+name: Refactor Task
+description: Track a specific refactoring task for the Noteleks codebase
+labels: ["refactor"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template when a piece of code needs restructuring, cleanup, or architectural improvement.
+
+  - type: dropdown
+    id: module
+    attributes:
+      label: Module
+      description: Which module or area does this refactor target?
+      options:
+        - AssetManager / loading pipeline
+        - AnimationHelper
+        - LoadingScene
+        - GameScene
+        - Player / entities
+        - Physics / combat
+        - ECS components
+        - Build tooling (Vite, manifest generator)
+        - Tests
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: current
+    attributes:
+      label: Current state
+      description: Describe what exists today and why it needs changing.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed
+    attributes:
+      label: Proposed change
+      description: What should change and what's the expected outcome?
+    validations:
+      required: true
+
+  - type: textarea
+    id: files
+    attributes:
+      label: Key files
+      description: List the files likely to be modified.
+      placeholder: |
+        - resources/js/games/noteleks/utils/AssetManagerSimple.js
+        - resources/js/games/noteleks/__tests__/AssetManager.test.js
+    validations:
+      required: false
+
+  - type: dropdown
+    id: size
+    attributes:
+      label: Estimated size
+      options:
+        - Small (< 2 hours)
+        - Medium (2–6 hours)
+        - Large (> 6 hours)
+    validations:
+      required: false

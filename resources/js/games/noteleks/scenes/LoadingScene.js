@@ -1,6 +1,16 @@
 /* global Phaser */
 import GameConfig from '../config/GameConfig.js';
+import { AssetManager } from '../utils/AssetManagerSimple.js';
 
+// Per-animation timing overrides (defaults: 12fps, repeat -1)
+const ANIM_CONFIG = {
+    'skeleton-idle':       { frameRate: 8,  repeat: -1 },
+    'skeleton-run':        { frameRate: 12, repeat: -1 },
+    'skeleton-walk':       { frameRate: 12, repeat: -1 },
+    'skeleton-attack1':    { frameRate: 10, repeat: 0 },
+    'skeleton-attack2':    { frameRate: 10, repeat: 0 },
+    'skeleton-jumpattack': { frameRate: 15, repeat: 0 },
+};
 
 class LoadingScene extends Phaser.Scene {
     constructor() {
@@ -10,113 +20,52 @@ class LoadingScene extends Phaser.Scene {
     preload() {
         try { this.cameras.main.setBackgroundColor(GameConfig.screen.backgroundColor); } catch { /* ignore */ }
 
-        // Show a simple progress text
+        // Progress UI
         try {
             const w = (GameConfig && GameConfig.screen && GameConfig.screen.width) || this.cameras.main.width;
             const h = (GameConfig && GameConfig.screen && GameConfig.screen.height) || this.cameras.main.height;
-            this._progressText = this.add.text(w / 2, h / 2, 'Loading...', { font: '16px Arial', fill: '#ffffff' }).setOrigin(0.5);
+            this._stageText = this.add.text(w / 2, h / 2 - 16, 'Stage 1/2 — Loading manifest…', { font: '12px Arial', fill: '#aaaaaa' }).setOrigin(0.5);
+            this._progressText = this.add.text(w / 2, h / 2 + 8, '0%', { font: '16px Arial', fill: '#ffffff' }).setOrigin(0.5);
         } catch { /* ignore */ }
 
-        // Load WebP animation frames directly
-        try {
-            // Load idle animation frames
-            for (let i = 0; i <= 15; i++) {
-                const frameNum = i.toString().padStart(2, '0');
-                this.load.image(`skeleton-idle-${i}`, `/games/noteleks/sprites/Skeleton-Idle_${frameNum}.webp`);
-            }
-            
-            // Load run animation frames
-            for (let i = 0; i <= 15; i++) {
-                const frameNum = i.toString().padStart(2, '0');
-                this.load.image(`skeleton-run-${i}`, `/games/noteleks/sprites/Skeleton-Run_${frameNum}.webp`);
-            }
-            
-            // Load attack animations
-            for (let i = 0; i <= 2; i++) {
-                this.load.image(`skeleton-attack1-${i}`, `/games/noteleks/sprites/Skeleton-Attack1_${i}.webp`);
-            }
-            
-            // Load jump animation
-            this.load.image('skeleton-jump-0', '/games/noteleks/sprites/Skeleton-Jump_0.webp');
-            
-            // Load jump attack animation
-            for (let i = 0; i <= 7; i++) {
-                this.load.image(`skeleton-jumpattack-${i}`, `/games/noteleks/sprites/Skeleton-JumpAttack_${i}.webp`);
-            }
-            
-            // Load weapon sprites
-            this.load.image('spear', '/games/noteleks/sprites/Spear.png');
-            
-            // Show progress
-            this.load.on('progress', (p) => {
-                if (this._progressText) this._progressText.setText('Loading: ' + Math.round(p * 100) + '%');
-            });
-            
-            // When loading completes, create animations and start GameScene
-            this.load.once('complete', () => {
-                this.createAnimations();
-                this.scene.start('GameScene');
-            });
-        } catch (e) {
-            console.warn('[LoadingScene] WebP loading failed', e.message);
-        }
+        this.load.on('progress', (p) => {
+            if (this._progressText) this._progressText.setText(Math.round(p * 100) + '%');
+        });
+
+        // Stage 1: load the sprite manifest
+        this.load.json('sprite-manifest', '/games/noteleks/sprites/manifest.json');
     }
 
     create() {
-        // nothing — transition happens on loader complete
-    }
-    
-    createAnimations() {
+        // Stage 2: read manifest, queue all frame images + static assets, start second load pass
         try {
-            // Create idle animation
-            const idleFrames = [];
-            for (let i = 0; i <= 15; i++) {
-                idleFrames.push({ key: `skeleton-idle-${i}` });
+            const manifest = this.cache.json.get('sprite-manifest');
+            if (!manifest) {
+                console.warn('[LoadingScene] Manifest not found, starting GameScene without assets');
+                this.scene.start('GameScene');
+                return;
             }
-            this.anims.create({
-                key: 'player-idle',
-                frames: idleFrames,
-                frameRate: 8,
-                repeat: -1
+
+            if (this._stageText) this._stageText.setText('Stage 2/2 — Loading sprites…');
+            if (this._progressText) this._progressText.setText('0%');
+
+            AssetManager.queueAssetsFromManifest(this, manifest, ANIM_CONFIG);
+
+            // Static assets not covered by the manifest
+            this.load.image('spear', '/games/noteleks/sprites/Spear.png');
+
+            this.load.on('progress', (p) => {
+                if (this._progressText) this._progressText.setText(Math.round(p * 100) + '%');
             });
-            
-            // Create run animation
-            const runFrames = [];
-            for (let i = 0; i <= 15; i++) {
-                runFrames.push({ key: `skeleton-run-${i}` });
-            }
-            this.anims.create({
-                key: 'player-run',
-                frames: runFrames,
-                frameRate: 12,
-                repeat: -1
+
+            this.load.once('complete', () => {
+                this.scene.start('GameScene');
             });
-            
-            // Create attack animation
-            const attackFrames = [];
-            for (let i = 0; i <= 2; i++) {
-                attackFrames.push({ key: `skeleton-attack1-${i}` });
-            }
-            this.anims.create({
-                key: 'player-attack',
-                frames: attackFrames,
-                frameRate: 10,
-                repeat: 0
-            });
-            
-            // Create jump animation using JumpAttack frames for more dynamic movement
-            const jumpFrames = [];
-            for (let i = 0; i <= 7; i++) {
-                jumpFrames.push({ key: `skeleton-jumpattack-${i}` });
-            }
-            this.anims.create({
-                key: 'player-jump',
-                frames: jumpFrames,
-                frameRate: 15,
-                repeat: 0
-            });
-        } catch {
-            // Failed to create animations
+
+            this.load.start();
+        } catch (e) {
+            console.warn('[LoadingScene] Asset loading failed', e.message);
+            this.scene.start('GameScene');
         }
     }
 }

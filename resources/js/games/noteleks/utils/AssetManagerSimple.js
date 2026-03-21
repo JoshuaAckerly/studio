@@ -9,6 +9,7 @@
  * This file intentionally omits legacy sidecar/spritesheet/spine self-heal logic.
  */
 import GameConfig from '../config/GameConfig.js';
+import { ALIAS_MAP, createAnimation, createAlias, promoteFirstFrameTexture } from './AnimationHelper.js';
 
 export class AssetManager {
     /**
@@ -49,7 +50,7 @@ export class AssetManager {
      *   sheets: { ... }
      * }
      */
-    static queueAssetsFromManifest(scene, manifest) {
+    static queueAssetsFromManifest(scene, manifest, animConfig = {}) {
         try {
             if (!scene || !manifest) return;
             const seqs = manifest.frameSequences || {};
@@ -103,49 +104,16 @@ export class AssetManager {
             try {
                 scene.load.once('complete', () => {
                     try {
-                        const aliasMap = {
-                            'skeleton-idle': 'player-idle',
-                            'skeleton-run': 'player-run',
-                            'skeleton-walk': 'player-walk',
-                            'skeleton-jumpattack': 'player-jump-attack',
-                            'skeleton-attack1': 'player-attack',
-                            'skeleton-attack2': 'player-attack',
-                            'skeleton-jump': 'player-jump'
-                        };
-
                         for (const animKey of Object.keys(sequences || {})) {
                             try {
                                 const count = sequences[animKey] || 0;
                                 if (count <= 0) continue;
 
-                                if (!scene.anims.exists(animKey)) {
-                                    const frames = [];
-                                    for (let i = 0; i < count; i++) frames.push({ key: `${animKey}-${i}` });
-                                    scene.anims.create({ key: animKey, frames, frameRate: 12, repeat: -1 });
-                                }
+                                createAnimation(scene, animKey, count, animConfig[animKey]);
+                                promoteFirstFrameTexture(scene, animKey);
 
-                                // Duplicate first frame into base texture so legacy code
-                                // that expects a single texture key (e.g. 'skeleton-idle')
-                                // finds something usable for sizing.
-                                try {
-                                    const firstKey = `${animKey}-0`;
-                                    if (scene.textures.exists(firstKey) && !scene.textures.exists(animKey)) {
-                                        const srcImg = scene.textures.get(firstKey).getSourceImage();
-                                        if (srcImg) scene.textures.addImage(animKey, srcImg);
-                                    }
-                                } catch { /* ignore */ }
-
-                                // Create alias if mapped
-                                const alias = aliasMap[animKey];
-                                if (alias && !scene.anims.exists(alias)) {
-                                    try {
-                                        const baseAnim = scene.anims.get(animKey);
-                                        if (baseAnim && baseAnim.frames && baseAnim.frames.length) {
-                                            const framesCopy = baseAnim.frames.map(f => ({ key: f.textureKey, frame: f.frame ? f.frame.name : f.frame }));
-                                            scene.anims.create({ key: alias, frames: framesCopy, frameRate: 12, repeat: -1 });
-                                        }
-                                    } catch { /* ignore */ }
-                                }
+                                const alias = ALIAS_MAP[animKey];
+                                if (alias) createAlias(scene, animKey, alias, animConfig[animKey]);
                             } catch { /* ignore */ }
                         }
                     } catch { /* ignore */ }

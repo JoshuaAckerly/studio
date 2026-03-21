@@ -1,0 +1,49 @@
+---
+name: Feature Request
+description: Suggest a new feature or enhancement for the Noteleks game or Studio site
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the feature you'd like to see. Keep scope tight — features that take more than a day should be split into smaller issues.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Gameplay — new mechanic or ability
+        - Gameplay — new enemy type
+        - Visuals — animation or sprite
+        - Visuals — UI / HUD
+        - Audio
+        - Performance
+        - DevEx — tooling or DX improvement
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Feature description
+      description: What should be added or changed?
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: Why is this valuable? What problem does it solve?
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Any other approaches you thought about?
+    validations:
+      required: false

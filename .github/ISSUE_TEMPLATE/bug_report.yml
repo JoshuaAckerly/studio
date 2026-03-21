@@ -1,0 +1,79 @@
+---
+name: Bug Report
+description: Report a bug in the Noteleks game or Studio site
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Fill in as much detail as you can.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of the project is affected?
+      options:
+        - Game — rendering / visuals
+        - Game — physics / collision
+        - Game — animation / sprites
+        - Game — input / controls
+        - Game — asset loading
+        - Site — routing / pages
+        - Site — build / Vite
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug description
+      description: What happened? What did you expect to happen?
+      placeholder: "When I do X, Y happens instead of Z."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: How can someone else trigger this bug?
+      placeholder: |
+        1. Open /noteleks
+        2. Press attack while jumping
+        3. Animation freezes on frame 3
+    validations:
+      required: true
+
+  - type: dropdown
+    id: browser
+    attributes:
+      label: Browser
+      options:
+        - Chrome
+        - Firefox
+        - Safari
+        - Edge
+        - Mobile Chrome
+        - Mobile Safari
+        - Other
+    validations:
+      required: false
+
+  - type: textarea
+    id: console
+    attributes:
+      label: Console output
+      description: Paste any errors from the browser console (or `localStorage.getItem('noteleks_last_error')` in production).
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Additional context
+      description: Screenshots, screen recordings, device info, etc.
+    validations:
+      required: false

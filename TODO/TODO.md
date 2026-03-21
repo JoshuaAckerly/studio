@@ -5,11 +5,11 @@ Add or update items as you make progress.
 
 ## High-level goals
 
-- [ ] Finish manifest-driven asset loader and remove legacy probing.
-- [ ] Ensure Spine and per-frame WebP fallbacks are stable and create animations deterministically.
-- [ ] Remove or archive legacy `_512` spritesheet assets from `public/games/noteleks/sprites` (if unused).
-- [ ] Add tests for `AssetManager` frame queuing and `LoadingScene` two-stage preload.
-- [ ] Clean up and document public build vs dev-mode boot differences; ensure dev server prefers source modules.
+- [x] Finish manifest-driven asset loader and remove legacy probing.
+- [x] Ensure Spine and per-frame WebP fallbacks are stable and create animations deterministically.
+- [x] Remove or archive legacy `_512` spritesheet assets from `public/games/noteleks/sprites` (if unused). _(Confirmed: none exist)_
+- [x] Add tests for `AssetManager` frame queuing and `LoadingScene` two-stage preload.
+- [x] Clean up and document public build vs dev-mode boot differences; ensure dev server prefers source modules.
 
 ## Immediate next tasks (for you)
 
@@ -20,16 +20,16 @@ Add or update items as you make progress.
 ## Refactor tasks
 
 - AssetManager
-  - [ ] Extract animation creation helpers (createAnimation, createAlias) into a small module.
-  - [ ] Add unit tests for `queueAssetsFromManifest` behavior.
-  - [ ] Remove the fallback timeout or make it configurable via GameConfig.
+  - [x] Extract animation creation helpers (createAnimation, createAlias) into a small module.
+  - [x] Add unit tests for `queueAssetsFromManifest` behavior.
+  - [x] Remove the fallback timeout or make it configurable via GameConfig. _(Resolved: legacy probing removed; no timeout in simplified flow)_
 
 - LoadingScene
-  - [ ] Add clearer two-phase progress UI (stage 1: manifest, stage 2: assets).
+  - [x] Add clearer two-phase progress UI (stage 1: manifest, stage 2: assets).
 
 - Misc
-  - [ ] Add a README that explains the runtime asset-loading strategies and how to rebuild sprite manifests.
-  - [ ] Add issue labels and templates in `.github/` to track refactor work.
+  - [x] Add a README that explains the runtime asset-loading strategies and how to rebuild sprite manifests.
+  - [x] Add issue labels and templates in `.github/` to track refactor work.
   - [x] Update documentation to reflect Linux backend setup (remove Windows references)
 
 ## Notes

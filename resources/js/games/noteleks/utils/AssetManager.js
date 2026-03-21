@@ -106,10 +106,9 @@ export class AssetManager {
                             'skeleton-idle': 'player-idle',
                             'skeleton-run': 'player-run',
                             'skeleton-walk': 'player-walk',
-                            'skeleton-jumpattack': 'player-jump-attack',
+                            'skeleton-jumpattack': 'player-jump',
                             'skeleton-attack1': 'player-attack',
                             'skeleton-attack2': 'player-attack',
-                            'skeleton-jump': 'player-jump'
                         };
 
                         for (const animKey of Object.keys(sequences || {})) {
