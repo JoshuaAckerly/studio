@@ -7,14 +7,16 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
     server: {
         port: 8084,
-        host: '10.0.1.30', // Allow access from network
+        host: '0.0.0.0',
+        origin: 'http://studio.graveyardjokes.local:8084',
         hmr: {
-            host: '10.0.1.30'
+            host: 'studio.graveyardjokes.local'
         },
         cors: {
             origin: ['http://studio.graveyardjokes.local'],
             credentials: true
-        }
+        },
+        allowedHosts: ['studio.graveyardjokes.local']
     },
     plugins: [
         laravel({
