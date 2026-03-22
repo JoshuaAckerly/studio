@@ -5,6 +5,11 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\VisitNotification;
+use App\Http\Controllers\Api\MessageProxyController;
+
+Route::get('/messages', [MessageProxyController::class, 'index']);
+Route::patch('/messages/read-all', [MessageProxyController::class, 'markAllRead']);
+Route::patch('/messages/{id}/read', [MessageProxyController::class, 'markRead']);
 
 // Tracking endpoint (no CSRF protection in API)
 Route::post('/track-visit', function (Request $request) {

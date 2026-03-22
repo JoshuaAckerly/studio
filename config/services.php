@@ -39,4 +39,8 @@ return [
         'tracking_id' => env('GOOGLE_ANALYTICS_TRACKING_ID'),
     ],
 
+    'auth_system' => [
+        'url' => env('AUTH_SYSTEM_URL', 'http://auth-system.local/api'),
+    ],
+
 ];

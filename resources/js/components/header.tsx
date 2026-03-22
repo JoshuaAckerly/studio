@@ -1,5 +1,6 @@
 import React from 'react';
 import ApplicationLogo from './ApplicationLogo';
+import NotificationBell from './NotificationBell';
 import { getLoginUrl } from '../env';
 
 interface HeaderProps {
@@ -44,6 +45,7 @@ const Header: React.FC<HeaderProps> = ({ minimalNav = false }) => {
                             Play Now
                         </a>
                     )}
+                    <NotificationBell />
                 </nav>
 
                 {/* Mobile menu button placeholder - keeps header balanced on small screens */}
