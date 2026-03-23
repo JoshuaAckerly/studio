@@ -14,6 +14,7 @@ const Header: React.FC<HeaderProps> = ({ minimalNav = false }) => {
             { name: 'Games', href: '/games' },
             { name: 'About', href: '/about' },
         ]),
+        { name: 'Blog', href: '/blog' },
         { name: 'Login', href: getLoginUrl('studio') },
     ];
 

@@ -11,8 +11,12 @@ Route::get('/', function () {
 })->name('welcome');
 
 use App\Http\Controllers\VideoLogController;
+use App\Http\Controllers\BlogPostController;
 
 Route::get('/video-log', [VideoLogController::class, 'index'])->name('video-log');
+
+Route::get('/blog', [BlogPostController::class, 'index'])->name('blog.index');
+Route::get('/blog/{slug}', [BlogPostController::class, 'show'])->name('blog.show');
 
 Route::get('/illustrations', function () {
     return Inertia::render('Illustrations');

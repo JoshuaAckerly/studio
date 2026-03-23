@@ -13,6 +13,7 @@ const navigation = [
     { name: 'Games', href: getProjectUrl('studio') },
     { name: 'Gallery', href: '/illustrations' },
     { name: 'Video Logs', href: '/video-log' },
+    { name: 'Blog', href: '/blog' },
     { name: 'About', href: '#about' },
 ];
 const features = [
