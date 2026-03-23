@@ -2,8 +2,8 @@
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
 use App\Http\Requests\ServeFileRequest;
+use Tests\TestCase;
 
 class ServeFileRequestTest extends TestCase
 {
@@ -11,7 +11,7 @@ class ServeFileRequestTest extends TestCase
     {
         config(['app.env' => 'testing']);
 
-        $req = new ServeFileRequest();
+        $req = new ServeFileRequest;
 
         $this->assertTrue($req->authorize());
     }
@@ -20,14 +20,14 @@ class ServeFileRequestTest extends TestCase
     {
         config(['app.env' => 'production']);
 
-        $req = new ServeFileRequest();
+        $req = new ServeFileRequest;
 
         $this->assertFalse($req->authorize());
     }
 
     public function test_rules_contains_path_required_string()
     {
-        $req = new ServeFileRequest();
+        $req = new ServeFileRequest;
 
         $rules = $req->rules();
 
@@ -39,7 +39,7 @@ class ServeFileRequestTest extends TestCase
 
     public function test_messages_contains_path_required()
     {
-        $req = new ServeFileRequest();
+        $req = new ServeFileRequest;
 
         $messages = $req->messages();
 

@@ -70,7 +70,7 @@ class PhysicsManager {
                     const targetRef = targetSprite?.enemyRef || targetSprite?.playerRef;
                     if (targetRef && !hitEntities.has(targetRef)) {
                         hitEntities.add(targetRef);
-                        
+
                         if (onHitCallback) {
                             onHitCallback(targetRef, targetSprite, facing);
                         }
@@ -114,8 +114,8 @@ class PhysicsManager {
 
     /**
      * Setup collision between two physics objects
-     * @param {Phaser.Physics.Arcade.Sprite|Phaser.GameObjects.Group} object1 
-     * @param {Phaser.Physics.Arcade.Sprite|Phaser.GameObjects.Group} object2 
+     * @param {Phaser.Physics.Arcade.Sprite|Phaser.GameObjects.Group} object1
+     * @param {Phaser.Physics.Arcade.Sprite|Phaser.GameObjects.Group} object2
      * @param {Function} callback - Optional collision callback
      */
     setupCollision(object1, object2, callback = null) {
@@ -126,8 +126,8 @@ class PhysicsManager {
 
     /**
      * Setup overlap detection between two physics objects
-     * @param {Phaser.Physics.Arcade.Sprite|Phaser.GameObjects.Group} object1 
-     * @param {Phaser.Physics.Arcade.Sprite|Phaser.GameObjects.Group} object2 
+     * @param {Phaser.Physics.Arcade.Sprite|Phaser.GameObjects.Group} object1
+     * @param {Phaser.Physics.Arcade.Sprite|Phaser.GameObjects.Group} object2
      * @param {Function} callback - Overlap callback
      */
     setupOverlap(object1, object2, callback) {
@@ -138,7 +138,7 @@ class PhysicsManager {
 
     /**
      * Reset physics body velocity
-     * @param {Phaser.Physics.Arcade.Sprite} sprite 
+     * @param {Phaser.Physics.Arcade.Sprite} sprite
      */
     resetVelocity(sprite) {
         if (sprite.body) {
@@ -148,8 +148,8 @@ class PhysicsManager {
 
     /**
      * Set horizontal velocity
-     * @param {Phaser.Physics.Arcade.Sprite} sprite 
-     * @param {number} velocityX 
+     * @param {Phaser.Physics.Arcade.Sprite} sprite
+     * @param {number} velocityX
      */
     setVelocityX(sprite, velocityX) {
         if (sprite.body) {
@@ -159,8 +159,8 @@ class PhysicsManager {
 
     /**
      * Set vertical velocity
-     * @param {Phaser.Physics.Arcade.Sprite} sprite 
-     * @param {number} velocityY 
+     * @param {Phaser.Physics.Arcade.Sprite} sprite
+     * @param {number} velocityY
      */
     setVelocityY(sprite, velocityY) {
         if (sprite.body) {
@@ -170,7 +170,7 @@ class PhysicsManager {
 
     /**
      * Check if sprite is touching down (on ground)
-     * @param {Phaser.Physics.Arcade.Sprite} sprite 
+     * @param {Phaser.Physics.Arcade.Sprite} sprite
      * @returns {boolean}
      */
     isTouchingDown(sprite) {

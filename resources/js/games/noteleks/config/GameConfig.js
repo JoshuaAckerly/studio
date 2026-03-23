@@ -25,7 +25,7 @@ export const GameConfig = {
         speed: 160,
         jumpPower: 330,
         doubleJumpEnabled: true,
-        doubleJumpPower: 280,  // Second jump is slightly weaker
+        doubleJumpPower: 280, // Second jump is slightly weaker
         maxJumps: 2,
         health: 100,
         maxHealth: 100,
@@ -84,11 +84,11 @@ export const GameConfig = {
     // Combat settings
     combat: {
         knockback: {
-            forceX: 200,        // Horizontal knockback force
-            forceY: -100,       // Vertical knockback force (negative = upward)
-            enemyMass: 1,       // Enemy physics mass
-            enemyDrag: 80,      // Enemy drag for natural deceleration
-            stunDuration: 800,  // Time in ms enemy can't move after knockback
+            forceX: 200, // Horizontal knockback force
+            forceY: -100, // Vertical knockback force (negative = upward)
+            enemyMass: 1, // Enemy physics mass
+            enemyDrag: 80, // Enemy drag for natural deceleration
+            stunDuration: 800, // Time in ms enemy can't move after knockback
         },
     },
 

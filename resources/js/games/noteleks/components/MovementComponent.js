@@ -79,7 +79,7 @@ class MovementComponent extends Component {
     jump() {
         if (this.jumpsRemaining > 0 && this.body) {
             // Use different jump power for double jump
-            const power = (this.jumpsRemaining === this.maxJumps) ? this.jumpPower : this.doubleJumpPower;
+            const power = this.jumpsRemaining === this.maxJumps ? this.jumpPower : this.doubleJumpPower;
             this.velocityY = -power;
             this.body.setVelocityY(this.velocityY);
             this.jumpsRemaining--;

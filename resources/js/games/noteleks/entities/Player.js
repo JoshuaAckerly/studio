@@ -17,27 +17,27 @@ import SpineBoneReader from '../utils/SpineBoneReader.js';
 class Player extends GameObject {
     constructor(scene, x, y) {
         super(scene, x, y);
-        
+
         // Animation states
         this._isJumping = false;
         this._isAttacking = false;
         this._attackLocked = false; // Lock player during attack
         this.animationManager = null;
-        
+
         // Weapon sprite
         this.weaponSprite = null;
         this.boneReader = null;
-        
+
         // Knockback state
         this.isKnockedBack = false;
         this.knockbackEndTime = 0;
-        
+
         // Input handler
-        this.inputHandler = new InputHandler(scene)
-        
+        this.inputHandler = new InputHandler(scene);
+
         // Physics manager
         this.physicsManager = new PhysicsManager(scene);
-        
+
         // Create player and setup components
         this.createPlayer();
         this.setupComponents();
@@ -51,14 +51,14 @@ class Player extends GameObject {
         this.sprite.setScale(GameConfig.player.scale);
         this.sprite.setVisible(true);
         this.sprite.setDepth(100);
-        
+
         // Setup physics using PhysicsManager
         this.physicsManager.setupPlayerPhysics(this.sprite);
-        
+
         // Initialize animation manager
         this.animationManager = new AnimationManager(this.sprite, this.scene);
         this.animationManager.play('player-idle', true);
-        
+
         // Listen for animation complete to reset attack state
         this.sprite.on('animationcomplete', (animation) => {
             if (animation.key === 'player-attack') {
@@ -66,7 +66,7 @@ class Player extends GameObject {
                 this._attackLocked = false;
             }
         });
-        
+
         // Create weapon sprite
         this.createWeaponSprite();
     }
@@ -77,10 +77,10 @@ class Player extends GameObject {
                 console.warn('[Player] Spear texture not loaded');
                 return;
             }
-            
+
             // Load Spine bone data for accurate positioning
             this.loadSpineBoneData();
-            
+
             // Create spear sprite attached to player
             this.weaponSprite = this.scene.add.sprite(0, 0, 'spear');
             this.weaponSprite.setOrigin(0, 0.5); // Pivot at base of spear (left side, center height)
@@ -90,13 +90,13 @@ class Player extends GameObject {
             console.error('[Player] Failed to create weapon sprite:', e);
         }
     }
-    
+
     async loadSpineBoneData() {
         try {
             // Load the Spine JSON file
             const response = await fetch('/games/noteleks/sprites/Skeleton.json');
             const spineData = await response.json();
-            
+
             this.boneReader = new SpineBoneReader(spineData);
         } catch (e) {
             console.warn('[Player] Could not load Spine bone data, using fallback positioning:', e.message);
@@ -105,51 +105,51 @@ class Player extends GameObject {
 
     updateWeaponPosition() {
         if (!this.weaponSprite || !this.sprite) return;
-        
+
         // Get player's current animation state from actual playing animation
         const currentAnim = this.sprite.anims?.currentAnim?.key || 'player-idle';
         const isAttacking = currentAnim.includes('attack');
         const isRunning = currentAnim.includes('run');
         const facingRight = !this.sprite.flipX;
-        
+
         // Get current animation progress (0 to 1)
         const animProgress = this.sprite.anims?.getProgress() || 0;
-        
+
         let offsetX, offsetY, rotation;
-        
+
         if (this.boneReader) {
             // Use Spine bone data for accurate hand position
             let state = 'idle';
             if (isAttacking) state = 'attack';
             else if (isRunning) state = 'run';
-            
+
             // Map game states to Spine animation names and get duration
             const animMap = {
-                'idle': { name: 'Idle', duration: 0.8 },
-                'attack': { name: 'Attack1', duration: 0.3 },
-                'run': { name: 'Run', duration: 0.8 },
-                'jump': { name: 'Jump', duration: 0.4 }
+                idle: { name: 'Idle', duration: 0.8 },
+                attack: { name: 'Attack1', duration: 0.3 },
+                run: { name: 'Run', duration: 0.8 },
+                jump: { name: 'Jump', duration: 0.4 },
             };
-            
+
             const animInfo = animMap[state] || animMap['idle'];
             const animTime = animProgress * animInfo.duration; // Convert progress to actual time
-            
+
             const boneTransform = this.boneReader.getBoneTransform('Handl', animInfo.name, animTime);
-            
+
             // Debug logging (only log occasionally to avoid spam)
             if (Math.random() < 0.02) {
                 console.log(`[Player] State: ${state}, Anim: ${animInfo.name}, Progress: ${animProgress.toFixed(2)}, Time: ${animTime.toFixed(3)}`);
                 console.log(`[Player] Bone transform:`, boneTransform);
             }
-            
+
             // Convert Spine coordinates to Phaser (Spine uses different coordinate system)
             // Scale down from Spine's coordinate space and apply player scale
             const spineScale = GameConfig.player.scale * 0.05; // Match the root bone scale from Spine
-            
+
             offsetX = boneTransform.x * spineScale;
             offsetY = -boneTransform.y * spineScale; // Y is inverted in Phaser
             rotation = (boneTransform.rotation * Math.PI) / 180; // Convert to radians from Spine
-            
+
             // Flip for left-facing
             if (!facingRight) {
                 offsetX = -offsetX;
@@ -168,41 +168,35 @@ class Player extends GameObject {
                 rotation = facingRight ? -Math.PI / 3 : Math.PI + Math.PI / 3;
             }
         }
-        
+
         // Apply position and rotation from Spine bone data
-        this.weaponSprite.setPosition(
-            this.sprite.x + offsetX,
-            this.sprite.y + offsetY
-        );
+        this.weaponSprite.setPosition(this.sprite.x + offsetX, this.sprite.y + offsetY);
         this.weaponSprite.setRotation(rotation);
-        
+
         // No manual flipping - rotation handles orientation
     }
 
     playAnimation(name, loop = true) {
         if (!this.animationManager) return;
-        
+
         // Map game animation names to player animation names
         let animKey = null;
         if (name === 'idle') {
             animKey = 'player-idle';
             this._isAttacking = false;
-        }
-        else if (name === 'run') {
+        } else if (name === 'run') {
             animKey = 'player-run';
             this._isAttacking = false;
-        }
-        else if (name === 'attack') {
+        } else if (name === 'attack') {
             animKey = 'player-attack';
             loop = false; // Attack should never loop
             this._isAttacking = true;
             this._attackLocked = true;
-        }
-        else if (name === 'jump') {
+        } else if (name === 'jump') {
             animKey = 'player-jump';
             this._isAttacking = false;
         }
-        
+
         if (animKey) {
             this.animationManager.play(animKey, loop);
         }
@@ -212,18 +206,16 @@ class Player extends GameObject {
         const config = GameConfig.player;
 
         // Add physics component
-        this.addComponent('physics', new PhysicsComponent({
-            bounce: 0.2,
-            collideWorldBounds: true,
-        }));
+        this.addComponent(
+            'physics',
+            new PhysicsComponent({
+                bounce: 0.2,
+                collideWorldBounds: true,
+            }),
+        );
 
         // Add movement component with double jump support
-        this.addComponent('movement', new MovementComponent(
-            config.speed, 
-            config.jumpPower,
-            config.doubleJumpPower,
-            config.maxJumps
-        ));
+        this.addComponent('movement', new MovementComponent(config.speed, config.jumpPower, config.doubleJumpPower, config.maxJumps));
 
         // Add health component
         this.addComponent('health', new HealthComponent(config.health, config.maxHealth));
@@ -272,15 +264,13 @@ class Player extends GameObject {
             // Stop movement during attack
             this.physicsManager.setVelocityX(this.sprite, 0);
         }
-        
+
         // Update InputHandler
         this.inputHandler.update();
-        
+
         // Update weapon position to follow player
         this.updateWeaponPosition();
     }
-
-
 
     createMeleeHitbox() {
         const enemyGroup = this.scene.enemyManager?.enemies;
@@ -289,18 +279,18 @@ class Player extends GameObject {
         const onHitCallback = (enemy, enemySprite, facing) => {
             // Apply knockback
             this.physicsManager.applyKnockback(enemySprite, facing);
-            
+
             // Stun the enemy
             const aiComponent = enemy.getComponent('ai');
             if (aiComponent) {
                 const knockbackConfig = GameConfig.combat.knockback;
                 aiComponent.stun(knockbackConfig.stunDuration);
             }
-            
+
             // Apply damage
             const damage = 1;
             const score = enemy.takeDamage(damage);
-            
+
             if (score && this.scene.addScore) {
                 this.scene.addScore(score);
             }
@@ -342,7 +332,7 @@ class Player extends GameObject {
     applyKnockback(direction, duration = 500) {
         this.isKnockedBack = true;
         this.knockbackEndTime = Date.now() + duration;
-        
+
         // Apply knockback through physics manager
         if (this.sprite && this.physicsManager) {
             this.physicsManager.applyKnockback(this.sprite, direction);
@@ -384,16 +374,16 @@ class Player extends GameObject {
             this.weaponSprite.destroy();
             this.weaponSprite = null;
         }
-        
+
         // Clean up InputHandler
         if (this.inputHandler) {
             this.inputHandler.destroy();
             this.inputHandler = null;
         }
-        
+
         // Clean up PhysicsManager reference
         this.physicsManager = null;
-        
+
         // Call parent destroy if it exists
         if (super.destroy) {
             super.destroy();

@@ -10,12 +10,16 @@ abstract class TestCase extends BaseTestCase
 
     /**
      * Backup of the previous error/exception handlers to restore after each test.
+     *
      * @var callable|null
      */
     private $prevErrorHandler = null;
+
     private $prevExceptionHandler = null;
+
     // Diagnostic capture fields
     private $diagPrevError = null;
+
     private $diagPrevException = null;
 
     protected function setUp(): void
@@ -132,7 +136,7 @@ abstract class TestCase extends BaseTestCase
                 set_error_handler($this->prevErrorHandler);
                 if (getenv('HANDLER_DIAG')) {
                     $bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 50);
-                    @file_put_contents(base_path('artifacts/handler-reinstall.log'), "Reinstalled error handler for " . static::class . "\nBacktrace:\n" . print_r($bt, true) . "\n", FILE_APPEND);
+                    @file_put_contents(base_path('artifacts/handler-reinstall.log'), 'Reinstalled error handler for '.static::class."\nBacktrace:\n".print_r($bt, true)."\n", FILE_APPEND);
                 }
             }
 
@@ -142,7 +146,7 @@ abstract class TestCase extends BaseTestCase
                 set_exception_handler($this->prevExceptionHandler);
                 if (getenv('HANDLER_DIAG')) {
                     $bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 50);
-                    @file_put_contents(base_path('artifacts/handler-reinstall.log'), "Reinstalled exception handler for " . static::class . "\nBacktrace:\n" . print_r($bt, true) . "\n", FILE_APPEND);
+                    @file_put_contents(base_path('artifacts/handler-reinstall.log'), 'Reinstalled exception handler for '.static::class."\nBacktrace:\n".print_r($bt, true)."\n", FILE_APPEND);
                 }
             }
         } catch (\Throwable $e) {
@@ -162,7 +166,7 @@ abstract class TestCase extends BaseTestCase
             if ($curError === null && $initialError !== null) {
                 set_error_handler($initialError);
                 if (getenv('HANDLER_DIAG')) {
-                    @file_put_contents(base_path('artifacts/handler-reinstall.log'), "Reinstalled initial error handler for " . static::class . "\n", FILE_APPEND);
+                    @file_put_contents(base_path('artifacts/handler-reinstall.log'), 'Reinstalled initial error handler for '.static::class."\n", FILE_APPEND);
                 }
             }
 
@@ -171,7 +175,7 @@ abstract class TestCase extends BaseTestCase
             if ($curEx === null && $initialEx !== null) {
                 set_exception_handler($initialEx);
                 if (getenv('HANDLER_DIAG')) {
-                    @file_put_contents(base_path('artifacts/handler-reinstall.log'), "Reinstalled initial exception handler for " . static::class . "\n", FILE_APPEND);
+                    @file_put_contents(base_path('artifacts/handler-reinstall.log'), 'Reinstalled initial exception handler for '.static::class."\n", FILE_APPEND);
                 }
             }
         } catch (\Throwable $e) {
@@ -191,19 +195,19 @@ abstract class TestCase extends BaseTestCase
                     break;
                 }
             }
-            $msg = "Test: " . static::class . '::' . $testMethod . "\n";
+            $msg = 'Test: '.static::class.'::'.$testMethod."\n";
             if ($this->diagPrevError !== $postError) {
                 $changed = true;
-                $msg .= "  Error handler changed:\n    before: " . var_export($this->diagPrevError, true) . "\n    after:  " . var_export($postError, true) . "\n";
+                $msg .= "  Error handler changed:\n    before: ".var_export($this->diagPrevError, true)."\n    after:  ".var_export($postError, true)."\n";
             }
             if ($this->diagPrevException !== $postEx) {
                 $changed = true;
-                $msg .= "  Exception handler changed:\n    before: " . var_export($this->diagPrevException, true) . "\n    after:  " . var_export($postEx, true) . "\n";
+                $msg .= "  Exception handler changed:\n    before: ".var_export($this->diagPrevException, true)."\n    after:  ".var_export($postEx, true)."\n";
             }
 
             if ($changed) {
                 @mkdir(base_path('artifacts'), 0777, true);
-                @file_put_contents(base_path('artifacts/handler-diag.log'), $msg . "\n", FILE_APPEND);
+                @file_put_contents(base_path('artifacts/handler-diag.log'), $msg."\n", FILE_APPEND);
             }
         }
     }

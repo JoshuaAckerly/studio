@@ -131,7 +131,9 @@ export class AssetManager {
                                         const srcImg = scene.textures.get(firstKey).getSourceImage();
                                         if (srcImg) scene.textures.addImage(animKey, srcImg);
                                     }
-                                } catch { /* ignore */ }
+                                } catch {
+                                    /* ignore */
+                                }
 
                                 // Create alias if mapped
                                 const alias = aliasMap[animKey];
@@ -139,16 +141,27 @@ export class AssetManager {
                                     try {
                                         const baseAnim = scene.anims.get(animKey);
                                         if (baseAnim && baseAnim.frames && baseAnim.frames.length) {
-                                            const framesCopy = baseAnim.frames.map(f => ({ key: f.textureKey, frame: f.frame ? f.frame.name : f.frame }));
+                                            const framesCopy = baseAnim.frames.map((f) => ({
+                                                key: f.textureKey,
+                                                frame: f.frame ? f.frame.name : f.frame,
+                                            }));
                                             scene.anims.create({ key: alias, frames: framesCopy, frameRate: 12, repeat: -1 });
                                         }
-                                    } catch { /* ignore */ }
+                                    } catch {
+                                        /* ignore */
+                                    }
                                 }
-                            } catch { /* ignore */ }
+                            } catch {
+                                /* ignore */
+                            }
                         }
-                    } catch { /* ignore */ }
+                    } catch {
+                        /* ignore */
+                    }
                 });
-            } catch { /* ignore */ }
+            } catch {
+                /* ignore */
+            }
         } catch {
             // ignore top-level failures
         }
@@ -164,18 +177,26 @@ export class AssetManager {
         for (let i = 0; i < frameCount; i++) {
             const key = `${animKey}-${i}`;
             frameKeys.push(key);
-            try { scene.load.image(key, `${baseUrl}${i}.webp`); } catch { /* ignore */ }
+            try {
+                scene.load.image(key, `${baseUrl}${i}.webp`);
+            } catch {
+                /* ignore */
+            }
         }
         try {
             scene.load.once('complete', () => {
                 try {
                     if (!scene.anims.exists(animKey)) {
-                        const frames = frameKeys.map(k => ({ key: k }));
+                        const frames = frameKeys.map((k) => ({ key: k }));
                         scene.anims.create({ key: animKey, frames, frameRate, repeat });
                     }
-                } catch { /* ignore */ }
+                } catch {
+                    /* ignore */
+                }
             });
-        } catch { /* ignore */ }
+        } catch {
+            /* ignore */
+        }
     }
 
     /**
@@ -185,7 +206,6 @@ export class AssetManager {
      * flow we return false.
      */
     static setupSpineData(_scene) {
-         
         try {
             if (GameConfig && GameConfig.useSpine === false) return false;
             return false;
@@ -194,8 +214,9 @@ export class AssetManager {
             return;
         }
     }
-     
 }
 // Developer convenience
-try { if (typeof window !== 'undefined') window.AssetManager = AssetManager; } catch {}
+try {
+    if (typeof window !== 'undefined') window.AssetManager = AssetManager;
+} catch {}
 export default AssetManager;

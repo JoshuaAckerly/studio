@@ -228,11 +228,11 @@ class GameUI {
             const isMobile = this.detectMobile();
             const bgWidth = isMobile ? Math.min(this.scene.scale.width * 0.9, 400) : 600;
             const bgHeight = isMobile ? Math.min(this.scene.scale.height * 0.6, 300) : 400;
-            
+
             // Background
             const gameOverBg = this.scene.add.graphics();
             gameOverBg.fillStyle(0x000000, 0.8);
-            gameOverBg.fillRect(-bgWidth/2, -bgHeight/2, bgWidth, bgHeight);
+            gameOverBg.fillRect(-bgWidth / 2, -bgHeight / 2, bgWidth, bgHeight);
             this.gameOverContainer.add(gameOverBg);
 
             // Game Over text
@@ -427,10 +427,10 @@ class GameUI {
 
     showGameOver() {
         this.finalScoreText.setText(`Final Score: ${this.score}`);
-        
+
         // Update position to stay centered in current viewport
         this.updateGameOverPosition();
-        
+
         this.gameOverContainer.setVisible(true);
 
         // Animate game over screen
@@ -580,7 +580,6 @@ class GameUI {
     _hidePauseDOMOverlay() {
         if (this._pauseDOMOverlayEl) this._pauseDOMOverlayEl.style.display = 'none';
     }
-
 
     getScore() {
         return this.score;

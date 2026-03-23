@@ -14,7 +14,7 @@ class AnimationManager {
      */
     setupAnimationListeners() {
         if (!this.sprite) return;
-        
+
         // Listen for animation complete events
         this.sprite.on('animationcomplete', (animation) => {
             // When attack animation completes, return to idle
@@ -29,10 +29,10 @@ class AnimationManager {
      */
     play(animationKey, _loop = true) {
         if (!this.sprite || !this.sprite.play) return;
-        
+
         // Allow attack animation to restart
         if (this.currentAnimation === animationKey && animationKey !== 'player-attack') return;
-        
+
         try {
             if (this.scene.anims.exists(animationKey)) {
                 this.sprite.play(animationKey);

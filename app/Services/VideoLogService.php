@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\VideoLog;
-use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -11,20 +10,25 @@ class VideoLogService
 {
     /**
      * Underlying S3 disk. Kept untyped to allow injection of test doubles in unit tests.
+     *
      * @var mixed
      */
     protected $s3;
+
     protected string $videoPrefix;
+
     protected string $imagePrefix;
+
     protected ?string $cloudfrontDomain;
+
     protected StorageUrlGenerator $urlGenerator;
 
     /**
      * Backwards-compatible constructor: first param may be the disk or the url generator.
      * Prefer injecting a StorageUrlGenerator for URL resolution.
      *
-     * @param mixed|null $s3OrGenerator
-     * @param StorageUrlGenerator|null $maybeGenerator
+     * @param  mixed|null  $s3OrGenerator
+     * @param  StorageUrlGenerator|null  $maybeGenerator
      */
     public function __construct($s3OrGenerator = null, ?\App\Contracts\StorageUrlGeneratorInterface $maybeGenerator = null)
     {
@@ -36,9 +40,9 @@ class VideoLogService
             $this->urlGenerator = $maybeGenerator ?? new StorageUrlGenerator($this->s3, config('media.cloudfront_domain') ?: null);
         }
 
-    $this->videoPrefix = config('media.video_prefix', 'video-logs');
-    $this->imagePrefix = rtrim(config('media.image_prefix', 'images/vlogs'), '/');
-    $this->cloudfrontDomain = config('media.cloudfront_domain') ?: null;
+        $this->videoPrefix = config('media.video_prefix', 'video-logs');
+        $this->imagePrefix = rtrim(config('media.image_prefix', 'images/vlogs'), '/');
+        $this->cloudfrontDomain = config('media.cloudfront_domain') ?: null;
     }
 
     /**
@@ -50,9 +54,9 @@ class VideoLogService
     {
         // Decide whether to use S3: use S3 when the default disk is 's3', or when an AWS_BUCKET is configured
         // and we're not in testing. This mirrors the previous controller logic.
-    $defaultDisk = (string) config('filesystems.default');
-    $s3Bucket = (string) config('filesystems.disks.s3.bucket');
-    $useS3 = ($defaultDisk === 's3') || (!app()->environment('testing') && $s3Bucket !== '');
+        $defaultDisk = (string) config('filesystems.default');
+        $s3Bucket = (string) config('filesystems.disks.s3.bucket');
+        $useS3 = ($defaultDisk === 's3') || (! app()->environment('testing') && $s3Bucket !== '');
 
         if (! $useS3) {
             return $this->staticFallbackItems();
@@ -69,6 +73,7 @@ class VideoLogService
 
             $candidateVideos = array_filter($candidateFiles, function ($f) {
                 $ext = Str::lower(pathinfo($f, PATHINFO_EXTENSION));
+
                 return in_array($ext, ['mp4', 'webm', 'mov', 'm4v']);
             });
 
@@ -81,6 +86,7 @@ class VideoLogService
         // Filter video extensions
         $videos = array_filter($files, function ($f) {
             $ext = Str::lower(pathinfo($f, PATHINFO_EXTENSION));
+
             return in_array($ext, ['mp4', 'webm', 'mov', 'm4v']);
         });
 
@@ -93,6 +99,7 @@ class VideoLogService
             try {
                 $ma = $this->s3->lastModified($a) ?: 0;
                 $mb = $this->s3->lastModified($b) ?: 0;
+
                 return $mb <=> $ma;
             } catch (\Throwable $e) {
                 return 0;
@@ -123,7 +130,7 @@ class VideoLogService
             // Find a per-video thumbnail
             $thumbnailKey = null;
             foreach (['jpg', 'jpeg', 'png', 'webp', 'gif'] as $ext) {
-                $candidate = $selectedImagePrefix . '/' . $basename . '.' . $ext;
+                $candidate = $selectedImagePrefix.'/'.$basename.'.'.$ext;
                 try {
                     if ($this->s3->exists($candidate)) {
                         $thumbnailKey = $candidate;
@@ -135,7 +142,7 @@ class VideoLogService
             }
 
             // fallback to first available image in images/vlogs
-            if (!$thumbnailKey && count($imageFiles) > 0) {
+            if (! $thumbnailKey && count($imageFiles) > 0) {
                 $thumbnailKey = $imageFiles[0];
             }
 
@@ -170,7 +177,7 @@ class VideoLogService
         if (str_starts_with($this->videoPrefix, 'studio/')) {
             $prefixes[] = substr($this->videoPrefix, strlen('studio/'));
         } else {
-            $prefixes[] = 'studio/' . ltrim($this->videoPrefix, '/');
+            $prefixes[] = 'studio/'.ltrim($this->videoPrefix, '/');
         }
 
         return array_values(array_unique(array_filter(array_map(function ($prefix) {
@@ -188,7 +195,7 @@ class VideoLogService
         if (str_starts_with($this->imagePrefix, 'studio/')) {
             $prefixes[] = substr($this->imagePrefix, strlen('studio/'));
         } else {
-            $prefixes[] = 'studio/' . ltrim($this->imagePrefix, '/');
+            $prefixes[] = 'studio/'.ltrim($this->imagePrefix, '/');
         }
 
         return array_values(array_unique(array_filter(array_map(function ($prefix) {
@@ -213,7 +220,7 @@ class VideoLogService
                 'date' => '2025-10-10',
                 'thumbnail' => $sessionThumbnail,
                 'url' => $sessionVideo,
-                'description' => 'A look into the music composing session with new synth textures.'
+                'description' => 'A look into the music composing session with new synth textures.',
             ]),
             new VideoLog([
                 'id' => 2,
@@ -221,7 +228,7 @@ class VideoLogService
                 'date' => '2025-09-28',
                 'thumbnail' => $conceptThumbnail,
                 'url' => $conceptVideo,
-                'description' => 'Discussing the 2D to 3D pipeline and collaborations.'
+                'description' => 'Discussing the 2D to 3D pipeline and collaborations.',
             ]),
         ];
     }

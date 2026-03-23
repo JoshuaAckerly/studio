@@ -4,11 +4,11 @@ import { AssetManager } from '../utils/AssetManagerSimple.js';
 
 // Per-animation timing overrides (defaults: 12fps, repeat -1)
 const ANIM_CONFIG = {
-    'skeleton-idle':       { frameRate: 8,  repeat: -1 },
-    'skeleton-run':        { frameRate: 12, repeat: -1 },
-    'skeleton-walk':       { frameRate: 12, repeat: -1 },
-    'skeleton-attack1':    { frameRate: 10, repeat: 0 },
-    'skeleton-attack2':    { frameRate: 10, repeat: 0 },
+    'skeleton-idle': { frameRate: 8, repeat: -1 },
+    'skeleton-run': { frameRate: 12, repeat: -1 },
+    'skeleton-walk': { frameRate: 12, repeat: -1 },
+    'skeleton-attack1': { frameRate: 10, repeat: 0 },
+    'skeleton-attack2': { frameRate: 10, repeat: 0 },
     'skeleton-jumpattack': { frameRate: 15, repeat: 0 },
 };
 
@@ -18,15 +18,23 @@ class LoadingScene extends Phaser.Scene {
     }
 
     preload() {
-        try { this.cameras.main.setBackgroundColor(GameConfig.screen.backgroundColor); } catch { /* ignore */ }
+        try {
+            this.cameras.main.setBackgroundColor(GameConfig.screen.backgroundColor);
+        } catch {
+            /* ignore */
+        }
 
         // Progress UI
         try {
             const w = (GameConfig && GameConfig.screen && GameConfig.screen.width) || this.cameras.main.width;
             const h = (GameConfig && GameConfig.screen && GameConfig.screen.height) || this.cameras.main.height;
-            this._stageText = this.add.text(w / 2, h / 2 - 16, 'Stage 1/2 — Loading manifest…', { font: '12px Arial', fill: '#aaaaaa' }).setOrigin(0.5);
+            this._stageText = this.add
+                .text(w / 2, h / 2 - 16, 'Stage 1/2 — Loading manifest…', { font: '12px Arial', fill: '#aaaaaa' })
+                .setOrigin(0.5);
             this._progressText = this.add.text(w / 2, h / 2 + 8, '0%', { font: '16px Arial', fill: '#ffffff' }).setOrigin(0.5);
-        } catch { /* ignore */ }
+        } catch {
+            /* ignore */
+        }
 
         this.load.on('progress', (p) => {
             if (this._progressText) this._progressText.setText(Math.round(p * 100) + '%');

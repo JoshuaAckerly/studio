@@ -44,6 +44,7 @@ node tools/generate_noteleks_manifest.cjs
 This scans `public/games/noteleks/sprites/` for `*.webp` files matching `Name_NN.webp`, groups them by prefix, sorts by index, and writes `manifest.json`. The `prebuild` npm script runs atlas conversion automatically before `vite build`.
 
 **When to regenerate:**
+
 - After adding, removing, or renaming sprite frames
 - After exporting new animations from Spine
 
@@ -51,26 +52,26 @@ This scans `public/games/noteleks/sprites/` for `*.webp` files matching `Name_NN
 
 Per-animation timing is defined in `LoadingScene.js`:
 
-| Manifest Key | Alias | FPS | Repeat |
-|---|---|---|---|
-| `skeleton-idle` | `player-idle` | 8 | loop |
-| `skeleton-run` | `player-run` | 12 | loop |
-| `skeleton-walk` | `player-walk` | 12 | loop |
-| `skeleton-attack1` | `player-attack` | 10 | once |
-| `skeleton-attack2` | `player-attack` | 10 | once |
-| `skeleton-jumpattack` | `player-jump` | 15 | once |
+| Manifest Key          | Alias           | FPS | Repeat |
+| --------------------- | --------------- | --- | ------ |
+| `skeleton-idle`       | `player-idle`   | 8   | loop   |
+| `skeleton-run`        | `player-run`    | 12  | loop   |
+| `skeleton-walk`       | `player-walk`   | 12  | loop   |
+| `skeleton-attack1`    | `player-attack` | 10  | once   |
+| `skeleton-attack2`    | `player-attack` | 10  | once   |
+| `skeleton-jumpattack` | `player-jump`   | 15  | once   |
 
 Animations not listed in the config default to 12 FPS, looping.
 
 ## Key Files
 
-| File | Role |
-|---|---|
-| `scenes/LoadingScene.js` | Two-stage loader + progress UI |
-| `utils/AssetManagerSimple.js` | Manifest parsing, image queuing, animation creation |
-| `utils/AnimationHelper.js` | `createAnimation()`, `createAlias()`, `promoteFirstFrameTexture()` |
-| `config/GameConfig.js` | Central config (screen, physics, player, enemies) |
-| `tools/generate_noteleks_manifest.cjs` | Build-time manifest generator |
+| File                                   | Role                                                               |
+| -------------------------------------- | ------------------------------------------------------------------ |
+| `scenes/LoadingScene.js`               | Two-stage loader + progress UI                                     |
+| `utils/AssetManagerSimple.js`          | Manifest parsing, image queuing, animation creation                |
+| `utils/AnimationHelper.js`             | `createAnimation()`, `createAlias()`, `promoteFirstFrameTexture()` |
+| `config/GameConfig.js`                 | Central config (screen, physics, player, enemies)                  |
+| `tools/generate_noteleks_manifest.cjs` | Build-time manifest generator                                      |
 
 ## Dev Mode vs Production
 

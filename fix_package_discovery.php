@@ -13,17 +13,17 @@ $commands = $artisan->all();
 
 if (isset($commands['package:discover'])) {
     $command = $commands['package:discover'];
-    
+
     // Manually set the Laravel application
     $command->setLaravel($app);
-    
+
     // Run the command
     $input = new Symfony\Component\Console\Input\ArrayInput(['command' => 'package:discover']);
-    $output = new Symfony\Component\Console\Output\ConsoleOutput();
-    
+    $output = new Symfony\Component\Console\Output\ConsoleOutput;
+
     echo "Running package discovery...\n";
     $result = $command->run($input, $output);
-    
+
     if ($result === 0) {
         echo "Package discovery completed successfully!\n";
     } else {

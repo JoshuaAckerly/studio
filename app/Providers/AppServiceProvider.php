@@ -2,11 +2,11 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
-use App\Services\VideoLogService;
-use App\Services\StorageUrlGenerator;
 use App\Contracts\StorageUrlGeneratorInterface;
+use App\Services\StorageUrlGenerator;
+use App\Services\VideoLogService;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +19,7 @@ class AppServiceProvider extends ServiceProvider
             $disk = Storage::disk('s3');
             $cloudfront = config('media.cloudfront_domain') ?: null;
             $expires = (int) config('media.url_expires_minutes', 60);
+
             return new StorageUrlGenerator($disk, $cloudfront, $expires);
         });
 
@@ -26,6 +27,7 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->bind(VideoLogService::class, function ($app) {
             $generator = $app->make(StorageUrlGeneratorInterface::class);
+
             return new VideoLogService(Storage::disk('s3'), $generator);
         });
     }

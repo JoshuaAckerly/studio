@@ -18,9 +18,9 @@ class StorageConfigProvider
 
     public function __construct(?string $basePath = null)
     {
-        $resolved = $basePath ?: realpath(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..');
+        $resolved = $basePath ?: realpath(__DIR__.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'..');
         $this->basePath = $resolved ?: '';
-        if ($this->basePath && file_exists($this->basePath . DIRECTORY_SEPARATOR . '.env')) {
+        if ($this->basePath && file_exists($this->basePath.DIRECTORY_SEPARATOR.'.env')) {
             try {
                 Dotenv::createImmutable($this->basePath)->safeLoad();
             } catch (\Exception $e) {
@@ -34,18 +34,25 @@ class StorageConfigProvider
      */
     public function lookup(string $name): ?string
     {
-        $envPath = $this->basePath . DIRECTORY_SEPARATOR . '.env';
+        $envPath = $this->basePath.DIRECTORY_SEPARATOR.'.env';
         if ($this->basePath && file_exists($envPath)) {
             $lines = @file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [];
             foreach ($lines as $line) {
                 $line = trim($line);
-                if ($line === '' || $line[0] === '#') continue;
-                if (strpos($line, '=') === false) continue;
-                list($k, $v) = array_map('trim', explode('=', $line, 2));
-                if ($k !== $name) continue;
-                if ((strlen($v) >= 2) && (($v[0] === '"' && $v[strlen($v)-1] === '"') || ($v[0] === "'" && $v[strlen($v)-1] === "'"))) {
+                if ($line === '' || $line[0] === '#') {
+                    continue;
+                }
+                if (strpos($line, '=') === false) {
+                    continue;
+                }
+                [$k, $v] = array_map('trim', explode('=', $line, 2));
+                if ($k !== $name) {
+                    continue;
+                }
+                if ((strlen($v) >= 2) && (($v[0] === '"' && $v[strlen($v) - 1] === '"') || ($v[0] === "'" && $v[strlen($v) - 1] === "'"))) {
                     $v = substr($v, 1, -1);
                 }
+
                 return $this->normalize($v);
             }
         }
@@ -126,7 +133,7 @@ class StorageConfigProvider
             'region' => $this->lookup('AWS_DEFAULT_REGION') ?: 'us-east-1',
             'bucket' => $this->lookup('AWS_BUCKET') ?: '',
             'endpoint' => $this->lookup('AWS_ENDPOINT') ?: null,
-            'use_path_style_endpoint' => in_array(strtolower($this->lookup('AWS_USE_PATH_STYLE_ENDPOINT') ?? 'false'), ['1','true','yes'], true),
+            'use_path_style_endpoint' => in_array(strtolower($this->lookup('AWS_USE_PATH_STYLE_ENDPOINT') ?? 'false'), ['1', 'true', 'yes'], true),
         ];
     }
 }

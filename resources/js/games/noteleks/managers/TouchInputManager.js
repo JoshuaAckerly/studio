@@ -6,7 +6,7 @@ class TouchInputManager {
     constructor(scene) {
         this.scene = scene;
         this.isMobile = this.detectMobile();
-        
+
         // Touch input states
         this.touchState = {
             left: false,
@@ -14,66 +14,69 @@ class TouchInputManager {
             up: false,
             down: false,
             jump: false,
-            attack: false
+            attack: false,
         };
-        
+
         // DOM control elements
         this.joystickElement = null;
         this.joystickThumb = null;
         this.jumpButton = null;
         this.attackButton = null;
-        
+
         // Joystick tracking
         this.joystickActive = false;
         this.joystickOrigin = { x: 0, y: 0 };
         this.joystickTouchId = null;
-        
+
         // Control visibility
         this.controlsVisible = false;
-        
+
         if (this.isMobile) {
             this.createTouchControls();
         }
     }
-    
+
     /**
      * Detect if device is mobile
      */
     detectMobile() {
         const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-        
+
         // Check if it's a mobile device by user agent
-        const isMobileUA = /android|avantgo|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino/i.test(userAgent);
-        
+        const isMobileUA =
+            /android|avantgo|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino/i.test(
+                userAgent,
+            );
+
         // Check if it's a tablet
         const isTablet = /ipad|android(?!.*mobile)|tablet/i.test(userAgent);
-        
+
         // Only show controls on actual mobile/tablet devices, not desktop with touchscreen
         // Desktop touchscreens often have maxTouchPoints > 0 but we don't want controls there
         return isMobileUA || isTablet;
     }
-    
+
     /**
      * Create touch control UI elements as DOM elements
      */
     createTouchControls() {
         const leftColumn = document.getElementById('mobile-left');
         const rightColumn = document.getElementById('mobile-right');
-        
+
         if (!leftColumn || !rightColumn) {
             console.warn('[TouchInputManager] Mobile control containers not found');
             return;
         }
-        
+
         // Create virtual joystick on the left
         this.createJoystick(leftColumn);
-        
+
         // Create action buttons on the right
         this.createActionButtons(rightColumn);
-        
+
         this.showTouchControls(true);
     }
-    
+
     /**
      * Create virtual joystick as DOM element
      */
@@ -90,7 +93,7 @@ class TouchInputManager {
             touch-action: none;
             user-select: none;
         `;
-        
+
         // Create joystick thumb
         this.joystickThumb = document.createElement('div');
         this.joystickThumb.style.cssText = `
@@ -105,10 +108,10 @@ class TouchInputManager {
             transform: translate(-50%, -50%);
             pointer-events: none;
         `;
-        
+
         this.joystickElement.appendChild(this.joystickThumb);
         container.appendChild(this.joystickElement);
-        
+
         // Handle touch events
         this.joystickElement.addEventListener('touchstart', (e) => {
             e.preventDefault();
@@ -116,7 +119,7 @@ class TouchInputManager {
             this.joystickTouchId = e.touches[0].identifier;
             this.updateJoystickFromTouch(e.touches[0]);
         });
-        
+
         this.joystickElement.addEventListener('touchmove', (e) => {
             e.preventDefault();
             for (let touch of e.touches) {
@@ -126,18 +129,18 @@ class TouchInputManager {
                 }
             }
         });
-        
+
         this.joystickElement.addEventListener('touchend', (e) => {
             e.preventDefault();
             this.resetJoystick();
         });
-        
+
         this.joystickElement.addEventListener('touchcancel', (e) => {
             e.preventDefault();
             this.resetJoystick();
         });
     }
-    
+
     /**
      * Update joystick from touch event
      */
@@ -145,26 +148,26 @@ class TouchInputManager {
         const rect = this.joystickElement.getBoundingClientRect();
         const centerX = rect.left + rect.width / 2;
         const centerY = rect.top + rect.height / 2;
-        
+
         const dx = touch.clientX - centerX;
         const dy = touch.clientY - centerY;
         const distance = Math.sqrt(dx * dx + dy * dy);
         const maxDistance = 30; // Half of joystick radius
-        
+
         // Clamp thumb position
         let offsetX = 0;
         let offsetY = 0;
-        
+
         if (distance > 0) {
             const angle = Math.atan2(dy, dx);
             const clampedDistance = Math.min(distance, maxDistance);
             offsetX = Math.cos(angle) * clampedDistance;
             offsetY = Math.sin(angle) * clampedDistance;
         }
-        
+
         // Move thumb
         this.joystickThumb.style.transform = `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`;
-        
+
         // Update touch state based on direction (with deadzone)
         const deadzone = 10;
         this.touchState.left = dx < -deadzone;
@@ -172,7 +175,7 @@ class TouchInputManager {
         this.touchState.up = dy < -deadzone;
         this.touchState.down = dy > deadzone;
     }
-    
+
     /**
      * Reset joystick to center
      */
@@ -187,7 +190,7 @@ class TouchInputManager {
         this.touchState.up = false;
         this.touchState.down = false;
     }
-    
+
     /**
      * Create action buttons (jump and attack) as DOM elements
      */
@@ -200,7 +203,7 @@ class TouchInputManager {
             gap: 15px;
             align-items: center;
         `;
-        
+
         // Jump button
         this.jumpButton = document.createElement('div');
         this.jumpButton.style.cssText = `
@@ -220,28 +223,28 @@ class TouchInputManager {
             transition: background 0.1s;
         `;
         this.jumpButton.textContent = '↑';
-        
+
         // Jump button events
         this.jumpButton.addEventListener('touchstart', (e) => {
             e.preventDefault();
             this.touchState.jump = true;
             this.jumpButton.style.background = 'rgba(37, 99, 235, 1)';
         });
-        
+
         this.jumpButton.addEventListener('touchend', (e) => {
             e.preventDefault();
             this.touchState.jump = false;
             this.jumpButton.style.background = 'rgba(59, 130, 246, 0.8)';
         });
-        
+
         this.jumpButton.addEventListener('touchcancel', (e) => {
             e.preventDefault();
             this.touchState.jump = false;
             this.jumpButton.style.background = 'rgba(59, 130, 246, 0.8)';
         });
-        
+
         buttonsContainer.appendChild(this.jumpButton);
-        
+
         // Attack button
         this.attackButton = document.createElement('div');
         this.attackButton.style.cssText = `
@@ -261,55 +264,55 @@ class TouchInputManager {
             transition: background 0.1s;
         `;
         this.attackButton.textContent = '⚔';
-        
+
         // Attack button events
         this.attackButton.addEventListener('touchstart', (e) => {
             e.preventDefault();
             this.touchState.attack = true;
             this.attackButton.style.background = 'rgba(220, 38, 38, 1)';
         });
-        
+
         this.attackButton.addEventListener('touchend', (e) => {
             e.preventDefault();
             this.touchState.attack = false;
             this.attackButton.style.background = 'rgba(239, 68, 68, 0.8)';
         });
-        
+
         this.attackButton.addEventListener('touchcancel', (e) => {
             e.preventDefault();
             this.touchState.attack = false;
             this.attackButton.style.background = 'rgba(239, 68, 68, 0.8)';
         });
-        
+
         buttonsContainer.appendChild(this.attackButton);
         container.appendChild(buttonsContainer);
     }
-    
+
     /**
      * Get current touch input state
      */
     getTouchState() {
         return { ...this.touchState };
     }
-    
+
     /**
      * Check if device is mobile
      */
     isMobileDevice() {
         return this.isMobile;
     }
-    
+
     /**
      * Show or hide touch controls
      */
     showTouchControls(visible) {
         if (!this.isMobile) return;
-        
+
         this.controlsVisible = visible;
         // CSS now handles visibility on mobile, no need to override
         // The mobile-controls-area is automatically shown via @media queries
     }
-    
+
     /**
      * Update touch controls (called each frame)
      */
@@ -317,7 +320,7 @@ class TouchInputManager {
         // Handle continuous jump button press
         // The jump state will be read by InputHandler
     }
-    
+
     /**
      * Clean up resources
      */

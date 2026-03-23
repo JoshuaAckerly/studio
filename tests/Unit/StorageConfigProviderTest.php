@@ -2,8 +2,8 @@
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
 use App\Services\StorageConfigProvider;
+use Tests\TestCase;
 
 class StorageConfigProviderTest extends TestCase
 {
@@ -12,7 +12,7 @@ class StorageConfigProviderTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->tmpDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'studio_storage_provider_' . uniqid();
+        $this->tmpDir = sys_get_temp_dir().DIRECTORY_SEPARATOR.'studio_storage_provider_'.uniqid();
         @mkdir($this->tmpDir, 0777, true);
     }
 
@@ -36,8 +36,8 @@ class StorageConfigProviderTest extends TestCase
 
     private function writeDotEnv(array $lines): void
     {
-        $content = implode("\n", $lines) . "\n";
-        file_put_contents($this->tmpDir . DIRECTORY_SEPARATOR . '.env', $content);
+        $content = implode("\n", $lines)."\n";
+        file_put_contents($this->tmpDir.DIRECTORY_SEPARATOR.'.env', $content);
     }
 
     public function test_lookup_prefers_env_and_trims_quotes_and_whitespace()
@@ -57,7 +57,7 @@ class StorageConfigProviderTest extends TestCase
         $this->assertSame('true', $pathStyle, 'Boolean-like value should be trimmed and normalized');
     }
 
-    public function test_sdkConfig_prefers_admin_credentials_and_parses_endpoint_and_path_style()
+    public function test_sdk_config_prefers_admin_credentials_and_parses_endpoint_and_path_style()
     {
         $this->writeDotEnv([
             'AWS_DEFAULT_REGION=us-east-2',
@@ -83,7 +83,7 @@ class StorageConfigProviderTest extends TestCase
         $this->assertTrue($cfg['use_path_style_endpoint']);
     }
 
-    public function test_laravelDiskConfig_returns_expected_structure()
+    public function test_laravel_disk_config_returns_expected_structure()
     {
         $this->writeDotEnv([
             'AWS_ACCESS_KEY_ID=AKIA_TEST',

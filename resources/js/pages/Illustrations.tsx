@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
 import { Head } from '@inertiajs/react';
+import React, { useEffect, useState } from 'react';
 
 type Illustration = {
     url: string;
@@ -44,12 +44,21 @@ export default function Illustrations() {
         <>
             <Head>
                 <title>Illustrations Gallery - Visual Art & Digital Artwork | GraveYard Jokes Studio</title>
-                <meta name="description" content="Explore our collection of original digital illustrations and visual artwork. Browse through a gallery showcasing our creative visual storytelling and artistic development." />
-                <meta name="keywords" content="illustrations, digital art, visual art, artwork gallery, digital illustrations, creative artwork, original art" />
+                <meta
+                    name="description"
+                    content="Explore our collection of original digital illustrations and visual artwork. Browse through a gallery showcasing our creative visual storytelling and artistic development."
+                />
+                <meta
+                    name="keywords"
+                    content="illustrations, digital art, visual art, artwork gallery, digital illustrations, creative artwork, original art"
+                />
 
                 {/* Open Graph */}
                 <meta property="og:title" content="Illustrations Gallery - Visual Art & Digital Artwork" />
-                <meta property="og:description" content="Explore our collection of original digital illustrations and visual artwork showcasing creative storytelling." />
+                <meta
+                    property="og:description"
+                    content="Explore our collection of original digital illustrations and visual artwork showcasing creative storytelling."
+                />
                 <meta property="og:type" content="website" />
                 <meta property="og:url" content="https://studio.graveyardjokes.com/illustrations" />
                 <meta property="og:image" content="https://studio.graveyardjokes.com/images/og-illustrations.jpg" />
@@ -63,14 +72,14 @@ export default function Illustrations() {
                 <link rel="canonical" href="https://studio.graveyardjokes.com/illustrations" />
             </Head>
             <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
-                <h1 className="text-4xl font-semibold mb-6">Illustrations Gallery</h1>
+                <h1 className="mb-6 text-4xl font-semibold">Illustrations Gallery</h1>
 
                 {loading ? (
                     <p>Loading…</p>
                 ) : items.length === 0 ? (
                     <p>No illustrations found.</p>
                 ) : (
-                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-6">
+                    <div className="grid grid-cols-2 gap-4 gap-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7">
                         {items.map((it) => (
                             <GifImage key={it.filename} illustration={it} onClick={handleIllustrationClick} />
                         ))}
@@ -81,18 +90,15 @@ export default function Illustrations() {
             {/* Modal */}
             {showModal && selectedIllustration && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm" onClick={closeModal}>
-                    <div className="relative max-w-4xl max-h-[90vh] w-full mx-4" onClick={(e) => e.stopPropagation()}>
-                        <button
-                            onClick={closeModal}
-                            className="absolute -top-12 right-0 text-white hover:text-gray-300 text-2xl font-bold z-10"
-                        >
+                    <div className="relative mx-4 max-h-[90vh] w-full max-w-4xl" onClick={(e) => e.stopPropagation()}>
+                        <button onClick={closeModal} className="absolute -top-12 right-0 z-10 text-2xl font-bold text-white hover:text-gray-300">
                             ✕
                         </button>
-                        <div className="bg-gray-900 rounded-lg overflow-hidden">
+                        <div className="overflow-hidden rounded-lg bg-gray-900">
                             <img
                                 src={selectedIllustration.url}
                                 alt={selectedIllustration.filename}
-                                className="w-full h-auto max-h-[80vh] object-contain"
+                                className="h-auto max-h-[80vh] w-full object-contain"
                                 style={{ imageRendering: 'pixelated' }}
                             />
                             <div className="p-4 text-white">
@@ -117,7 +123,7 @@ const GifImage: React.FC<GifImageProps> = ({ illustration, onClick }) => {
     const isGif = illustration.filename.toLowerCase().endsWith('.gif');
 
     // For GIFs: use thumbnail if available, otherwise don't load anything initially
-    const displayUrl = isGif && illustration.thumbnail_url ? illustration.thumbnail_url : (isGif ? '' : illustration.url);
+    const displayUrl = isGif && illustration.thumbnail_url ? illustration.thumbnail_url : isGif ? '' : illustration.url;
 
     const handleMouseEnter = () => {
         if (!isGif) return;
@@ -139,8 +145,8 @@ const GifImage: React.FC<GifImageProps> = ({ illustration, onClick }) => {
     };
 
     return (
-        <figure className="overflow-hidden rounded-lg bg-white/5 group cursor-pointer" onClick={handleClick}>
-            <div className="relative w-full h-56 md:h-64 lg:h-72 overflow-hidden" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+        <figure className="group cursor-pointer overflow-hidden rounded-lg bg-white/5" onClick={handleClick}>
+            <div className="relative h-56 w-full overflow-hidden md:h-64 lg:h-72" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
                 {displayUrl ? (
                     <>
                         {/* Static image (thumbnail or regular image) */}
@@ -148,11 +154,11 @@ const GifImage: React.FC<GifImageProps> = ({ illustration, onClick }) => {
                             src={displayUrl}
                             alt={illustration.filename}
                             loading="lazy"
-                            className={`w-full h-full object-cover transition-all duration-300 absolute inset-0 ${
+                            className={`absolute inset-0 h-full w-full object-cover transition-all duration-300 ${
                                 isGif && showGif ? 'opacity-0' : 'opacity-100'
-                            } ${isGif ? 'group-hover:brightness-100 brightness-75 group-hover:scale-105' : 'group-hover:scale-105'}`}
+                            } ${isGif ? 'brightness-75 group-hover:scale-105 group-hover:brightness-100' : 'group-hover:scale-105'}`}
                             style={{
-                                imageRendering: 'pixelated'
+                                imageRendering: 'pixelated',
                             }}
                         />
                         {/* GIF overlay - only for GIFs */}
@@ -163,17 +169,17 @@ const GifImage: React.FC<GifImageProps> = ({ illustration, onClick }) => {
                                     alt={illustration.filename}
                                     loading="lazy"
                                     onLoad={handleGifLoad}
-                                    className={`w-full h-full object-cover transition-all duration-300 absolute inset-0 ${
+                                    className={`absolute inset-0 h-full w-full object-cover transition-all duration-300 ${
                                         showGif && gifLoaded ? 'opacity-100' : 'opacity-0'
-                                    } group-hover:brightness-100 brightness-75 group-hover:scale-105`}
+                                    } brightness-75 group-hover:scale-105 group-hover:brightness-100`}
                                     style={{
-                                        imageRendering: 'pixelated'
+                                        imageRendering: 'pixelated',
                                     }}
                                 />
                                 {/* Loading indicator while GIF loads */}
                                 {showGif && !gifLoaded && (
                                     <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                                        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-white"></div>
                                     </div>
                                 )}
                             </>
@@ -186,31 +192,31 @@ const GifImage: React.FC<GifImageProps> = ({ illustration, onClick }) => {
                             src={illustration.url}
                             alt={illustration.filename}
                             onLoad={handleGifLoad}
-                            className={`w-full h-full object-cover transition-all duration-300 absolute inset-0 ${
+                            className={`absolute inset-0 h-full w-full object-cover transition-all duration-300 ${
                                 gifLoaded ? 'opacity-100' : 'opacity-0'
-                            } group-hover:brightness-100 brightness-75 group-hover:scale-105`}
+                            } brightness-75 group-hover:scale-105 group-hover:brightness-100`}
                             style={{
-                                imageRendering: 'pixelated'
+                                imageRendering: 'pixelated',
                             }}
                         />
                         {/* Loading indicator while GIF loads */}
                         {!gifLoaded && (
                             <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                                <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-white"></div>
                             </div>
                         )}
                     </>
                 ) : (
                     // No thumbnail and not hovered - show placeholder
-                    <div className="w-full h-full bg-gray-800 flex items-center justify-center">
-                        <div className="text-white text-sm opacity-50 text-center">
+                    <div className="flex h-full w-full items-center justify-center bg-gray-800">
+                        <div className="text-center text-sm text-white opacity-50">
                             <div>GIF</div>
-                            <div className="text-xs mt-1">Hover to play</div>
+                            <div className="mt-1 text-xs">Hover to play</div>
                         </div>
                     </div>
                 )}
                 {isGif && (
-                    <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="absolute top-2 right-2 rounded bg-black/70 px-2 py-1 text-xs font-medium text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100">
                         GIF
                     </div>
                 )}

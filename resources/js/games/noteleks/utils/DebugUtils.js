@@ -10,7 +10,9 @@ const DebugUtils = {
     isPlayerDebugEnabled() {
         try {
             if (typeof window !== 'undefined' && window.noteleksDebug === true) return true;
-        } catch { /* ignore */ }
+        } catch {
+            /* ignore */
+        }
 
         return !!(GameConfig && GameConfig.debug && GameConfig.debug.enablePlayerDebugOverlay);
     },
@@ -25,7 +27,7 @@ const DebugUtils = {
         if (!message || !GameConfig || !GameConfig.debug || !Array.isArray(GameConfig.debug.suppressLogPrefixes)) return false;
         try {
             const msg = String(message);
-            return GameConfig.debug.suppressLogPrefixes.some(prefix => msg.indexOf(prefix) !== -1);
+            return GameConfig.debug.suppressLogPrefixes.some((prefix) => msg.indexOf(prefix) !== -1);
         } catch {
             return false;
         }

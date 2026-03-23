@@ -1,10 +1,11 @@
 <?php
+
 // tests/bootstrap/minio-check.php
 // Quick test bootstrap to verify the configured S3 bucket exists for integration tests.
 
-require __DIR__ . '/../../vendor/autoload.php';
+require __DIR__.'/../../vendor/autoload.php';
 
-$app = require __DIR__ . '/../../bootstrap/app.php';
+$app = require __DIR__.'/../../bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
@@ -38,7 +39,7 @@ if ($shouldRun) {
     $disk = Illuminate\Support\Facades\Storage::disk($diskName);
     try {
         // Build an S3 client directly from config to avoid coupling to Flysystem internals
-        $s3cfg = config('filesystems.disks.' . $diskName, []);
+        $s3cfg = config('filesystems.disks.'.$diskName, []);
         $key = $s3cfg['key'] ?? getenv('AWS_ACCESS_KEY_ID');
         $secret = $s3cfg['secret'] ?? getenv('AWS_SECRET_ACCESS_KEY');
         $region = $s3cfg['region'] ?? getenv('AWS_DEFAULT_REGION') ?: 'us-east-1';
@@ -63,15 +64,15 @@ if ($shouldRun) {
         fwrite(STDERR, "Integration bootstrap failure: S3 bucket '{$bucket}' not accessible.\n");
         fwrite(STDERR, "Ensure MinIO is running: 'minio server ~/minio-data --console-address \":9001\"' and bucket exists.\n");
         // Diagnostic info
-        fwrite(STDERR, "Exception: " . get_class($e) . " - " . $e->getMessage() . "\n");
+        fwrite(STDERR, 'Exception: '.get_class($e).' - '.$e->getMessage()."\n");
         if ($e instanceof Aws\Exception\AwsException && method_exists($e, 'getResponse')) {
             $resp = $e->getResponse();
             if ($resp) {
-                fwrite(STDERR, "Response code: " . $resp->getStatusCode() . "\n");
-                fwrite(STDERR, (string)$resp->getBody() . "\n");
+                fwrite(STDERR, 'Response code: '.$resp->getStatusCode()."\n");
+                fwrite(STDERR, (string) $resp->getBody()."\n");
             }
         }
-        fwrite(STDERR, "Stack:\n" . $e->getTraceAsString() . "\n");
+        fwrite(STDERR, "Stack:\n".$e->getTraceAsString()."\n");
         exit(2);
     }
 }

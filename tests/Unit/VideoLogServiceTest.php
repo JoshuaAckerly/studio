@@ -2,9 +2,9 @@
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
-use Illuminate\Support\Facades\Storage;
 use App\Services\VideoLogService;
+use Illuminate\Support\Facades\Storage;
+use Tests\TestCase;
 
 class VideoLogServiceTest extends TestCase
 {
@@ -18,7 +18,7 @@ class VideoLogServiceTest extends TestCase
         Storage::disk('s3')->put('video-logs/unit-video.mp4', 'video-content');
         Storage::disk('s3')->put('images/vlogs/unit-video.jpg', 'thumb-content');
 
-        $svc = new VideoLogService();
+        $svc = new VideoLogService;
         $items = $svc->list();
 
         $this->assertIsArray($items);
@@ -52,15 +52,15 @@ class VideoLogServiceTest extends TestCase
         // Mock the s3 disk so makeS3Url can obtain a sample s3 url/temporaryUrl
         $mock = \Mockery::mock();
         $mock->shouldReceive('temporaryUrl')->andReturnUsing(function ($path, $expires) {
-            return 'https://graveyardjokes-cdn.s3.us-east-2.amazonaws.com/' . $path;
+            return 'https://graveyardjokes-cdn.s3.us-east-2.amazonaws.com/'.$path;
         });
         $mock->shouldReceive('url')->andReturnUsing(function ($path) {
-            return 'https://graveyardjokes-cdn.s3.us-east-2.amazonaws.com/' . $path;
+            return 'https://graveyardjokes-cdn.s3.us-east-2.amazonaws.com/'.$path;
         });
 
         \Illuminate\Support\Facades\Storage::shouldReceive('disk')->with('s3')->andReturn($mock);
 
-        $svc = new VideoLogService();
+        $svc = new VideoLogService;
 
         $ref = new \ReflectionObject($svc);
         $method = $ref->getMethod('makeS3Url');

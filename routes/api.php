@@ -1,11 +1,11 @@
 <?php
 
+use App\Http\Controllers\Api\MessageProxyController;
+use App\Mail\VisitNotification;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\VisitNotification;
-use App\Http\Controllers\Api\MessageProxyController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/messages', [MessageProxyController::class, 'index']);
 Route::patch('/messages/read-all', [MessageProxyController::class, 'markAllRead']);
@@ -14,9 +14,9 @@ Route::patch('/messages/{id}/read', [MessageProxyController::class, 'markRead'])
 // Tracking endpoint (no CSRF protection in API)
 Route::post('/track-visit', function (Request $request) {
     Log::info('Track-visit endpoint hit!', ['data' => $request->all()]);
-    
+
     $data = $request->all();
-    
+
     $visitData = [
         'referrer' => $data['referrer'] ?? null,
         'subdomain' => $data['subdomain'] ?? null,
@@ -25,22 +25,22 @@ Route::post('/track-visit', function (Request $request) {
         'timestamp' => $data['timestamp'] ?? now(),
         'ip' => $request->ip(),
     ];
-    
+
     // Log the visit data
     Log::info('Subdomain visit tracked', $visitData);
-    
+
     // Send email notification
     try {
         $adminEmail = config('mail.admin_email');
-        Log::info('Attempting to send email to: ' . $adminEmail);
-        
+        Log::info('Attempting to send email to: '.$adminEmail);
+
         Mail::to($adminEmail)->send(new VisitNotification($visitData));
         Log::info('Visit notification email sent successfully');
     } catch (\Exception $e) {
-        Log::error('Failed to send visit notification email: ' . $e->getMessage());
-        Log::error('Stack trace: ' . $e->getTraceAsString());
+        Log::error('Failed to send visit notification email: '.$e->getMessage());
+        Log::error('Stack trace: '.$e->getTraceAsString());
     }
-    
+
     return response()->json(['status' => 'success', 'data' => $visitData]);
 });
 

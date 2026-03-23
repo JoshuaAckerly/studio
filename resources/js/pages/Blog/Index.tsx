@@ -21,7 +21,10 @@ export default function BlogIndex({ posts }: Props) {
         <MainLayout minimalNav>
             <Head>
                 <title>Blog - GraveYardJokes Studios</title>
-                <meta name="description" content="Thoughts, updates, and stories from the GraveYardJokes Studios team. Covering game dev, music, creative process, and studio life." />
+                <meta
+                    name="description"
+                    content="Thoughts, updates, and stories from the GraveYardJokes Studios team. Covering game dev, music, creative process, and studio life."
+                />
                 <meta name="keywords" content="game development blog, music blog, creative process, studio updates, indie dev, GraveYardJokes" />
                 <meta property="og:title" content="Blog - GraveYardJokes Studios" />
                 <meta property="og:description" content="Thoughts, updates, and stories from the GraveYardJokes Studios team." />
@@ -42,14 +45,13 @@ export default function BlogIndex({ posts }: Props) {
                 ) : (
                     <div className="flex flex-col gap-8">
                         {posts.map((post) => (
-                            <article key={post.id} className="rounded-lg border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md">
+                            <article
+                                key={post.id}
+                                className="rounded-lg border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md"
+                            >
                                 {post.featured_image && (
                                     <Link href={`/blog/${post.slug}`}>
-                                        <img
-                                            src={post.featured_image}
-                                            alt={post.title}
-                                            className="mb-4 h-48 w-full rounded-md object-cover"
-                                        />
+                                        <img src={post.featured_image} alt={post.title} className="mb-4 h-48 w-full rounded-md object-cover" />
                                     </Link>
                                 )}
                                 <div className="mb-2 flex items-center gap-3 text-xs text-muted-foreground">
@@ -62,18 +64,13 @@ export default function BlogIndex({ posts }: Props) {
                                     </time>
                                     {post.author && <span>· {post.author}</span>}
                                 </div>
-                                <h2 className="mb-2 text-xl font-semibold leading-snug">
+                                <h2 className="mb-2 text-xl leading-snug font-semibold">
                                     <Link href={`/blog/${post.slug}`} className="hover:text-primary">
                                         {post.title}
                                     </Link>
                                 </h2>
-                                {post.excerpt && (
-                                    <p className="mb-4 text-sm text-muted-foreground line-clamp-3">{post.excerpt}</p>
-                                )}
-                                <Link
-                                    href={`/blog/${post.slug}`}
-                                    className="text-sm font-medium text-primary hover:underline"
-                                >
+                                {post.excerpt && <p className="mb-4 line-clamp-3 text-sm text-muted-foreground">{post.excerpt}</p>}
+                                <Link href={`/blog/${post.slug}`} className="text-sm font-medium text-primary hover:underline">
                                     Read more →
                                 </Link>
                             </article>

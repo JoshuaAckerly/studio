@@ -12,7 +12,7 @@ class InputHandler {
         this.attackCooldown = 300; // milliseconds - matches animation duration
         this.physicsManager = new PhysicsManager(scene);
         this.lastJumpKeyState = false; // Track jump key state for edge detection
-        
+
         this.setupKeys();
     }
 
@@ -45,8 +45,8 @@ class InputHandler {
                 d: this.keys.D.isDown,
                 w: this.keys.W.isDown,
                 s: this.keys.S.isDown,
-                space: this.keys.SPACE.isDown
-            }
+                space: this.keys.SPACE.isDown,
+            },
         };
 
         // Merge with touch input if available
@@ -58,7 +58,7 @@ class InputHandler {
                 up: keyboardState.up || touchState.jump,
                 down: keyboardState.down || touchState.down,
                 attack: (keyboardState.attack || touchState.attack) && this.canAttack(),
-                raw: keyboardState.raw
+                raw: keyboardState.raw,
             };
         }
 
@@ -115,7 +115,7 @@ class InputHandler {
         // Handle jump with double jump support - detect key press edge
         const jumpKeyPressed = inputState.up;
         const jumpKeyJustPressed = jumpKeyPressed && !this.lastJumpKeyState;
-        
+
         // Update the key state for next frame
         this.lastJumpKeyState = jumpKeyPressed;
 
@@ -162,9 +162,11 @@ class InputHandler {
         if (this.isEscapePressed()) {
             try {
                 if (typeof window !== 'undefined') window.location.href = '/';
-            } catch { /* ignore navigation errors */ }
+            } catch {
+                /* ignore navigation errors */
+            }
         }
-        
+
         // Handle restart in game over state
         if (this.scene.gameState === 'gameOver' && this.isRestartPressed()) {
             this.scene.restartGame();

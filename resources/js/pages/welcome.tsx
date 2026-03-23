@@ -116,12 +116,21 @@ export default function Welcome() {
         <div className="bg-[var(--foreground)] dark:bg-[var(--background)]">
             <Head>
                 <title>GraveYard Jokes Studio - Creative Arts, Music & Game Development</title>
-                <meta name="description" content="Creative studio showcasing original music, game development, visual art, and creative growth. Building Noteleks Heroes, creating collaborative music, and documenting the artistic journey." />
-                <meta name="keywords" content="game development, original music, creative studio, Noteleks Heroes, 2D platformer, visual art, illustrations, video logs, indie games" />
+                <meta
+                    name="description"
+                    content="Creative studio showcasing original music, game development, visual art, and creative growth. Building Noteleks Heroes, creating collaborative music, and documenting the artistic journey."
+                />
+                <meta
+                    name="keywords"
+                    content="game development, original music, creative studio, Noteleks Heroes, 2D platformer, visual art, illustrations, video logs, indie games"
+                />
 
                 {/* Open Graph */}
                 <meta property="og:title" content="GraveYard Jokes Studio - Creative Arts, Music & Game Development" />
-                <meta property="og:description" content="Creative studio showcasing original music, game development, visual art, and creative growth. Building Noteleks Heroes and documenting the artistic journey." />
+                <meta
+                    property="og:description"
+                    content="Creative studio showcasing original music, game development, visual art, and creative growth. Building Noteleks Heroes and documenting the artistic journey."
+                />
                 <meta property="og:type" content="website" />
                 <meta property="og:url" content={studioUrl} />
                 <meta property="og:image" content={`${studioUrl}images/og-image.jpg`} />
@@ -130,7 +139,10 @@ export default function Welcome() {
                 {/* Twitter Card */}
                 <meta name="twitter:card" content="summary_large_image" />
                 <meta name="twitter:title" content="GraveYard Jokes Studio - Creative Arts & Game Development" />
-                <meta name="twitter:description" content="Creative studio showcasing original music, game development, visual art, and creative growth." />
+                <meta
+                    name="twitter:description"
+                    content="Creative studio showcasing original music, game development, visual art, and creative growth."
+                />
                 <meta name="twitter:image" content={`${studioUrl}images/og-image.jpg`} />
 
                 {/* Additional Meta */}

@@ -2,16 +2,16 @@
 
 namespace Tests\Integration;
 
+use App\Services\StorageConfigProvider;
+use App\Services\StorageUrlGenerator;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\TestCase;
-use App\Services\StorageUrlGenerator;
-use App\Services\StorageConfigProvider;
 
 #[Group('integration')]
 class StorageIntegrationTest extends TestCase
 {
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -23,29 +23,29 @@ class StorageIntegrationTest extends TestCase
         $provider = new StorageConfigProvider(base_path());
 
         $awsBucket = env('AWS_BUCKET') ?: ($provider->lookup('AWS_BUCKET') ?: 'test-bucket');
-        putenv('AWS_BUCKET=' . $awsBucket);
+        putenv('AWS_BUCKET='.$awsBucket);
         $_ENV['AWS_BUCKET'] = $awsBucket;
         $_SERVER['AWS_BUCKET'] = $awsBucket;
 
         $awsEndpoint = env('AWS_ENDPOINT') ?: ($provider->lookup('AWS_ENDPOINT') ?: 'http://127.0.0.1:9000');
-        putenv('AWS_ENDPOINT=' . $awsEndpoint);
+        putenv('AWS_ENDPOINT='.$awsEndpoint);
         $_ENV['AWS_ENDPOINT'] = $awsEndpoint;
         $_SERVER['AWS_ENDPOINT'] = $awsEndpoint;
 
         // Ensure AWS credentials are present to prevent SDK trying instance profile (IMDS)
         $awsKey = env('AWS_ACCESS_KEY_ID') ?: ($provider->lookup('AWS_ACCESS_KEY_ID') ?: 'minioadmin');
-        putenv('AWS_ACCESS_KEY_ID=' . $awsKey);
+        putenv('AWS_ACCESS_KEY_ID='.$awsKey);
         $_ENV['AWS_ACCESS_KEY_ID'] = $awsKey;
         $_SERVER['AWS_ACCESS_KEY_ID'] = $awsKey;
 
         $awsSecret = env('AWS_SECRET_ACCESS_KEY') ?: ($provider->lookup('AWS_SECRET_ACCESS_KEY') ?: 'minioadmin');
-        putenv('AWS_SECRET_ACCESS_KEY=' . $awsSecret);
+        putenv('AWS_SECRET_ACCESS_KEY='.$awsSecret);
         $_ENV['AWS_SECRET_ACCESS_KEY'] = $awsSecret;
         $_SERVER['AWS_SECRET_ACCESS_KEY'] = $awsSecret;
 
         // Ensure app.url is not localhost in CI so StorageUrlGenerator won't proxy local URLs
         $appUrl = env('APP_URL') ?: ($provider->lookup('APP_URL') ?: 'https://studio.test');
-        putenv('APP_URL=' . $appUrl);
+        putenv('APP_URL='.$appUrl);
         $_ENV['APP_URL'] = $appUrl;
         $_SERVER['APP_URL'] = $appUrl;
 
@@ -73,8 +73,8 @@ class StorageIntegrationTest extends TestCase
      * When a test fails, write helpful debug files for CI artifact collection.
      * PHPUnit will call this when a test throws an exception/fails.
      *
-     * @param \Throwable $t
      * @return void
+     *
      * @throws \Throwable
      */
     public function onNotSuccessfulTest(\Throwable $t): never
@@ -91,9 +91,9 @@ class StorageIntegrationTest extends TestCase
 
     protected function writeFailureDebugFiles(\Throwable $t): void
     {
-    $timestamp = date('Ymd-His');
-    // Use class short name + uniqid to avoid relying on PHPUnit internals
-    $testName = preg_replace('/[^A-Za-z0-9_\-]/', '_', (new \ReflectionClass($this))->getShortName() . '_' . uniqid());
+        $timestamp = date('Ymd-His');
+        // Use class short name + uniqid to avoid relying on PHPUnit internals
+        $testName = preg_replace('/[^A-Za-z0-9_\-]/', '_', (new \ReflectionClass($this))->getShortName().'_'.uniqid());
 
         // Ensure directories exist in repo root so workflow artifact paths pick them up
         $phpunitDir = base_path('artifacts/phpunit');
@@ -107,17 +107,17 @@ class StorageIntegrationTest extends TestCase
         }
 
         // Debug file with exception and env dump
-        $debugPath = $phpunitDir . "/debug-{$testName}-{$timestamp}.log";
-        $content = "Exception: " . $t->getMessage() . "\n\n";
-        $content .= "Stack:\n" . $t->getTraceAsString() . "\n\n";
+        $debugPath = $phpunitDir."/debug-{$testName}-{$timestamp}.log";
+        $content = 'Exception: '.$t->getMessage()."\n\n";
+        $content .= "Stack:\n".$t->getTraceAsString()."\n\n";
         $content .= "ENV VARS:\n";
         $provider = new StorageConfigProvider(base_path());
-        foreach (['AWS_BUCKET','AWS_ENDPOINT','AWS_ACCESS_KEY_ID','AWS_SECRET_ACCESS_KEY','APP_URL'] as $k) {
+        foreach (['AWS_BUCKET', 'AWS_ENDPOINT', 'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'APP_URL'] as $k) {
             $val = $provider->lookup($k) ?: (getenv($k) ?: ($_ENV[$k] ?? ($_SERVER[$k] ?? '(empty)')));
             $masked = $this->redactEnvValue($k, $val);
             $content .= "$k=$masked\n";
         }
-        $content .= "\nLaravel filesystems.disks.s3:\n" . var_export(config('filesystems.disks.s3'), true) . "\n";
+        $content .= "\nLaravel filesystems.disks.s3:\n".var_export(config('filesystems.disks.s3'), true)."\n";
 
         @file_put_contents($debugPath, $content);
 
@@ -152,10 +152,10 @@ class StorageIntegrationTest extends TestCase
                 }
             }
 
-            $s3ListingPath = $minioDir . "/s3-listing-{$testName}-{$timestamp}.txt";
+            $s3ListingPath = $minioDir."/s3-listing-{$testName}-{$timestamp}.txt";
             @file_put_contents($s3ListingPath, implode("\n", $out));
         } catch (\Throwable $e) {
-            @file_put_contents($minioDir . '/s3-listing-error.txt', (string) $e);
+            @file_put_contents($minioDir.'/s3-listing-error.txt', (string) $e);
         }
     }
 
@@ -167,9 +167,7 @@ class StorageIntegrationTest extends TestCase
      * - Otherwise, show first 4 and last 4 chars and mask the middle with '****' if length > 8
      * - For short values, mask entirely except first/last char
      *
-     * @param string $key
-     * @param string|null $val
-     * @return string
+     * @param  string|null  $val
      */
     private function redactEnvValue(string $key, $val): string
     {
@@ -197,22 +195,18 @@ class StorageIntegrationTest extends TestCase
         }
 
         if ($len <= 8) {
-            return substr($val, 0, 1) . str_repeat('*', max(0, $len - 2)) . substr($val, -1);
+            return substr($val, 0, 1).str_repeat('*', max(0, $len - 2)).substr($val, -1);
         }
 
         // longer values: keep first 4 and last 4
-        return substr($val, 0, 4) . '****' . substr($val, -4);
+        return substr($val, 0, 4).'****'.substr($val, -4);
     }
 
     /**
      * Wait for an object to be visible on the given disk.
      * Returns true when the object exists within the timeout, false otherwise.
      *
-     * @param \Illuminate\Contracts\Filesystem\Filesystem $disk
-     * @param string $path
-     * @param int $timeoutSeconds
-     * @param int $intervalMs
-     * @return bool
+     * @param  \Illuminate\Contracts\Filesystem\Filesystem  $disk
      */
     protected function waitForObject($disk, string $path, int $timeoutSeconds = 10, int $intervalMs = 250): bool
     {
@@ -227,6 +221,7 @@ class StorageIntegrationTest extends TestCase
             }
             usleep($intervalMs * 1000);
         }
+
         return false;
     }
 
@@ -236,8 +231,8 @@ class StorageIntegrationTest extends TestCase
         $disk = Storage::disk('s3');
 
         // create a small test file
-        $path = 'integration-test/' . uniqid() . '.txt';
-        $contents = "hello-integration";
+        $path = 'integration-test/'.uniqid().'.txt';
+        $contents = 'hello-integration';
 
         $disk->put($path, $contents);
 
@@ -260,9 +255,9 @@ class StorageIntegrationTest extends TestCase
         /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
         $disk = Storage::disk('s3');
 
-    $path = 'integration-test/' . uniqid() . '.txt';
-    $disk->put($path, 'integration-url-test');
-    $this->assertTrue($this->waitForObject($disk, $path, 10, 250), 'Uploaded object did not become available in time');
+        $path = 'integration-test/'.uniqid().'.txt';
+        $disk->put($path, 'integration-url-test');
+        $this->assertTrue($this->waitForObject($disk, $path, 10, 250), 'Uploaded object did not become available in time');
 
         // instantiate generator with disk and a fake cloudfront domain
         $generator = new StorageUrlGenerator($disk, 'd123.cloudfront.net', 10);
@@ -281,7 +276,7 @@ class StorageIntegrationTest extends TestCase
         $this->assertArrayHasKey('query', $parsed);
         parse_str($parsed['query'], $qs);
 
-        $this->assertTrue(isset($qs['X-Amz-Algorithm']) || isset($qs['X-Amz-Signature']) || isset($qs['Signature']) , 'No signature/query params found on presigned URL');
+        $this->assertTrue(isset($qs['X-Amz-Algorithm']) || isset($qs['X-Amz-Signature']) || isset($qs['Signature']), 'No signature/query params found on presigned URL');
 
         // Validate expiry param exists and is approximately 5 minutes (300s)
         if (isset($qs['X-Amz-Expires'])) {
@@ -292,11 +287,11 @@ class StorageIntegrationTest extends TestCase
             $this->fail('No expiry parameter (X-Amz-Expires or Expires) found on presigned URL');
         }
 
-    // allow small clock skew tolerance (configurable)
-    $tolerance = (int) config('media.url_expiry_tolerance_seconds', 20);
-    $expected = 300; // seconds for 5 minutes
-    $this->assertGreaterThanOrEqual($expected - $tolerance, $expiresVal, 'Expiry is too small');
-    $this->assertLessThanOrEqual($expected + $tolerance, $expiresVal, 'Expiry is larger than expected');
+        // allow small clock skew tolerance (configurable)
+        $tolerance = (int) config('media.url_expiry_tolerance_seconds', 20);
+        $expected = 300; // seconds for 5 minutes
+        $this->assertGreaterThanOrEqual($expected - $tolerance, $expiresVal, 'Expiry is too small');
+        $this->assertLessThanOrEqual($expected + $tolerance, $expiresVal, 'Expiry is larger than expected');
 
         // Also ensure that when no CloudFront domain is provided, host is the original S3/MinIO host
         $generatorNoCf = new StorageUrlGenerator($disk, null, 10);
@@ -321,9 +316,9 @@ class StorageIntegrationTest extends TestCase
         /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
         $disk = Storage::disk('s3');
 
-    $path = 'integration-test/' . uniqid() . '.txt';
-    $disk->put($path, 'unsigned-url-test');
-    $this->assertTrue($this->waitForObject($disk, $path, 10, 250), 'Uploaded object did not become available in time');
+        $path = 'integration-test/'.uniqid().'.txt';
+        $disk->put($path, 'unsigned-url-test');
+        $this->assertTrue($this->waitForObject($disk, $path, 10, 250), 'Uploaded object did not become available in time');
 
         // get unsigned url from the disk (no temporaryUrl)
         $url = $disk->url($path);

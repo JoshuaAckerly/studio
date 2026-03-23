@@ -3,8 +3,8 @@
 // Removed unused import
 import MainLayout from '@/layouts/main';
 import { Dialog } from '@headlessui/react';
-import { useEffect, useState } from 'react';
 import { Head } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
 import { getProjectUrl } from '../env';
 
 interface VideoItem {
@@ -58,11 +58,20 @@ export default function VideoLog() {
         <MainLayout minimalNav>
             <Head>
                 <title>Video Log - Creative Process Documentation | GraveYard Jokes Studio</title>
-                <meta name="description" content="Watch behind-the-scenes videos documenting our creative journey, game development process, music creation, and studio updates. A chronological log of creative growth." />
-                <meta name="keywords" content="video log, creative process, game development videos, music creation, studio updates, behind the scenes, creative journey" />
+                <meta
+                    name="description"
+                    content="Watch behind-the-scenes videos documenting our creative journey, game development process, music creation, and studio updates. A chronological log of creative growth."
+                />
+                <meta
+                    name="keywords"
+                    content="video log, creative process, game development videos, music creation, studio updates, behind the scenes, creative journey"
+                />
                 {/* Open Graph */}
                 <meta property="og:title" content="Video Log - Creative Process Documentation" />
-                <meta property="og:description" content="Watch behind-the-scenes videos documenting our creative journey, game development process, and music creation." />
+                <meta
+                    property="og:description"
+                    content="Watch behind-the-scenes videos documenting our creative journey, game development process, and music creation."
+                />
                 <meta property="og:type" content="website" />
                 <meta property="og:url" content={getProjectUrl('studio') + '/video-log'} />
                 <meta property="og:image" content={getProjectUrl('studio') + '/images/og-video-log.jpg'} />

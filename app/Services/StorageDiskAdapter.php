@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Contracts\StorageAdapterInterface;
-use Illuminate\Contracts\Filesystem\Filesystem;
 
 class StorageDiskAdapter implements StorageAdapterInterface
 {
@@ -57,6 +56,7 @@ class StorageDiskAdapter implements StorageAdapterInterface
             if (method_exists($this->disk, 'temporaryUrl')) {
                 return $this->disk->temporaryUrl($path, $expires);
             }
+
             return $this->disk->url($path);
         } catch (\Throwable $e) {
             return '';

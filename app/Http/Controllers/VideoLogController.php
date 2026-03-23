@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Log;
-use Inertia\Inertia;
-use App\Services\VideoLogService;
 use App\Http\Resources\VideoLogResource;
+use App\Services\VideoLogService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
 
 class VideoLogController extends Controller
 {
@@ -76,7 +76,8 @@ class VideoLogController extends Controller
 
             return response($contents, 200)->header('Content-Type', $mime);
         } catch (\Throwable $e) {
-            Log::error('Error serving video file: ' . $e->getMessage());
+            Log::error('Error serving video file: '.$e->getMessage());
+
             return response('Error', 500);
         }
     }

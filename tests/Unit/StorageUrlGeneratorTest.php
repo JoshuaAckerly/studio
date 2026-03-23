@@ -2,8 +2,8 @@
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
 use App\Services\StorageUrlGenerator;
+use Tests\TestCase;
 
 class StorageUrlGeneratorTest extends TestCase
 {
@@ -21,21 +21,22 @@ class StorageUrlGeneratorTest extends TestCase
         $this->assertStringContainsString('some%2Fpath%2Ffile.mp4', $result);
     }
 
-    public function test_uses_temporaryUrl_and_rewrites_to_cloudfront()
+    public function test_uses_temporary_url_and_rewrites_to_cloudfront()
     {
         // Make sure we're not in testing so generator uses disk methods
         $originalEnv = $this->app['env'] ?? null;
         $this->app['env'] = 'local';
 
-        $mock = new class {
+        $mock = new class
+        {
             public function temporaryUrl($path, $expires)
             {
-                return 'https://bucket.s3.amazonaws.com/' . $path . '?x=1';
+                return 'https://bucket.s3.amazonaws.com/'.$path.'?x=1';
             }
 
             public function url($path)
             {
-                return 'https://bucket.s3.amazonaws.com/' . $path;
+                return 'https://bucket.s3.amazonaws.com/'.$path;
             }
         };
 
@@ -51,7 +52,7 @@ class StorageUrlGeneratorTest extends TestCase
         }
     }
 
-    public function test_falls_back_to_url_when_temporaryUrl_missing()
+    public function test_falls_back_to_url_when_temporary_url_missing()
     {
         $originalEnv = $this->app['env'] ?? null;
         $this->app['env'] = 'local';

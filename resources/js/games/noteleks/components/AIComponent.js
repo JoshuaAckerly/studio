@@ -14,7 +14,7 @@ class AIComponent extends Component {
         // Set properties from config
         this.speed = this.config.speed;
         this.detectionRange = this.config.detectionRange;
-        
+
         // Stun system for knockback
         this.isStunned = false;
         this.stunEndTime = 0;
@@ -22,12 +22,12 @@ class AIComponent extends Component {
 
     update(_deltaTime) {
         if (!this.enabled || !this.target) return;
-        
+
         // Check if stun has expired
         if (this.isStunned && Date.now() > this.stunEndTime) {
             this.isStunned = false;
         }
-        
+
         // Don't move if stunned
         if (this.isStunned) {
             // While stunned, don't apply AI movement but let physics handle velocity
@@ -136,7 +136,7 @@ class AIComponent extends Component {
 
         return null;
     }
-    
+
     /**
      * Stun the enemy for a specified duration
      * @param {number} duration - Stun duration in milliseconds
@@ -144,10 +144,10 @@ class AIComponent extends Component {
     stun(duration) {
         this.isStunned = true;
         this.stunEndTime = Date.now() + duration;
-        
+
         // Don't stop movement here - let physics handle the knockback velocity
     }
-    
+
     /**
      * Check if enemy is currently stunned
      */

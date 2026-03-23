@@ -46,31 +46,31 @@ export class PlatformManager {
 
     createFloatingPlatform(x, y, width = 64, height = 32) {
         const overrides = {};
-        
+
         if (width !== 64 || height !== 32) {
             const scaleX = width / GameConfig.assets.textures.ground.width;
             const scaleY = height / GameConfig.assets.textures.ground.height;
             overrides.scale = { x: scaleX, y: scaleY };
         }
-        
+
         const platform = this.scene.entityFactory.createPlatform(x, y, 'floating', overrides);
         this.platforms.add(platform);
-        
+
         return platform;
     }
 
     addCustomPlatform(x, y, width, height, texture = 'ground') {
         const scaleX = width / GameConfig.assets.textures.ground.width;
         const scaleY = height / GameConfig.assets.textures.ground.height;
-        
+
         const overrides = {
             sprite: texture,
-            scale: { x: scaleX, y: scaleY }
+            scale: { x: scaleX, y: scaleY },
         };
-        
+
         const platform = this.scene.entityFactory.createPlatform(x, y, 'ground', overrides);
         this.platforms.add(platform);
-        
+
         return platform;
     }
 

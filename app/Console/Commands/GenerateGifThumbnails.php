@@ -2,9 +2,9 @@
 
 namespace App\Console\Commands;
 
+use App\Services\IllustrationService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
-use App\Services\IllustrationService;
 
 class GenerateGifThumbnails extends Command
 {
@@ -27,10 +27,10 @@ class GenerateGifThumbnails extends Command
      */
     public function handle()
     {
-        $service = new IllustrationService();
+        $service = new IllustrationService;
         $illustrations = $service->list();
 
-        $this->info('Found ' . count($illustrations) . ' illustrations');
+        $this->info('Found '.count($illustrations).' illustrations');
 
         $gifCount = 0;
         $thumbnailCount = 0;
@@ -38,7 +38,7 @@ class GenerateGifThumbnails extends Command
         foreach ($illustrations as $illustration) {
             $filename = basename(parse_url($illustration, PHP_URL_PATH) ?: '');
 
-            if (!preg_match('/\.gif$/i', $filename)) {
+            if (! preg_match('/\.gif$/i', $filename)) {
                 continue;
             }
 
@@ -48,8 +48,9 @@ class GenerateGifThumbnails extends Command
             // Check if thumbnail already exists
             $thumbnailPath = str_replace($filename, $thumbnailFilename, $this->getS3Path($illustration));
 
-            if (!$this->option('force') && Storage::disk('s3')->exists($thumbnailPath)) {
+            if (! $this->option('force') && Storage::disk('s3')->exists($thumbnailPath)) {
                 $this->line("Thumbnail already exists for {$filename}, skipping...");
+
                 continue;
             }
 
@@ -84,13 +85,13 @@ class GenerateGifThumbnails extends Command
 
             // Get the GIF content directly from S3
             $gifContent = Storage::disk('s3')->get($s3Path);
-            if (!$gifContent) {
+            if (! $gifContent) {
                 return false;
             }
 
             // Create image from GIF
             $image = imagecreatefromstring($gifContent);
-            if (!$image) {
+            if (! $image) {
                 return false;
             }
 
@@ -135,7 +136,8 @@ class GenerateGifThumbnails extends Command
             return $result;
 
         } catch (\Exception $e) {
-            $this->error("Error generating thumbnail: " . $e->getMessage());
+            $this->error('Error generating thumbnail: '.$e->getMessage());
+
             return false;
         }
     }

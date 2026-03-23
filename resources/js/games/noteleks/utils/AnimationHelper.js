@@ -57,7 +57,7 @@ export function createAlias(scene, sourceKey, aliasKey, cfg = {}) {
     const baseAnim = scene.anims.get(sourceKey);
     if (!baseAnim || !baseAnim.frames || !baseAnim.frames.length) return false;
 
-    const framesCopy = baseAnim.frames.map(f => ({
+    const framesCopy = baseAnim.frames.map((f) => ({
         key: f.textureKey,
         frame: f.frame ? f.frame.name : f.frame,
     }));
@@ -86,5 +86,7 @@ export function promoteFirstFrameTexture(scene, animKey) {
             const srcImg = scene.textures.get(firstKey).getSourceImage();
             if (srcImg) scene.textures.addImage(animKey, srcImg);
         }
-    } catch { /* ignore */ }
+    } catch {
+        /* ignore */
+    }
 }

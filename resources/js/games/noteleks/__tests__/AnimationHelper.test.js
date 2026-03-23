@@ -1,4 +1,4 @@
-import { ALIAS_MAP, createAnimation, createAlias, promoteFirstFrameTexture } from '../utils/AnimationHelper.js';
+import { ALIAS_MAP, createAlias, createAnimation, promoteFirstFrameTexture } from '../utils/AnimationHelper.js';
 
 describe('AnimationHelper', () => {
     let mockScene;
@@ -43,12 +43,7 @@ describe('AnimationHelper', () => {
 
             expect(mockScene.anims.create).toHaveBeenCalledWith({
                 key: 'skeleton-run',
-                frames: [
-                    { key: 'skeleton-run-0' },
-                    { key: 'skeleton-run-1' },
-                    { key: 'skeleton-run-2' },
-                    { key: 'skeleton-run-3' },
-                ],
+                frames: [{ key: 'skeleton-run-0' }, { key: 'skeleton-run-1' }, { key: 'skeleton-run-2' }, { key: 'skeleton-run-3' }],
                 frameRate: 12,
                 repeat: -1,
             });
@@ -117,7 +112,7 @@ describe('AnimationHelper', () => {
 
     describe('promoteFirstFrameTexture', () => {
         it('adds standalone texture from first frame when not already present', () => {
-            mockScene.textures.exists.mockImplementation(key => key === 'skeleton-idle-0');
+            mockScene.textures.exists.mockImplementation((key) => key === 'skeleton-idle-0');
 
             promoteFirstFrameTexture(mockScene, 'skeleton-idle');
 

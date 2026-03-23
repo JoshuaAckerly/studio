@@ -2,25 +2,24 @@
 
 namespace App\Console\Commands;
 
+use Aws\S3\S3Client;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
-use Aws\S3\S3Client;
-use Symfony\Component\Console\Helper\ProgressBar;
 
 class NormalizeS3Prefix extends Command
 {
     protected $signature = 's3:normalize-prefix'
-        . ' {--dry : Do not perform changes (dry run)}'
-        . ' {--source= : Source prefix (required) }'
-        . ' {--target= : Target prefix (required) }'
-        . ' {--bucket= : Bucket to operate on (overrides config)}'
-        . ' {--delete-original : Delete original objects after copy} '
-        . ' {--overwrite : Overwrite target if exists} '
-    . ' {--progress-only : Show only the progress bar and final summary (suppress per-item output)} '
-    . ' {--spinner : Use an indeterminate spinner instead of counting objects first} '
-    . ' {--limit= : Max objects to process (for safety)}'
-    . ' {--report-path= : Path to write JSON report (file or directory; relative paths are resolved against project root)}'
-    . ' {--summary-only : Emit only the JSON report and a compact summary (suitable for CI) }';
+        .' {--dry : Do not perform changes (dry run)}'
+        .' {--source= : Source prefix (required) }'
+        .' {--target= : Target prefix (required) }'
+        .' {--bucket= : Bucket to operate on (overrides config)}'
+        .' {--delete-original : Delete original objects after copy} '
+        .' {--overwrite : Overwrite target if exists} '
+        .' {--progress-only : Show only the progress bar and final summary (suppress per-item output)} '
+        .' {--spinner : Use an indeterminate spinner instead of counting objects first} '
+        .' {--limit= : Max objects to process (for safety)}'
+        .' {--report-path= : Path to write JSON report (file or directory; relative paths are resolved against project root)}'
+        .' {--summary-only : Emit only the JSON report and a compact summary (suitable for CI) }';
 
     protected $description = 'Normalize S3 object prefixes by copying objects from a source prefix to a target prefix.';
 
@@ -31,6 +30,7 @@ class NormalizeS3Prefix extends Command
 
         if ($source === '' || $target === '') {
             $this->error('Both --source and --target are required.');
+
             return 1;
         }
 
@@ -49,8 +49,9 @@ class NormalizeS3Prefix extends Command
         $limit = $this->option('limit') ? (int) $this->option('limit') : null;
 
         $bucket = $this->option('bucket') ?? config('filesystems.disks.s3.bucket');
-        if (!$bucket) {
+        if (! $bucket) {
             $this->error('Bucket must be specified via --bucket or filesystems.disks.s3.bucket config');
+
             return 1;
         }
 
@@ -77,7 +78,7 @@ class NormalizeS3Prefix extends Command
 
         $params = [
             'Bucket' => $bucket,
-            'Prefix' => $source . '/',
+            'Prefix' => $source.'/',
         ];
 
         // If spinner mode is requested, skip counting and use an indeterminate spinner.
@@ -116,6 +117,7 @@ class NormalizeS3Prefix extends Command
 
             if ($total === 0) {
                 $this->info('No objects found for the given source prefix.');
+
                 return 0;
             }
 
@@ -136,14 +138,14 @@ class NormalizeS3Prefix extends Command
             $paginator = $client->getPaginator('ListObjectsV2', $params);
         }
 
-    $start = $start ?? microtime(true);
-    // Summary counters and samples
-    $copied = 0;
-    $skipped = 0;
-    $deletedCount = 0;
-    $failed = 0;
-    $samples = [];
-    foreach ($paginator as $result) {
+        $start = $start ?? microtime(true);
+        // Summary counters and samples
+        $copied = 0;
+        $skipped = 0;
+        $deletedCount = 0;
+        $failed = 0;
+        $samples = [];
+        foreach ($paginator as $result) {
             if (empty($result['Contents'])) {
                 continue;
             }
@@ -151,12 +153,12 @@ class NormalizeS3Prefix extends Command
             foreach ($result['Contents'] as $obj) {
                 $key = $obj['Key'];
                 // Ignore keys that don't start with the prefix (defensive)
-                if (strpos($key, $source . '/') !== 0) {
+                if (strpos($key, $source.'/') !== 0) {
                     continue;
                 }
 
                 $relative = substr($key, strlen($source) + 1);
-                $targetKey = $target . '/' . $relative;
+                $targetKey = $target.'/'.$relative;
 
                 if (! $progressOnly) {
                     $this->line("Found: $key -> $targetKey");
@@ -171,13 +173,16 @@ class NormalizeS3Prefix extends Command
                     $targetExists = false;
                 }
 
-                    if ($targetExists && !$overwrite) {
+                if ($targetExists && ! $overwrite) {
                     if (! $progressOnly) {
                         $this->line("Skipping existing target: $targetKey");
                     }
                     $skipped++;
                     $samples[] = ['action' => 'skipped', 'source' => $key, 'target' => $targetKey];
-                    if ($bar) { $bar->advance(); }
+                    if ($bar) {
+                        $bar->advance();
+                    }
+
                     continue;
                 }
 
@@ -227,7 +232,9 @@ class NormalizeS3Prefix extends Command
                         $this->output->write("\r$char Processed: $processed (elapsed: {$elapsedStr}s, rate: {$rateStr}/s)");
                     }
                 } else {
-                    if ($bar) { $bar->advance(); }
+                    if ($bar) {
+                        $bar->advance();
+                    }
                 }
                 if ($limit && $processed >= $limit) {
                     $this->info("Limit reached ($limit). Stopping.");
@@ -235,7 +242,12 @@ class NormalizeS3Prefix extends Command
                         $this->output->write("\r");
                         $this->newLine(1);
                     } else {
-                        if ($bar) { $bar->finish(); $this->newLine(2); } else { $this->newLine(1); }
+                        if ($bar) {
+                            $bar->finish();
+                            $this->newLine(2);
+                        } else {
+                            $this->newLine(1);
+                        }
                     }
                     break 2;
                 }
@@ -283,11 +295,11 @@ class NormalizeS3Prefix extends Command
                     $reportDir = dirname($reportFile);
                 } else {
                     $reportDir = rtrim($requestedReportPath, DIRECTORY_SEPARATOR);
-                    $reportFile = $reportDir . DIRECTORY_SEPARATOR . 's3-normalize-' . time() . '.json';
+                    $reportFile = $reportDir.DIRECTORY_SEPARATOR.'s3-normalize-'.time().'.json';
                 }
             } else {
                 $reportDir = base_path('artifacts');
-                $reportFile = $reportDir . DIRECTORY_SEPARATOR . 's3-normalize-' . time() . '.json';
+                $reportFile = $reportDir.DIRECTORY_SEPARATOR.'s3-normalize-'.time().'.json';
             }
 
             if (! is_dir($reportDir)) {
@@ -323,7 +335,7 @@ class NormalizeS3Prefix extends Command
             file_put_contents($reportFile, json_encode($report, JSON_PRETTY_PRINT));
             $this->info("Wrote report: $reportFile");
         } catch (\Exception $e) {
-            $this->error('Failed to write report: ' . $e->getMessage());
+            $this->error('Failed to write report: '.$e->getMessage());
         }
 
         return 0;

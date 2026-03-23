@@ -8,11 +8,13 @@ class StorageUrlGenerator implements StorageUrlGeneratorInterface
 {
     /** @var mixed Underlying filesystem adapter (may be a FilesystemAdapter) */
     protected $disk;
+
     protected ?string $cloudfrontDomain;
+
     protected ?int $defaultExpires;
 
     /**
-     * @param mixed $disk
+     * @param  mixed  $disk
      */
     public function __construct($disk, ?string $cloudfrontDomain = null, ?int $defaultExpires = null)
     {
@@ -24,10 +26,6 @@ class StorageUrlGenerator implements StorageUrlGeneratorInterface
     /**
      * Return a public URL for a storage path, honoring testing proxy, temporaryUrl if available,
      * and optional CloudFront hostname rewrite.
-     *
-     * @param string $path
-     * @param int|null $expiresMinutes
-     * @return string
      */
     public function url(string $path, ?int $expiresMinutes = null): string
     {
@@ -39,12 +37,12 @@ class StorageUrlGenerator implements StorageUrlGeneratorInterface
         if (app()->environment('testing')) {
             // If default is local, always proxy
             if (config('filesystems.default') === 'local') {
-                return url('/api/video-logs/serve?path=' . rawurlencode($path));
+                return url('/api/video-logs/serve?path='.rawurlencode($path));
             }
 
             // If the disk cannot produce temporary URLs, proxy
             if (! method_exists($this->disk, 'temporaryUrl')) {
-                return url('/api/video-logs/serve?path=' . rawurlencode($path));
+                return url('/api/video-logs/serve?path='.rawurlencode($path));
             }
 
             // Otherwise, try to probe the disk's url/temporaryUrl to detect fakes that
@@ -71,19 +69,19 @@ class StorageUrlGenerator implements StorageUrlGeneratorInterface
                         } else {
                             // If no signature-like params and host matches app host, proxy
                             if (isset($parsedCandidate['host']) && isset($appUrl['host']) && $parsedCandidate['host'] === $appUrl['host']) {
-                                return url('/api/video-logs/serve?path=' . rawurlencode($path));
+                                return url('/api/video-logs/serve?path='.rawurlencode($path));
                             }
                         }
                     } else {
                         // No query — if host matches app host, treat as fake and proxy
                         if (isset($parsedCandidate['host']) && isset($appUrl['host']) && $parsedCandidate['host'] === $appUrl['host']) {
-                            return url('/api/video-logs/serve?path=' . rawurlencode($path));
+                            return url('/api/video-logs/serve?path='.rawurlencode($path));
                         }
                     }
                 }
             } catch (\Throwable $e) {
                 // If probing fails, fall back to proxy in testing to be safe for unit tests
-                return url('/api/video-logs/serve?path=' . rawurlencode($path));
+                return url('/api/video-logs/serve?path='.rawurlencode($path));
             }
         }
 
@@ -108,9 +106,9 @@ class StorageUrlGenerator implements StorageUrlGeneratorInterface
             $parsed = parse_url($url);
             if ($parsed && isset($parsed['scheme'])) {
                 $scheme = $parsed['scheme'];
-                $url = $scheme . '://' . rtrim($this->cloudfrontDomain, '/') . (isset($parsed['path']) ? $parsed['path'] : '');
+                $url = $scheme.'://'.rtrim($this->cloudfrontDomain, '/').(isset($parsed['path']) ? $parsed['path'] : '');
                 if (isset($parsed['query'])) {
-                    $url .= '?' . $parsed['query'];
+                    $url .= '?'.$parsed['query'];
                 }
             }
         }
@@ -131,26 +129,26 @@ class StorageUrlGenerator implements StorageUrlGeneratorInterface
                     // If path-style endpoints are used, include bucket in path
                     $usePathStyle = filter_var(env('AWS_USE_PATH_STYLE_ENDPOINT', config('filesystems.disks.s3.use_path_style_endpoint', false)), FILTER_VALIDATE_BOOLEAN);
                     if ($usePathStyle) {
-                        $url = $endpoint . '/' . trim($bucket, '/') . '/' . $pathPart;
+                        $url = $endpoint.'/'.trim($bucket, '/').'/'.$pathPart;
                     } else {
                         // virtual-hosted style
                         $parsed = parse_url($endpoint);
                         $scheme = $parsed['scheme'] ?? 'https';
                         $host = $parsed['host'] ?? $endpoint;
-                        $url = $scheme . '://' . $bucket . '.' . $host . '/' . $pathPart;
+                        $url = $scheme.'://'.$bucket.'.'.$host.'/'.$pathPart;
                     }
                 } else {
                     // If endpoint isn't a URL, just join pieces
-                    $url = $endpoint . '/' . trim($bucket, '/') . '/' . $pathPart;
+                    $url = $endpoint.'/'.trim($bucket, '/').'/'.$pathPart;
                 }
 
                 // If a CloudFront domain is configured, apply the rewrite now
                 if ($this->cloudfrontDomain && $url) {
                     $parsed = parse_url($url);
                     $scheme = $parsed['scheme'] ?? 'https';
-                    $url = $scheme . '://' . rtrim($this->cloudfrontDomain, '/') . (isset($parsed['path']) ? $parsed['path'] : '');
+                    $url = $scheme.'://'.rtrim($this->cloudfrontDomain, '/').(isset($parsed['path']) ? $parsed['path'] : '');
                     if (isset($parsed['query'])) {
-                        $url .= '?' . $parsed['query'];
+                        $url .= '?'.$parsed['query'];
                     }
                 }
             }
@@ -160,14 +158,14 @@ class StorageUrlGenerator implements StorageUrlGeneratorInterface
         // IP-hosted URLs that would trigger mixed-content warnings when the app
         // is served over HTTPS. Instead, proxy such paths through the application
         // serve endpoint so the browser requests from the same origin (HTTPS).
-        if ($url && !app()->environment('production')) {
+        if ($url && ! app()->environment('production')) {
             try {
                 $parsed = parse_url($url);
                 $isInsecureScheme = isset($parsed['scheme']) && strtolower($parsed['scheme']) === 'http';
                 $isIpHost = isset($parsed['host']) && preg_match('/^\d{1,3}(?:\.\d{1,3}){3}$/', $parsed['host']);
 
                 if ($isInsecureScheme || $isIpHost) {
-                    return url('/api/video-logs/serve?path=' . rawurlencode($path));
+                    return url('/api/video-logs/serve?path='.rawurlencode($path));
                 }
             } catch (\Throwable $e) {
                 // ignore and fall through

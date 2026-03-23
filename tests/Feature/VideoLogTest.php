@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 class VideoLogTest extends TestCase
@@ -12,7 +11,7 @@ class VideoLogTest extends TestCase
     {
         // Ensure default disk is s3 for this test and fake the s3 disk
         config(['filesystems.default' => 's3']);
-        
+
         // Fake the s3 disk
         Storage::fake('s3');
 
@@ -20,7 +19,7 @@ class VideoLogTest extends TestCase
         Storage::disk('s3')->put('video-logs/testvideo.mp4', 'video-content');
         Storage::disk('s3')->put('images/vlogs/testvideo.jpg', 'thumb-content');
 
-    // Put files on fake disk (no explicit existence checks)
+        // Put files on fake disk (no explicit existence checks)
 
         // Call the API
         $response = $this->getJson('/api/video-logs');
@@ -34,10 +33,10 @@ class VideoLogTest extends TestCase
         // Find our testvideo entry
         $found = collect($data)->firstWhere('title', 'Testvideo');
         $this->assertNotNull($found, 'Expected to find testvideo in API output');
-    $this->assertArrayHasKey('url', $found);
-    $this->assertArrayHasKey('thumbnail', $found);
+        $this->assertArrayHasKey('url', $found);
+        $this->assertArrayHasKey('thumbnail', $found);
 
-    // (no debug output)
+        // (no debug output)
 
         // Verify the returned URLs are reachable (proxy will serve fake storage files)
         if (! empty($found['url'])) {
@@ -45,7 +44,7 @@ class VideoLogTest extends TestCase
             // If an absolute URL was returned, convert to a relative path for the test client
             if (preg_match('#^https?://#', $videoUrl)) {
                 $p = parse_url($videoUrl);
-                $videoUrl = ($p['path'] ?? $videoUrl) . (isset($p['query']) ? '?' . $p['query'] : '');
+                $videoUrl = ($p['path'] ?? $videoUrl).(isset($p['query']) ? '?'.$p['query'] : '');
             }
 
             $videoResponse = $this->get($videoUrl);
@@ -57,7 +56,7 @@ class VideoLogTest extends TestCase
             $thumbUrl = $found['thumbnail'];
             if (preg_match('#^https?://#', $thumbUrl)) {
                 $p = parse_url($thumbUrl);
-                $thumbUrl = ($p['path'] ?? $thumbUrl) . (isset($p['query']) ? '?' . $p['query'] : '');
+                $thumbUrl = ($p['path'] ?? $thumbUrl).(isset($p['query']) ? '?'.$p['query'] : '');
             }
 
             $thumbResponse = $this->get($thumbUrl);
@@ -89,7 +88,7 @@ class VideoLogTest extends TestCase
         $path = 'video-logs/serve-test.mp4';
         Storage::disk('s3')->put($path, 'dummy-video');
 
-        $response = $this->get('/api/video-logs/serve?path=' . urlencode($path));
+        $response = $this->get('/api/video-logs/serve?path='.urlencode($path));
         $response->assertStatus(200);
         $this->assertStringStartsWith('video/', $response->headers->get('Content-Type'));
     }
@@ -99,8 +98,8 @@ class VideoLogTest extends TestCase
         // Simulate production environment
         config(['app.env' => 'production']);
 
-    $response = $this->get('/api/video-logs/serve?path=some/path.mp4');
-    // FormRequest::authorize() returns false, which results in a 403 Forbidden response
-    $response->assertStatus(403);
+        $response = $this->get('/api/video-logs/serve?path=some/path.mp4');
+        // FormRequest::authorize() returns false, which results in a 403 Forbidden response
+        $response->assertStatus(403);
     }
 }

@@ -43,13 +43,7 @@ export default function BlogShow({ post }: Props) {
                 </Link>
 
                 <article>
-                    {post.featured_image && (
-                        <img
-                            src={post.featured_image}
-                            alt={post.title}
-                            className="mb-6 h-64 w-full rounded-lg object-cover"
-                        />
-                    )}
+                    {post.featured_image && <img src={post.featured_image} alt={post.title} className="mb-6 h-64 w-full rounded-lg object-cover" />}
 
                     <div className="mb-4 flex items-center gap-3 text-xs text-muted-foreground">
                         <time dateTime={post.published_at}>
@@ -62,18 +56,11 @@ export default function BlogShow({ post }: Props) {
                         {post.author && <span>· {post.author}</span>}
                     </div>
 
-                    <h1 className="mb-6 text-3xl font-bold leading-tight">{post.title}</h1>
+                    <h1 className="mb-6 text-3xl leading-tight font-bold">{post.title}</h1>
 
-                    {post.excerpt && (
-                        <p className="mb-6 text-lg text-muted-foreground border-l-4 border-primary pl-4 italic">
-                            {post.excerpt}
-                        </p>
-                    )}
+                    {post.excerpt && <p className="mb-6 border-l-4 border-primary pl-4 text-lg text-muted-foreground italic">{post.excerpt}</p>}
 
-                    <div
-                        className="prose prose-invert max-w-none"
-                        dangerouslySetInnerHTML={{ __html: post.content }}
-                    />
+                    <div className="prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: post.content }} />
                 </article>
             </div>
         </MainLayout>

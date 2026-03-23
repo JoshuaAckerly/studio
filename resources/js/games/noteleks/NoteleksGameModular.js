@@ -21,16 +21,16 @@ class NoteleksGame {
         // decide whether to enable a lowQuality fallback mode that avoids heavy
         // assets (Spine) and reduces resolution. This helps small/old phones.
         try {
-            const deviceMemory = (navigator && navigator.deviceMemory) ? Number(navigator.deviceMemory) : null;
-            const cores = (navigator && navigator.hardwareConcurrency) ? Number(navigator.hardwareConcurrency) : null;
-            const ua = navigator && navigator.userAgent || '';
+            const deviceMemory = navigator && navigator.deviceMemory ? Number(navigator.deviceMemory) : null;
+            const cores = navigator && navigator.hardwareConcurrency ? Number(navigator.hardwareConcurrency) : null;
+            const ua = (navigator && navigator.userAgent) || '';
             // Heuristics: memory < 2GB or 1-2 cores => lowQuality
             const lowMem = deviceMemory !== null ? deviceMemory < 2 : false;
             const lowCores = cores !== null ? cores <= 2 : false;
             const smallScreenUA = /iPhone|Android/i.test(ua) && window.innerWidth <= 420;
             this._detectedDeviceInfo = { deviceMemory, cores, ua };
             // Expose a global flag for debug/QA toggles
-            window.noteleks_lowQuality = (lowMem || lowCores || smallScreenUA) ? true : false;
+            window.noteleks_lowQuality = lowMem || lowCores || smallScreenUA ? true : false;
             GameConfig.lowQuality = !!window.noteleks_lowQuality;
         } catch {
             // ignore detection errors
@@ -48,7 +48,7 @@ class NoteleksGame {
                 try {
                     const payload = {
                         type: 'error',
-                        message: message && (message.stack || message) || (error && error.message) || String(message),
+                        message: (message && (message.stack || message)) || (error && error.message) || String(message),
                         stack: (error && (error.stack || null)) || null,
                         source,
                         lineno,
@@ -58,19 +58,29 @@ class NoteleksGame {
                         cores: navigator.hardwareConcurrency || null,
                         ts: Date.now(),
                     };
-                    try { localStorage.setItem('noteleks_last_error', JSON.stringify(payload)); } catch { /* ignore localStorage errors */ }
+                    try {
+                        localStorage.setItem('noteleks_last_error', JSON.stringify(payload));
+                    } catch {
+                        /* ignore localStorage errors */
+                    }
                     // Try sendBeacon as a best-effort remote capture (server endpoint optional)
                     try {
                         if (navigator && typeof navigator.sendBeacon === 'function') {
                             const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
                             navigator.sendBeacon('/__noteleks_error', blob);
                         }
-                    } catch { /* ignore sendBeacon errors */ }
+                    } catch {
+                        /* ignore sendBeacon errors */
+                    }
                 } catch {
                     // ignore storage/set errors
                 }
                 if (typeof originalOnError === 'function') {
-                    try { originalOnError(message, source, lineno, colno, error); } catch { /* ignore originalOnError errors */ }
+                    try {
+                        originalOnError(message, source, lineno, colno, error);
+                    } catch {
+                        /* ignore originalOnError errors */
+                    }
                 }
                 // Do not suppress the default handler return value (let it run normally)
                 return false;
@@ -81,20 +91,26 @@ class NoteleksGame {
                     const reason = ev && ev.reason;
                     const payload = {
                         type: 'unhandledrejection',
-                        message: reason && (reason.message || String(reason)) || 'unhandledrejection',
-                        stack: reason && (reason.stack || null) || null,
+                        message: (reason && (reason.message || String(reason))) || 'unhandledrejection',
+                        stack: (reason && (reason.stack || null)) || null,
                         userAgent: navigator.userAgent,
                         deviceMemory: navigator.deviceMemory || null,
                         cores: navigator.hardwareConcurrency || null,
                         ts: Date.now(),
                     };
-                    try { localStorage.setItem('noteleks_last_error', JSON.stringify(payload)); } catch { /* ignore localStorage errors */ }
+                    try {
+                        localStorage.setItem('noteleks_last_error', JSON.stringify(payload));
+                    } catch {
+                        /* ignore localStorage errors */
+                    }
                     try {
                         if (navigator && typeof navigator.sendBeacon === 'function') {
                             const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
                             navigator.sendBeacon('/__noteleks_error', blob);
                         }
-                    } catch { /* ignore sendBeacon errors */ }
+                    } catch {
+                        /* ignore sendBeacon errors */
+                    }
                 } catch {
                     // ignore
                 }
@@ -109,7 +125,7 @@ class NoteleksGame {
         if (typeof Phaser === 'undefined') {
             throw new Error('Phaser is not loaded. Make sure phaser.min.js loads before the game module.');
         }
-        
+
         // Simple game config without Spine plugin
         return {
             type: Phaser.AUTO,

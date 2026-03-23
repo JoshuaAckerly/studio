@@ -3,8 +3,6 @@
  * Simplified main entry point without extensive logging and debug systems
  */
 
-
-
 /**
  * Initialize the game but wait for Phaser and Spine to be available
  */
@@ -13,11 +11,11 @@ async function bootstrap() {
         const mod = await import('./NoteleksGameModular.js');
         const NoteleksGame = mod && mod.default ? mod.default : mod;
         const game = await NoteleksGame.create('phaser-game');
-        
+
         if (game && typeof window !== 'undefined') {
             window.noteleksGame = game;
         }
-        
+
         return game;
     } catch (e) {
         console.error('[Noteleks] Failed to initialize game:', e.message);
@@ -28,7 +26,7 @@ async function bootstrap() {
 if (typeof window !== 'undefined') {
     // Only auto-bootstrap when the game container is present
     const hasGameContainer = !!document.getElementById('phaser-game');
-    
+
     if (hasGameContainer) {
         const startGame = async () => {
             // Wait for Phaser and Spine to be available
@@ -65,9 +63,12 @@ if (typeof window !== 'undefined') {
                 // Display error to user on mobile
                 const container = document.getElementById('phaser-game');
                 if (container) {
-                    container.innerHTML = '<div style="color: white; padding: 20px; text-align: center; font-family: Arial;">' +
+                    container.innerHTML =
+                        '<div style="color: white; padding: 20px; text-align: center; font-family: Arial;">' +
                         '<h2>Failed to load game</h2>' +
-                        '<p>' + e.message + '</p>' +
+                        '<p>' +
+                        e.message +
+                        '</p>' +
                         '<p>Please check your internet connection and refresh the page.</p>' +
                         '</div>';
                 }

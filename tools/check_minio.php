@@ -1,5 +1,6 @@
 <?php
-require __DIR__ . '/../vendor/autoload.php';
+
+require __DIR__.'/../vendor/autoload.php';
 
 use Aws\S3\S3Client;
 
@@ -26,17 +27,17 @@ try {
     ]);
 
     $result = $s3->listObjectsV2(['Bucket' => $bucket, 'MaxKeys' => 5]);
-    echo "ListObjectsV2 succeeded. Count: " . count($result['Contents'] ?? []) . "\n";
+    echo 'ListObjectsV2 succeeded. Count: '.count($result['Contents'] ?? [])."\n";
     foreach ($result['Contents'] ?? [] as $obj) {
-        echo $obj['Key'] . "\n";
+        echo $obj['Key']."\n";
     }
 } catch (Throwable $e) {
-    echo "Error: " . get_class($e) . " - " . $e->getMessage() . "\n";
+    echo 'Error: '.get_class($e).' - '.$e->getMessage()."\n";
     if ($e instanceof Aws\Exception\AwsException) {
         $resp = $e->getResponse();
         if ($resp) {
-            echo "Response: " . $resp->getStatusCode() . "\n";
-            echo (string)$resp->getBody() . "\n";
+            echo 'Response: '.$resp->getStatusCode()."\n";
+            echo (string) $resp->getBody()."\n";
         }
     }
     exit(1);

@@ -1,6 +1,6 @@
+import GameConfig from '../config/GameConfig.js';
 import Enemy from '../entities/Enemy.js';
 import Player from '../entities/Player.js';
-import GameConfig from '../config/GameConfig.js';
 
 /**
  * EntityFactory - Centralized entity creation and configuration
@@ -25,8 +25,8 @@ class EntityFactory {
                     collideWorldBounds: true,
                     bounce: 0,
                     bodySize: { width: 60, height: 100 },
-                    bodyOffset: { x: 48, y: 120 }
-                }
+                    bodyOffset: { x: 48, y: 120 },
+                },
             },
             enemies: {
                 zombie: {
@@ -38,8 +38,8 @@ class EntityFactory {
                         collideWorldBounds: true,
                         bounce: 0.1,
                         mass: GameConfig.combat.knockback.enemyMass,
-                        drag: GameConfig.combat.knockback.enemyDrag
-                    }
+                        drag: GameConfig.combat.knockback.enemyDrag,
+                    },
                 },
                 skeleton: {
                     sprite: 'enemy',
@@ -50,8 +50,8 @@ class EntityFactory {
                         collideWorldBounds: true,
                         bounce: 0.1,
                         mass: GameConfig.combat.knockback.enemyMass,
-                        drag: GameConfig.combat.knockback.enemyDrag
-                    }
+                        drag: GameConfig.combat.knockback.enemyDrag,
+                    },
                 },
                 ghost: {
                     sprite: 'enemy',
@@ -62,8 +62,8 @@ class EntityFactory {
                         collideWorldBounds: true,
                         bounce: 0.1,
                         mass: GameConfig.combat.knockback.enemyMass,
-                        drag: GameConfig.combat.knockback.enemyDrag
-                    }
+                        drag: GameConfig.combat.knockback.enemyDrag,
+                    },
                 },
                 boss: {
                     sprite: 'enemy',
@@ -74,24 +74,24 @@ class EntityFactory {
                         collideWorldBounds: true,
                         bounce: 0.1,
                         mass: GameConfig.combat.knockback.enemyMass * 2,
-                        drag: GameConfig.combat.knockback.enemyDrag
-                    }
-                }
+                        drag: GameConfig.combat.knockback.enemyDrag,
+                    },
+                },
             },
             platforms: {
                 ground: {
                     sprite: 'ground',
                     scale: { x: 1, y: 1 },
                     depth: 10,
-                    static: true
+                    static: true,
                 },
                 floating: {
                     sprite: 'ground',
                     scale: { x: 0.8, y: 0.5 },
                     depth: 10,
-                    static: true
-                }
-            }
+                    static: true,
+                },
+            },
         };
     }
 
@@ -105,12 +105,12 @@ class EntityFactory {
     createPlayer(x, y, overrides = {}) {
         const template = { ...this.entityTemplates.player, ...overrides };
         const player = new Player(this.scene, x, y);
-        
+
         // Apply template configuration if needed
         if (player.sprite) {
             this.applyTemplate(player.sprite, template);
         }
-        
+
         return player;
     }
 
@@ -125,12 +125,12 @@ class EntityFactory {
     createEnemy(x, y, type = 'zombie', overrides = {}) {
         const template = { ...this.entityTemplates.enemies[type], ...overrides };
         const enemy = new Enemy(this.scene, x, y, type);
-        
+
         // Apply template configuration if needed
         if (enemy.sprite) {
             this.applyTemplate(enemy.sprite, template);
         }
-        
+
         return enemy;
     }
 
@@ -144,14 +144,14 @@ class EntityFactory {
      */
     createPlatform(x, y, type = 'ground', overrides = {}) {
         const template = { ...this.entityTemplates.platforms[type], ...overrides };
-        
+
         const platform = this.scene.physics.add.staticSprite(x, y, template.sprite);
         this.applyTemplate(platform, template);
-        
+
         if (template.static) {
             platform.refreshBody();
         }
-        
+
         return platform;
     }
 
@@ -162,10 +162,10 @@ class EntityFactory {
      */
     createEntitiesFromConfig(entityConfigs) {
         const entities = [];
-        
+
         for (const config of entityConfigs) {
             let entity = null;
-            
+
             switch (config.type) {
                 case 'player':
                     entity = this.createPlayer(config.x, config.y, config.overrides);
@@ -177,12 +177,12 @@ class EntityFactory {
                     entity = this.createPlatform(config.x, config.y, config.subtype, config.overrides);
                     break;
             }
-            
+
             if (entity) {
                 entities.push(entity);
             }
         }
-        
+
         return entities;
     }
 
@@ -195,7 +195,7 @@ class EntityFactory {
         if (template.tint) {
             sprite.setTint(template.tint);
         }
-        
+
         if (template.scale) {
             if (typeof template.scale === 'number') {
                 sprite.setScale(template.scale);
@@ -203,35 +203,35 @@ class EntityFactory {
                 sprite.setScale(template.scale.x || 1, template.scale.y || 1);
             }
         }
-        
+
         if (template.depth !== undefined) {
             sprite.setDepth(template.depth);
         }
-        
+
         // Apply physics configuration
         if (template.physics && sprite.body) {
             const physics = template.physics;
-            
+
             if (physics.collideWorldBounds) {
                 sprite.body.setCollideWorldBounds(true);
             }
-            
+
             if (physics.bounce !== undefined) {
                 sprite.body.setBounce(physics.bounce);
             }
-            
+
             if (physics.mass !== undefined) {
                 sprite.body.setMass(physics.mass);
             }
-            
+
             if (physics.drag !== undefined) {
                 sprite.body.setDrag(physics.drag);
             }
-            
+
             if (physics.bodySize) {
                 sprite.body.setSize(physics.bodySize.width, physics.bodySize.height);
             }
-            
+
             if (physics.bodyOffset) {
                 sprite.body.setOffset(physics.bodyOffset.x, physics.bodyOffset.y);
             }
@@ -277,10 +277,10 @@ class EntityFactory {
      */
     createEntityPool(entityType, subtype, poolSize = 10) {
         const pool = [];
-        
+
         for (let i = 0; i < poolSize; i++) {
             let entity = null;
-            
+
             switch (entityType) {
                 case 'enemy':
                     entity = this.createEnemy(0, 0, subtype);
@@ -289,12 +289,12 @@ class EntityFactory {
                     break;
                 // Add other entity types as needed
             }
-            
+
             if (entity) {
                 pool.push(entity);
             }
         }
-        
+
         return pool;
     }
 }

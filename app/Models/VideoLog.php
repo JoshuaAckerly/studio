@@ -5,10 +5,15 @@ namespace App\Models;
 class VideoLog
 {
     public int $id;
+
     public string $title;
+
     public string $date;
+
     public string $thumbnail;
+
     public string $url;
+
     public ?string $description;
 
     public function __construct(array $data)

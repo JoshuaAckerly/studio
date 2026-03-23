@@ -9,7 +9,7 @@
  * This file intentionally omits legacy sidecar/spritesheet/spine self-heal logic.
  */
 import GameConfig from '../config/GameConfig.js';
-import { ALIAS_MAP, createAnimation, createAlias, promoteFirstFrameTexture } from './AnimationHelper.js';
+import { ALIAS_MAP, createAlias, createAnimation, promoteFirstFrameTexture } from './AnimationHelper.js';
 
 export class AssetManager {
     /**
@@ -114,11 +114,17 @@ export class AssetManager {
 
                                 const alias = ALIAS_MAP[animKey];
                                 if (alias) createAlias(scene, animKey, alias, animConfig[animKey]);
-                            } catch { /* ignore */ }
+                            } catch {
+                                /* ignore */
+                            }
                         }
-                    } catch { /* ignore */ }
+                    } catch {
+                        /* ignore */
+                    }
                 });
-            } catch { /* ignore */ }
+            } catch {
+                /* ignore */
+            }
         } catch {
             // ignore top-level failures
         }
@@ -134,18 +140,26 @@ export class AssetManager {
         for (let i = 0; i < frameCount; i++) {
             const key = `${animKey}-${i}`;
             frameKeys.push(key);
-            try { scene.load.image(key, `${baseUrl}${i}.webp`); } catch { /* ignore */ }
+            try {
+                scene.load.image(key, `${baseUrl}${i}.webp`);
+            } catch {
+                /* ignore */
+            }
         }
         try {
             scene.load.once('complete', () => {
                 try {
                     if (!scene.anims.exists(animKey)) {
-                        const frames = frameKeys.map(k => ({ key: k }));
+                        const frames = frameKeys.map((k) => ({ key: k }));
                         scene.anims.create({ key: animKey, frames, frameRate, repeat });
                     }
-                } catch { /* ignore */ }
+                } catch {
+                    /* ignore */
+                }
             });
-        } catch { /* ignore */ }
+        } catch {
+            /* ignore */
+        }
     }
 
     /**
@@ -155,7 +169,6 @@ export class AssetManager {
      * flow we return false.
      */
     static setupSpineData(_scene) {
-         
         try {
             if (GameConfig && GameConfig.useSpine === false) return false;
             return false;
@@ -164,8 +177,9 @@ export class AssetManager {
             return;
         }
     }
-     
 }
 // Developer convenience
-try { if (typeof window !== 'undefined') window.AssetManager = AssetManager; } catch {}
+try {
+    if (typeof window !== 'undefined') window.AssetManager = AssetManager;
+} catch {}
 export default AssetManager;

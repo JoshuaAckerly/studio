@@ -18,7 +18,7 @@ class Enemy extends GameObject {
 
         // Physics manager
         this.physicsManager = new PhysicsManager(scene);
-        
+
         this.createEnemy();
         this.setupComponents();
     }

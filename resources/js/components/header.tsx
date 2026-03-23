@@ -1,7 +1,7 @@
 import React from 'react';
+import { getLoginUrl } from '../env';
 import ApplicationLogo from './ApplicationLogo';
 import NotificationBell from './NotificationBell';
-import { getLoginUrl } from '../env';
 
 interface HeaderProps {
     minimalNav?: boolean;
@@ -10,10 +10,12 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ minimalNav = false }) => {
     const navLinks = [
         { name: 'Home', href: '/' },
-        ...(minimalNav ? [] : [
-            { name: 'Games', href: '/games' },
-            { name: 'About', href: '/about' },
-        ]),
+        ...(minimalNav
+            ? []
+            : [
+                  { name: 'Games', href: '/games' },
+                  { name: 'About', href: '/about' },
+              ]),
         { name: 'Blog', href: '/blog' },
         { name: 'Login', href: getLoginUrl('studio') },
     ];
