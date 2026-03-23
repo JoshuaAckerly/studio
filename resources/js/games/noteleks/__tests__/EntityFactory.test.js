@@ -29,6 +29,9 @@ describe('EntityFactory', () => {
                     addKeys: jest.fn().mockReturnValue({}),
                 },
             },
+            add: {
+                sprite: jest.fn().mockReturnValue(mockSprite),
+            },
             physics: {
                 add: {
                     existing: jest.fn(),
@@ -38,6 +41,12 @@ describe('EntityFactory', () => {
             textures: { exists: jest.fn().mockReturnValue(true) },
         };
         factory = new EntityFactory(mockScene);
+    });
+
+    beforeAll(() => {
+        global.fetch = jest.fn().mockResolvedValue({
+            json: jest.fn().mockResolvedValue({}),
+        });
     });
 
     afterEach(() => {
