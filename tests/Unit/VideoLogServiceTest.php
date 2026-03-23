@@ -42,6 +42,7 @@ class VideoLogServiceTest extends TestCase
         // the protected makeS3Url method via reflection. This avoids depending on
         // the service's S3-use decision which is influenced by the test environment.
         putenv('CLOUDFRONT_DOMAIN=cdn.example.test');
+        config(['media.cloudfront_domain' => 'cdn.example.test']);
         config(['filesystems.default' => 's3']);
 
         // Ensure the application environment is not 'testing' so makeS3Url avoids the proxy branch
@@ -71,6 +72,7 @@ class VideoLogServiceTest extends TestCase
 
         // Cleanup env and Mockery
         putenv('CLOUDFRONT_DOMAIN');
+        config(['media.cloudfront_domain' => null]);
         if ($originalEnv !== null) {
             $this->app['env'] = $originalEnv;
         }
