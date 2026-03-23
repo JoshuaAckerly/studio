@@ -109,8 +109,8 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
-        'name' => env('MAIL_FROM_NAME', 'Example'),
+        'address' => env('MAIL_FROM_ADDRESS', 'admin@graveyardjokes.com'),
+        'name' => env('MAIL_FROM_NAME', 'GraveYardJokes Studios'),
     ],
 
     /*
@@ -122,6 +122,6 @@ return [
     |
     */
 
-    'admin_email' => env('ADMIN_EMAIL', 'your-email@example.com'),
+    'admin_email' => env('ADMIN_EMAIL', 'admin@graveyardjokes.com'),
 
 ];
