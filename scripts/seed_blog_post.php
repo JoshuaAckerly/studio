@@ -1,7 +1,5 @@
 <?php
 
-use App\Models\BlogPost;
-
 $content = '<p>The last few weeks have been heads-down in the best possible way. No single big launch — just a lot of small, deliberate improvements across the whole portfolio, plus some new client-facing work that is starting to take real shape. Here is a full snapshot of what I have been working on.</p>
 
 <h2>Built a Blog (You Are Reading It)</h2>
@@ -52,18 +50,18 @@ $post = \App\Models\BlogPost::where('slug', 'what-i-have-been-building-lately')-
 
 if ($post) {
     $post->update([
-        'content'      => $content,
-        'excerpt'      => 'A full roundup of recent work: DesignRush listing, portfolio page rebuild, SEO service card, starter package promo with real PayPal checkout, a Let\'s Talk bug fix, cross-site analytics, HollowPress upgrades, Noteleks refactoring, and the quieter work of keeping codebases healthy.',
+        'content' => $content,
+        'excerpt' => 'A full roundup of recent work: DesignRush listing, portfolio page rebuild, SEO service card, starter package promo with real PayPal checkout, a Let\'s Talk bug fix, cross-site analytics, HollowPress upgrades, Noteleks refactoring, and the quieter work of keeping codebases healthy.',
         'published_at' => now(),
     ]);
     echo "Blog post updated.\n";
 } else {
     \App\Models\BlogPost::create([
-        'title'        => 'What I Have Been Building Lately',
-        'slug'         => 'what-i-have-been-building-lately',
-        'content'      => $content,
-        'excerpt'      => 'A full roundup of recent work: DesignRush listing, portfolio page rebuild, SEO service card, starter package promo with real PayPal checkout, a Let\'s Talk bug fix, cross-site analytics, HollowPress upgrades, Noteleks refactoring, and the quieter work of keeping codebases healthy.',
-        'author'       => 'Joshua Ackerly',
+        'title' => 'What I Have Been Building Lately',
+        'slug' => 'what-i-have-been-building-lately',
+        'content' => $content,
+        'excerpt' => 'A full roundup of recent work: DesignRush listing, portfolio page rebuild, SEO service card, starter package promo with real PayPal checkout, a Let\'s Talk bug fix, cross-site analytics, HollowPress upgrades, Noteleks refactoring, and the quieter work of keeping codebases healthy.',
+        'author' => 'Joshua Ackerly',
         'published_at' => now(),
     ]);
     echo "Blog post created.\n";

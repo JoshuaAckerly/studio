@@ -86,7 +86,7 @@ class NoteleksGameTest extends TestCase
     public static function authRedirectProvider(): array
     {
         return [
-            'login'    => ['/login'],
+            'login' => ['/login'],
             'register' => ['/register'],
         ];
     }
