@@ -60,6 +60,14 @@ jobs:
       - name: Install Dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
+      - name: PHP Syntax Check
+        run: |
+          find . -name '*.php' -not -path './vendor/*' -print0 | \
+          xargs -0 -n1 php -l
+
+      - name: Run PHPStan
+        run: vendor/bin/phpstan analyse -c phpstan.neon --memory-limit=2G --error-format=github
+
       - name: Copy Environment File
         run: cp .env.example .env
 
@@ -73,9 +81,12 @@ jobs:
         run: php artisan key:generate
 
       - name: Tests
-        run: ./vendor/bin/phpunit --testsuite Unit,Feature
+        run: ./vendor/bin/phpunit --testsuite Unit,Feature --colors=always --coverage-text
         env:
           DB_CONNECTION: mysql
           DB_DATABASE: studio_test
           DB_USERNAME: root
           DB_PASSWORD: ""
+
+      - name: Security audit
+        run: composer audit
