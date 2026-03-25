@@ -61,7 +61,7 @@ const creativeAreas = [
         statusColor: 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400',
         headline: 'Documenting the Journey',
         description:
-            'Raw and honest video logs capturing what it's like to grow from one creative medium into many — the wins, the struggles, and everything in between.',
+            "Raw and honest video logs capturing what it's like to grow from one creative medium into many — the wins, the struggles, and everything in between.",
         cta: { label: 'Watch Logs →', href: '/video-log' },
         bg: 'from-rose-500/10 to-pink-500/10 dark:from-rose-900/20 dark:to-pink-900/20',
         border: 'border-rose-200 dark:border-rose-800',
