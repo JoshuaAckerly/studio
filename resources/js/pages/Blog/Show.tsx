@@ -23,7 +23,7 @@ export default function BlogShow({ post }: Props) {
     return (
         <MainLayout minimalNav>
             <Head>
-                <title>{post.title} - GraveYardJokes Studios Blog</title>
+                <title>{`${post.title} - GraveYardJokes Studios Blog`}</title>
                 <meta name="description" content={post.excerpt ?? post.title} />
                 <meta property="og:title" content={post.title} />
                 <meta property="og:description" content={post.excerpt ?? post.title} />

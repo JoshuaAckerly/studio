@@ -11,6 +11,22 @@ Add or update items as you make progress.
 - [x] Add tests for `AssetManager` frame queuing and `LoadingScene` two-stage preload.
 - [x] Clean up and document public build vs dev-mode boot differences; ensure dev server prefers source modules.
 
+
+random generate rooms
+
+particle system *
+
+sound manager
+
+spine animations
+
+move project to seperte subdomain and refer to that from studio
+
+Make spear thrown by pressing holding
+and relasing the space bar. *
+
+
+
 ## Immediate next tasks (for you)
 
                                                                                  
