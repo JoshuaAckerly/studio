@@ -47,8 +47,7 @@ const creativeAreas = [
         status: 'In Development',
         statusColor: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
         headline: 'Indie Game Development',
-        description:
-            'Building 2D action games with Phaser 3 — learning game design, physics, enemy AI, and interactive storytelling from scratch.',
+        description: 'Building 2D action games with Phaser 3 — learning game design, physics, enemy AI, and interactive storytelling from scratch.',
         cta: null,
         bg: 'from-amber-500/10 to-orange-500/10 dark:from-amber-900/20 dark:to-orange-900/20',
         border: 'border-amber-200 dark:border-amber-800',
@@ -114,9 +113,7 @@ const footerNavigation = {
         { name: 'Video Logs', href: '/video-log' },
         { name: 'Blog', href: '/blog' },
     ],
-    connect: [
-        { name: 'Graveyard Jokes Studios', href: getProjectUrl('graveyardjokes') },
-    ],
+    connect: [{ name: 'Graveyard Jokes Studios', href: getProjectUrl('graveyardjokes') }],
 };
 
 export default function Welcome() {
@@ -163,11 +160,7 @@ export default function Welcome() {
                     <div className="flex">
                         <a href="/" className="-m-1.5 p-1.5">
                             <span className="sr-only">Creative Studio</span>
-                            <img
-                                alt="GraveYard Jokes Studio Logo"
-                                src={`${cdn}/images/GraveYardJokesLogoJester.svg`}
-                                className="h-16 w-auto"
-                            />
+                            <img alt="GraveYard Jokes Studio Logo" src={`${cdn}/images/GraveYardJokesLogoJester.svg`} className="h-16 w-auto" />
                         </a>
                     </div>
                     <div className="flex lg:hidden">
@@ -182,7 +175,11 @@ export default function Welcome() {
                     </div>
                     <div className="mx-auto hidden items-center gap-x-12 lg:flex">
                         {navigation.map((item) => (
-                            <a key={item.name} href={item.href} className="text-sm/6 font-semibold text-gray-900 hover:text-gray-600 dark:text-white dark:hover:text-gray-300">
+                            <a
+                                key={item.name}
+                                href={item.href}
+                                className="text-sm/6 font-semibold text-gray-900 hover:text-gray-600 dark:text-white dark:hover:text-gray-300"
+                            >
                                 {item.name}
                             </a>
                         ))}
@@ -196,7 +193,11 @@ export default function Welcome() {
                                 <span className="sr-only">GraveYard Jokes Studios</span>
                                 <img alt="GraveYard Jokes Studios Logo" src={`${cdn}/images/GraveYardJokesLogoJester.svg`} className="h-20 w-auto" />
                             </a>
-                            <button type="button" onClick={() => setMobileMenuOpen(false)} className="-m-2.5 rounded-md p-2.5 text-gray-700 dark:text-gray-200">
+                            <button
+                                type="button"
+                                onClick={() => setMobileMenuOpen(false)}
+                                className="-m-2.5 rounded-md p-2.5 text-gray-700 dark:text-gray-200"
+                            >
                                 <span className="sr-only">Close menu</span>
                                 <XMarkIcon aria-hidden="true" className="size-6" />
                             </button>
@@ -225,7 +226,10 @@ export default function Welcome() {
                 <div className="relative isolate overflow-hidden bg-gradient-to-b from-indigo-100/20 dark:from-indigo-900/10">
                     <div aria-hidden="true" className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80">
                         <div
-                            style={{ clipPath: 'polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)' }}
+                            style={{
+                                clipPath:
+                                    'polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)',
+                            }}
                             className="relative left-[calc(50%-11rem)] aspect-1155/678 w-144.5 -translate-x-1/2 rotate-30 bg-gradient-to-tr from-indigo-300 to-purple-400 opacity-20 sm:left-[calc(50%-30rem)] sm:w-288.75 dark:from-indigo-800 dark:to-purple-900 dark:opacity-30"
                         />
                     </div>
@@ -239,11 +243,10 @@ export default function Welcome() {
                                 </span>
                                 Actively creating
                             </div>
-                            <h1 className="text-5xl font-bold tracking-tight text-gray-900 sm:text-7xl dark:text-white">
-                                Creative Studio
-                            </h1>
+                            <h1 className="text-5xl font-bold tracking-tight text-gray-900 sm:text-7xl dark:text-white">Creative Studio</h1>
                             <p className="mt-6 text-lg/8 text-gray-600 dark:text-gray-400">
-                                A musician's journey into becoming a well-rounded creative. Music, visual art, game development, and honest documentation of the process — growing with peace, fun, and intention.
+                                A musician's journey into becoming a well-rounded creative. Music, visual art, game development, and honest
+                                documentation of the process — growing with peace, fun, and intention.
                             </p>
                             <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
                                 <Link
@@ -252,7 +255,10 @@ export default function Welcome() {
                                 >
                                     View Gallery
                                 </Link>
-                                <Link href="/video-log" className="rounded-full border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10">
+                                <Link
+                                    href="/video-log"
+                                    className="rounded-full border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+                                >
                                     Video Logs
                                 </Link>
                                 <Link href="/blog" className="text-sm/6 font-semibold text-gray-900 dark:text-white">
@@ -286,9 +292,7 @@ export default function Welcome() {
                 <div className="mx-auto max-w-7xl px-6 py-24 lg:px-8">
                     <div className="mx-auto max-w-2xl text-center">
                         <h2 className="text-base/7 font-semibold text-indigo-600 dark:text-indigo-400">What I Create</h2>
-                        <p className="mt-2 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl dark:text-white">
-                            Four creative pillars
-                        </p>
+                        <p className="mt-2 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl dark:text-white">Four creative pillars</p>
                         <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
                             Each area feeds the others — music inspires visuals, visuals inspire games, games inspire stories.
                         </p>
@@ -307,11 +311,14 @@ export default function Welcome() {
                                     </span>
                                 </div>
                                 <div className="mt-4 flex flex-1 flex-col">
-                                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{area.label}</p>
+                                    <p className="text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400">{area.label}</p>
                                     <h3 className="mt-1 text-lg font-semibold text-gray-900 dark:text-white">{area.headline}</h3>
                                     <p className="mt-3 flex-1 text-sm text-gray-600 dark:text-gray-400">{area.description}</p>
                                     {area.cta && (
-                                        <a href={area.cta.href} className="mt-5 text-sm font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">
+                                        <a
+                                            href={area.cta.href}
+                                            className="mt-5 text-sm font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                                        >
                                             {area.cta.label}
                                         </a>
                                     )}
@@ -332,17 +339,26 @@ export default function Welcome() {
                         </div>
                         <ul className="mx-auto mt-10 grid max-w-2xl grid-cols-1 gap-4 sm:grid-cols-2 lg:max-w-none lg:gap-6">
                             {nowItems.map((item, i) => (
-                                <li key={i} className="flex items-start gap-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5">
+                                <li
+                                    key={i}
+                                    className="flex items-start gap-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5"
+                                >
                                     <span className="text-2xl">{item.emoji}</span>
                                     <p className="text-sm text-gray-700 dark:text-gray-300">{item.text}</p>
                                 </li>
                             ))}
                         </ul>
                         <div className="mt-10 flex flex-wrap gap-4">
-                            <Link href="/blog" className="rounded-full bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-gray-700 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100">
+                            <Link
+                                href="/blog"
+                                className="rounded-full bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-gray-700 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100"
+                            >
                                 Read the blog for updates
                             </Link>
-                            <Link href="/video-log" className="rounded-full border border-gray-300 px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-white/20 dark:text-white dark:hover:bg-white/10">
+                            <Link
+                                href="/video-log"
+                                className="rounded-full border border-gray-300 px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
+                            >
                                 Watch video logs
                             </Link>
                         </div>
@@ -382,10 +398,16 @@ export default function Welcome() {
                             Whether it's new music, fresh art, or the next chapter of game dev — it all lives here.
                         </p>
                         <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-                            <Link href="/illustrations" className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-indigo-600 shadow-sm hover:bg-indigo-50">
+                            <Link
+                                href="/illustrations"
+                                className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-indigo-600 shadow-sm hover:bg-indigo-50"
+                            >
                                 View Gallery
                             </Link>
-                            <Link href="/blog" className="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10">
+                            <Link
+                                href="/blog"
+                                className="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10"
+                            >
                                 Read the Blog
                             </Link>
                             <Link href="/video-log" className="text-sm/6 font-semibold text-indigo-200 hover:text-white">
@@ -397,7 +419,7 @@ export default function Welcome() {
             </main>
 
             {/* Footer */}
-            <footer className="mx-auto max-w-7xl px-6 pb-12 pt-16 lg:px-8">
+            <footer className="mx-auto max-w-7xl px-6 pt-16 pb-12 lg:px-8">
                 <div className="flex flex-col items-start justify-between gap-8 border-t border-gray-900/10 pt-10 sm:flex-row dark:border-white/10">
                     <div>
                         <img alt="GraveYard Jokes Studios" src={`${cdn}/images/GraveYardJokesLogoJester.svg`} className="h-14" />
@@ -409,7 +431,10 @@ export default function Welcome() {
                             <ul className="mt-4 space-y-3">
                                 {footerNavigation.explore.map((item) => (
                                     <li key={item.name}>
-                                        <a href={item.href} className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+                                        <a
+                                            href={item.href}
+                                            className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                                        >
                                             {item.name}
                                         </a>
                                     </li>
@@ -421,7 +446,10 @@ export default function Welcome() {
                             <ul className="mt-4 space-y-3">
                                 {footerNavigation.connect.map((item) => (
                                     <li key={item.name}>
-                                        <a href={item.href} className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+                                        <a
+                                            href={item.href}
+                                            className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                                        >
                                             {item.name}
                                         </a>
                                     </li>
@@ -430,7 +458,9 @@ export default function Welcome() {
                         </div>
                     </div>
                 </div>
-                <p className="mt-10 text-xs text-gray-500 dark:text-gray-600">&copy; {new Date().getFullYear()} GraveYard Jokes Studios. All rights reserved.</p>
+                <p className="mt-10 text-xs text-gray-500 dark:text-gray-600">
+                    &copy; {new Date().getFullYear()} GraveYard Jokes Studios. All rights reserved.
+                </p>
             </footer>
         </div>
     );
