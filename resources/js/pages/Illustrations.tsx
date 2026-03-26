@@ -1,3 +1,4 @@
+import MainLayout from '@/layouts/main';
 import { Head } from '@inertiajs/react';
 import React, { useEffect, useRef, useState } from 'react';
 
@@ -258,7 +259,7 @@ export default function Illustrations() {
     const isFacebook = items.length > 0 && !!items[0].embed_url;
 
     return (
-        <>
+        <MainLayout>
             <Head>
                 <title>Gallery - GraveYard Jokes Studio</title>
                 <meta
@@ -345,6 +346,6 @@ export default function Illustrations() {
                         </div>
                     </div>
                 ))}
-        </>
+        </MainLayout>
     );
 }

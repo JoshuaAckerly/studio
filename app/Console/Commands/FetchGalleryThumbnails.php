@@ -12,12 +12,19 @@ class FetchGalleryThumbnails extends Command
     protected $signature = 'gallery:fetch-thumbnails
                             {--force : Re-fetch thumbnails even if already set}
                             {--token= : Facebook App Access Token (overrides FACEBOOK_APP_ACCESS_TOKEN env)}
-                            {--scrape : Use page scraping instead of Graph API (no credentials needed)}';
+                            {--scrape : Use page scraping instead of Graph API (no credentials needed)}
+                            {--import=* : Facebook post URLs to import (e.g. https://www.facebook.com/photo?fbid=123)}';
 
     protected $description = 'Fetch thumbnails for Facebook gallery posts via the Graph API or page scraping';
 
     public function handle(): int
     {
+        // --import: add new post URLs before fetching thumbnails
+        $importUrls = $this->option('import');
+        if ($importUrls) {
+            $this->importPosts($importUrls);
+        }
+
         $useScrape = $this->option('scrape');
         $rawToken = $this->option('token') ?? config('services.facebook.app_access_token');
 
@@ -214,5 +221,38 @@ class FetchGalleryThumbnails extends Command
 
             return null;
         }
+    }
+
+    private function importPosts(array $urls): void
+    {
+        $this->info('Importing '.count($urls).' post(s)…');
+        $imported = 0;
+        $skipped = 0;
+
+        foreach ($urls as $url) {
+            $url = trim($url);
+            if (! $url) {
+                continue;
+            }
+
+            if (FacebookGalleryPost::where('post_url', $url)->exists()) {
+                $this->line("  Skipped (already exists): {$url}");
+                $skipped++;
+
+                continue;
+            }
+
+            FacebookGalleryPost::create([
+                'post_url' => $url,
+                'title' => null,
+                'is_active' => true,
+                'sort_order' => 0,
+            ]);
+
+            $this->line("  Imported: {$url}");
+            $imported++;
+        }
+
+        $this->info("Import done. Imported: {$imported}, Skipped: {$skipped}");
     }
 }

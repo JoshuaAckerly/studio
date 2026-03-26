@@ -78,4 +78,33 @@ class FetchGalleryThumbnailsTest extends TestCase
         // Post was loaded for re-fetching (command ran without "No posts" message)
         $this->assertDatabaseHas('facebook_gallery_posts', ['title' => 'Force Test']);
     }
+
+    public function test_import_option_creates_new_post(): void
+    {
+        $url = 'https://www.facebook.com/photo?fbid=999999999';
+
+        // HTTP will fail in test environment — use run() and assert DB state only
+        $this->artisan('gallery:fetch-thumbnails', ['--import' => [$url]])->run();
+
+        $this->assertDatabaseHas('facebook_gallery_posts', [
+            'post_url'  => $url,
+            'is_active' => true,
+        ]);
+    }
+
+    public function test_import_option_skips_duplicate_urls(): void
+    {
+        $url = 'https://www.facebook.com/photo?fbid=111111111';
+
+        FacebookGalleryPost::create([
+            'post_url'   => $url,
+            'is_active'  => true,
+            'sort_order' => 0,
+        ]);
+
+        // Running import again with same URL should not duplicate the record
+        $this->artisan('gallery:fetch-thumbnails', ['--import' => [$url]])->run();
+
+        $this->assertSame(1, FacebookGalleryPost::where('post_url', $url)->count());
+    }
 }
