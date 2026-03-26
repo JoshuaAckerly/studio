@@ -23,7 +23,7 @@ class TikTokVideoTest extends TestCase
 
         $video = new TikTokVideo([
             'tiktok_video_id' => '7123456789012345678',
-            'post_type'       => 'video',
+            'post_type' => 'video',
         ]);
 
         $this->assertSame(
@@ -38,7 +38,7 @@ class TikTokVideoTest extends TestCase
 
         $video = new TikTokVideo([
             'tiktok_video_id' => '111',
-            'post_type'       => 'photo',
+            'post_type' => 'photo',
         ]);
 
         $this->assertSame(
@@ -53,7 +53,7 @@ class TikTokVideoTest extends TestCase
 
         $video = new TikTokVideo([
             'tiktok_video_id' => '999',
-            'post_type'       => null,
+            'post_type' => null,
         ]);
 
         $this->assertStringContainsString('/video/999', $video->video_url);
@@ -61,7 +61,7 @@ class TikTokVideoTest extends TestCase
 
     public function test_is_active_cast_to_boolean(): void
     {
-        $active   = new TikTokVideo(['is_active' => 1]);
+        $active = new TikTokVideo(['is_active' => 1]);
         $inactive = new TikTokVideo(['is_active' => 0]);
 
         $this->assertTrue($active->is_active);
@@ -80,12 +80,12 @@ class TikTokVideoTest extends TestCase
     {
         $video = new TikTokVideo([
             'tiktok_video_id' => 'abc',
-            'post_type'       => 'video',
-            'title'           => 'My Video',
-            'description'     => 'A description',
-            'thumbnail_url'   => 'https://cdn.test/thumb.jpg',
-            'is_active'       => true,
-            'sort_order'      => 3,
+            'post_type' => 'video',
+            'title' => 'My Video',
+            'description' => 'A description',
+            'thumbnail_url' => 'https://cdn.test/thumb.jpg',
+            'is_active' => true,
+            'sort_order' => 3,
         ]);
 
         $this->assertSame('abc', $video->tiktok_video_id);

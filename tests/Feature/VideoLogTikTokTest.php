@@ -25,13 +25,13 @@ class VideoLogTikTokTest extends TestCase
     {
         TikTokVideo::create([
             'tiktok_video_id' => '7123456789012345678',
-            'post_type'       => 'video',
-            'title'           => 'Studio Update',
-            'description'     => 'Working on a track',
-            'thumbnail_url'   => 'https://p16.tiktokcdn.com/thumb.jpg',
-            'posted_at'       => '2026-03-20',
-            'is_active'       => true,
-            'sort_order'      => 0,
+            'post_type' => 'video',
+            'title' => 'Studio Update',
+            'description' => 'Working on a track',
+            'thumbnail_url' => 'https://p16.tiktokcdn.com/thumb.jpg',
+            'posted_at' => '2026-03-20',
+            'is_active' => true,
+            'sort_order' => 0,
         ]);
 
         $response = $this->getJson('/api/video-logs');
@@ -56,14 +56,14 @@ class VideoLogTikTokTest extends TestCase
     {
         TikTokVideo::create([
             'tiktok_video_id' => '9999',
-            'post_type'       => 'video',
-            'title'           => 'Embed Test',
-            'is_active'       => true,
-            'sort_order'      => 0,
+            'post_type' => 'video',
+            'title' => 'Embed Test',
+            'is_active' => true,
+            'sort_order' => 0,
         ]);
 
         $response = $this->getJson('/api/video-logs');
-        $item     = collect($response->json('data'))->firstWhere('title', 'Embed Test');
+        $item = collect($response->json('data'))->firstWhere('title', 'Embed Test');
 
         $this->assertStringContainsString('tiktok.com/embed/v2/9999', $item['embed_url']);
     }
@@ -72,22 +72,22 @@ class VideoLogTikTokTest extends TestCase
     {
         TikTokVideo::create([
             'tiktok_video_id' => 'active1',
-            'post_type'       => 'video',
-            'title'           => 'Active',
-            'is_active'       => true,
-            'sort_order'      => 0,
+            'post_type' => 'video',
+            'title' => 'Active',
+            'is_active' => true,
+            'sort_order' => 0,
         ]);
 
         TikTokVideo::create([
             'tiktok_video_id' => 'inactive1',
-            'post_type'       => 'video',
-            'title'           => 'Inactive',
-            'is_active'       => false,
-            'sort_order'      => 0,
+            'post_type' => 'video',
+            'title' => 'Inactive',
+            'is_active' => false,
+            'sort_order' => 0,
         ]);
 
         $response = $this->getJson('/api/video-logs');
-        $data     = $response->json('data');
+        $data = $response->json('data');
 
         $titles = collect($data)->pluck('title')->toArray();
         $this->assertContains('Active', $titles);
@@ -112,15 +112,15 @@ class VideoLogTikTokTest extends TestCase
     {
         TikTokVideo::create([
             'tiktok_video_id' => 'date_test_1',
-            'post_type'       => 'video',
-            'title'           => 'Date Test',
-            'posted_at'       => '2026-02-14',
-            'is_active'       => true,
-            'sort_order'      => 0,
+            'post_type' => 'video',
+            'title' => 'Date Test',
+            'posted_at' => '2026-02-14',
+            'is_active' => true,
+            'sort_order' => 0,
         ]);
 
         $response = $this->getJson('/api/video-logs');
-        $item     = collect($response->json('data'))->firstWhere('title', 'Date Test');
+        $item = collect($response->json('data'))->firstWhere('title', 'Date Test');
 
         $this->assertSame('2026-02-14', $item['date']);
     }

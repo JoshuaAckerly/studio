@@ -23,24 +23,24 @@ class FetchTikTokThumbnailsTest extends TestCase
     public function test_command_reports_no_videos_when_table_is_empty(): void
     {
         $this->artisan('tiktok:fetch-thumbnails')
-             ->expectsOutput('No videos need thumbnails.')
-             ->assertExitCode(0);
+            ->expectsOutput('No videos need thumbnails.')
+            ->assertExitCode(0);
     }
 
     public function test_command_skips_videos_with_existing_thumbnail_by_default(): void
     {
         TikTokVideo::create([
             'tiktok_video_id' => '111',
-            'post_type'       => 'video',
-            'title'           => 'Has Thumb',
-            'thumbnail_url'   => 'https://cdn.test/existing.jpg',
-            'is_active'       => true,
-            'sort_order'      => 0,
+            'post_type' => 'video',
+            'title' => 'Has Thumb',
+            'thumbnail_url' => 'https://cdn.test/existing.jpg',
+            'is_active' => true,
+            'sort_order' => 0,
         ]);
 
         $this->artisan('tiktok:fetch-thumbnails')
-             ->expectsOutput('No videos need thumbnails.')
-             ->assertExitCode(0);
+            ->expectsOutput('No videos need thumbnails.')
+            ->assertExitCode(0);
     }
 
     public function test_command_import_extracts_video_id_from_video_url(): void
@@ -54,7 +54,7 @@ class FetchTikTokThumbnailsTest extends TestCase
 
         $this->assertDatabaseHas('tiktok_videos', [
             'tiktok_video_id' => '7999888777666555444',
-            'post_type'       => 'video',
+            'post_type' => 'video',
         ]);
     }
 
@@ -66,7 +66,7 @@ class FetchTikTokThumbnailsTest extends TestCase
 
         $this->assertDatabaseHas('tiktok_videos', [
             'tiktok_video_id' => '1234567890',
-            'post_type'       => 'photo',
+            'post_type' => 'photo',
         ]);
     }
 
@@ -74,11 +74,11 @@ class FetchTikTokThumbnailsTest extends TestCase
     {
         TikTokVideo::create([
             'tiktok_video_id' => '555',
-            'post_type'       => 'video',
-            'title'           => 'Existing',
-            'thumbnail_url'   => 'https://cdn.test/t.jpg',
-            'is_active'       => true,
-            'sort_order'      => 0,
+            'post_type' => 'video',
+            'title' => 'Existing',
+            'thumbnail_url' => 'https://cdn.test/t.jpg',
+            'is_active' => true,
+            'sort_order' => 0,
         ]);
 
         $this->artisan('tiktok:fetch-thumbnails', [
@@ -93,6 +93,6 @@ class FetchTikTokThumbnailsTest extends TestCase
         $this->artisan('tiktok:fetch-thumbnails', [
             '--import' => ['https://example.com/not-a-tiktok-url'],
         ])->expectsOutput('Could not extract video ID from: https://example.com/not-a-tiktok-url')
-          ->assertExitCode(0);
+            ->assertExitCode(0);
     }
 }

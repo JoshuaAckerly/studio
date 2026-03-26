@@ -14,8 +14,8 @@ class FacebookGalleryPostTest extends TestCase
         ]);
 
         $expected = 'https://www.facebook.com/plugins/post.php?href='
-            . urlencode('https://www.facebook.com/graveyardjokes/posts/123456')
-            . '&width=500&show_text=false';
+            .urlencode('https://www.facebook.com/graveyardjokes/posts/123456')
+            .'&width=500&show_text=false';
 
         $this->assertSame($expected, $post->embed_url);
     }
@@ -49,7 +49,7 @@ class FacebookGalleryPostTest extends TestCase
 
     public function test_is_active_cast_to_boolean(): void
     {
-        $active   = new FacebookGalleryPost(['is_active' => 1]);
+        $active = new FacebookGalleryPost(['is_active' => 1]);
         $inactive = new FacebookGalleryPost(['is_active' => 0]);
 
         $this->assertTrue($active->is_active);
@@ -67,13 +67,13 @@ class FacebookGalleryPostTest extends TestCase
     public function test_fillable_fields_are_set(): void
     {
         $post = new FacebookGalleryPost([
-            'post_url'      => 'https://facebook.com/page/posts/1',
-            'title'         => 'My Illustration',
-            'description'   => 'Some description',
-            'tags'          => ['art'],
+            'post_url' => 'https://facebook.com/page/posts/1',
+            'title' => 'My Illustration',
+            'description' => 'Some description',
+            'tags' => ['art'],
             'thumbnail_url' => 'https://cdn.test/thumb.jpg',
-            'is_active'     => true,
-            'sort_order'    => 5,
+            'is_active' => true,
+            'sort_order' => 5,
         ]);
 
         $this->assertSame('My Illustration', $post->title);
