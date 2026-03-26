@@ -5,11 +5,11 @@ import { Bars3Icon, ChevronDownIcon, XMarkIcon } from '@heroicons/react/24/outli
 import { useState } from 'react';
 
 import { Head, Link } from '@inertiajs/react';
-import { getProjectUrl } from '../env';
+import { getProjectUrl, getMainSiteUrl } from '../env';
 
 const navigation = [
     { name: 'Gallery', href: '/illustrations' },
-    { name: 'Video Logs', href: '/video-log' },
+    { name: 'Video Log', href: '/video-log' },
     { name: 'Blog', href: '/blog' },
 ];
 
@@ -53,15 +53,15 @@ const creativeAreas = [
         border: 'border-amber-200 dark:border-amber-800',
     },
     {
-        id: 'video',
-        label: 'Video Logs',
-        emoji: '📹',
-        status: 'Ongoing',
-        statusColor: 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400',
-        headline: 'Documenting the Journey',
+        id: 'videolog',
+        label: 'Video Log',
+        emoji: '🎬',
+        status: 'Active',
+        statusColor: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+        headline: 'Behind-the-Scenes Video Updates',
         description:
-            "Raw and honest video logs capturing what it's like to grow from one creative medium into many — the wins, the struggles, and everything in between.",
-        cta: { label: 'Watch Logs →', href: '/video-log' },
+            'Short TikTok-style videos documenting the creative process — game dev progress, music sessions, studio life, and the honest journey of growth.',
+        cta: { label: 'Watch Videos →', href: '/video-log' },
         bg: 'from-rose-500/10 to-pink-500/10 dark:from-rose-900/20 dark:to-pink-900/20',
         border: 'border-rose-200 dark:border-rose-800',
     },
@@ -72,6 +72,7 @@ const nowItems = [
     { emoji: '🖼️', text: 'Adding new illustrations to the gallery' },
     { emoji: '🎮', text: 'Developing Noteleks Heroes — 2D action platformer' },
     { emoji: '📝', text: 'Posting updates on the creative journey via the blog' },
+    { emoji: '🎬', text: 'Sharing behind-the-scenes process videos on TikTok & the video log' },
 ];
 
 const faqs = [
@@ -110,10 +111,12 @@ const faqs = [
 const footerNavigation = {
     explore: [
         { name: 'Gallery', href: '/illustrations' },
-        { name: 'Video Logs', href: '/video-log' },
+        { name: 'Video Log', href: '/video-log' },
         { name: 'Blog', href: '/blog' },
     ],
-    connect: [{ name: 'Graveyard Jokes Studios', href: getProjectUrl('graveyardjokes') }],
+    connect: [
+        { name: 'Graveyard Jokes Studios', href: getMainSiteUrl() },
+    ],
 };
 
 export default function Welcome() {
@@ -255,11 +258,8 @@ export default function Welcome() {
                                 >
                                     View Gallery
                                 </Link>
-                                <Link
-                                    href="/video-log"
-                                    className="rounded-full border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
-                                >
-                                    Video Logs
+                                <Link href="/video-log" className="rounded-full border border-gray-300 px-5 py-2.5 text-sm font-semibold text-gray-900 hover:bg-gray-50 dark:border-white/20 dark:text-white dark:hover:bg-white/10">
+                                    Watch Video Log
                                 </Link>
                                 <Link href="/blog" className="text-sm/6 font-semibold text-gray-900 dark:text-white">
                                     Read the Blog <span aria-hidden="true">→</span>
@@ -274,10 +274,10 @@ export default function Welcome() {
                     <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
                         <dl className="grid grid-cols-2 gap-x-8 gap-y-6 text-center sm:grid-cols-4">
                             {[
-                                { label: 'Creative Areas', value: '4' },
+                                { label: 'Creative Areas', value: '3' },
                                 { label: 'Original Tracks', value: '2+' },
                                 { label: 'Illustrations', value: '20+' },
-                                { label: 'Video Logs', value: '10+' },
+                                { label: 'Gallery Posts', value: '3+' },
                             ].map((stat) => (
                                 <div key={stat.label} className="flex flex-col gap-y-1">
                                     <dt className="text-sm/6 text-gray-600 dark:text-gray-400">{stat.label}</dt>
@@ -292,7 +292,9 @@ export default function Welcome() {
                 <div className="mx-auto max-w-7xl px-6 py-24 lg:px-8">
                     <div className="mx-auto max-w-2xl text-center">
                         <h2 className="text-base/7 font-semibold text-indigo-600 dark:text-indigo-400">What I Create</h2>
-                        <p className="mt-2 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl dark:text-white">Four creative pillars</p>
+                        <p className="mt-2 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl dark:text-white">
+                            Creative pillars
+                        </p>
                         <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
                             Each area feeds the others — music inspires visuals, visuals inspire games, games inspire stories.
                         </p>
@@ -355,11 +357,8 @@ export default function Welcome() {
                             >
                                 Read the blog for updates
                             </Link>
-                            <Link
-                                href="/video-log"
-                                className="rounded-full border border-gray-300 px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
-                            >
-                                Watch video logs
+                            <Link href="/video-log" className="rounded-full border border-gray-300 px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-100 dark:border-white/20 dark:text-white dark:hover:bg-white/10">
+                                Watch Video Logs
                             </Link>
                         </div>
                     </div>
@@ -410,8 +409,8 @@ export default function Welcome() {
                             >
                                 Read the Blog
                             </Link>
-                            <Link href="/video-log" className="text-sm/6 font-semibold text-indigo-200 hover:text-white">
-                                Video Logs <span aria-hidden="true">→</span>
+                            <Link href="/video-log" className="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10">
+                                Watch Video Log
                             </Link>
                         </div>
                     </div>

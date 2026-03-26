@@ -18,6 +18,7 @@ const getProtocol = () => (getBaseDomain() === 'graveyardjokes.local' ? 'http' :
 
 export const getAuthSystemUrl = () => `${getProtocol()}://auth-system.${getBaseDomain()}`;
 export const getProjectUrl = (subdomain: string) => `${getProtocol()}://${subdomain}.${getBaseDomain()}`;
+export const getMainSiteUrl = () => `${getProtocol()}://${getBaseDomain()}`;
 
 export const getLoginUrl = (subdomain: string) => {
     const authUrl = getAuthSystemUrl();

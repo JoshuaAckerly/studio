@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\VideoLogResource;
+use App\Models\TikTokVideo;
 use App\Services\VideoLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -25,6 +26,28 @@ class VideoLogController extends Controller
 
     public function api(Request $request)
     {
+        $tikTokVideos = TikTokVideo::active()
+            ->orderBy('sort_order')
+            ->orderByDesc('posted_at')
+            ->orderByDesc('created_at')
+            ->get();
+
+        if ($tikTokVideos->isNotEmpty()) {
+            $items = $tikTokVideos->map(fn ($video) => [
+                'id'          => $video->id,
+                'title'       => $video->title,
+                'date'        => $video->posted_at
+                    ? $video->posted_at->format('Y-m-d')
+                    : $video->created_at->format('Y-m-d'),
+                'thumbnail'   => $video->thumbnail_url ?? '',
+                'url'         => $video->video_url,
+                'embed_url'   => $video->embed_url,
+                'description' => $video->description,
+            ]);
+
+            return response()->json(['data' => $items]);
+        }
+
         $items = $this->videoLogService->list();
 
         return VideoLogResource::collection($items);

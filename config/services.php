@@ -52,4 +52,12 @@ return [
         'track_token' => env('AUTHSYSTEM_TRACK_TOKEN'),
     ],
 
+    'tiktok' => [
+        'username' => env('TIKTOK_USERNAME', 'graveyardjokes'),
+    ],
+
+    'facebook' => [
+        'app_access_token' => env('FACEBOOK_APP_ACCESS_TOKEN'),
+    ],
+
 ];
