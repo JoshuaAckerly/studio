@@ -159,7 +159,7 @@ export default function Welcome() {
             <header className="absolute inset-x-0 top-0 z-50">
                 <nav aria-label="Global" className="flex items-center justify-between p-6 lg:px-8">
                     <div className="flex">
-                        <a href="/" className="-m-1.5 p-1.5">
+                        <a href="https://graveyardjokes.com" className="-m-1.5 p-1.5">
                             <span className="sr-only">Creative Studio</span>
                             <img alt="GraveYard Jokes Studio Logo" src={`${cdn}/images/GraveYardJokesLogoJester.svg`} className="h-16 w-auto" />
                         </a>
