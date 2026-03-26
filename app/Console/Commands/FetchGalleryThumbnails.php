@@ -13,12 +13,34 @@ class FetchGalleryThumbnails extends Command
                             {--force : Re-fetch thumbnails even if already set}
                             {--token= : Facebook App Access Token (overrides FACEBOOK_APP_ACCESS_TOKEN env)}
                             {--scrape : Use page scraping instead of Graph API (no credentials needed)}
-                            {--import=* : Facebook post URLs to import (e.g. https://www.facebook.com/photo?fbid=123)}';
+                            {--import=* : Facebook post URLs to import (e.g. https://www.facebook.com/photo?fbid=123)}
+                            {--page= : Facebook profile/page URL — discover and import all photos from its Photos tab}';
 
     protected $description = 'Fetch thumbnails for Facebook gallery posts via the Graph API or page scraping';
 
     public function handle(): int
     {
+        // --page: discover photo URLs from a Facebook profile/page photos tab
+        $pageUrl = $this->option('page');
+
+        // Build the initial client early so --page can use it
+        $discoveryClient = new Client([
+            'timeout' => 20,
+            'allow_redirects' => true,
+            'headers' => [
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language' => 'en-US,en;q=0.9',
+            ],
+        ]);
+
+        if ($pageUrl) {
+            $discovered = $this->discoverPhotosFromPage($discoveryClient, $pageUrl);
+            if ($discovered) {
+                $this->importPosts($discovered);
+            }
+        }
+
         // --import: add new post URLs before fetching thumbnails
         $importUrls = $this->option('import');
         if ($importUrls) {
@@ -34,15 +56,7 @@ class FetchGalleryThumbnails extends Command
             $this->warn('No Facebook access token found — falling back to page scraping.');
         }
 
-        $client = new Client([
-            'timeout' => 15,
-            'allow_redirects' => true,
-            'headers' => [
-                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-                'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'Accept-Language' => 'en-US,en;q=0.9',
-            ],
-        ]);
+        $client = $discoveryClient;
 
         $token = null;
 
@@ -221,6 +235,78 @@ class FetchGalleryThumbnails extends Command
 
             return null;
         }
+    }
+
+    private function discoverPhotosFromPage(Client $client, string $pageUrl): array
+    {
+        // mbasic.facebook.com is the lightweight mobile version — much more
+        // parse-friendly and less aggressively blocked than the full site.
+        $mbasic = str_replace(
+            ['https://www.facebook.com', 'http://www.facebook.com', 'https://facebook.com'],
+            'https://mbasic.facebook.com',
+            $pageUrl
+        );
+
+        $base = rtrim($mbasic, '/');
+
+        // For profile.php?id=NNN style, photos tab is ?id=NNN&v=photos
+        if (str_contains($base, 'profile.php')) {
+            $photosUrl = $base.'&v=photos';
+        } else {
+            $photosUrl = $base.'/photos';
+        }
+
+        $candidateUrls = [$photosUrl, $base];
+
+        $fbids = [];
+
+        foreach ($candidateUrls as $url) {
+            $this->info("Scanning: {$url}");
+            try {
+                $response = $client->get($url);
+                $html = (string) $response->getBody();
+
+                // Extract fbid=NNN from href/JSON anywhere in the page
+                preg_match_all('/fbid[=\\\\"]+(\d{10,})/i', $html, $m);
+                foreach ($m[1] as $id) {
+                    $fbids[$id] = true;
+                }
+
+                // Also capture photo?fbid=NNN patterns
+                preg_match_all('/photo\?fbid=(\d{10,})/i', $html, $m2);
+                foreach ($m2[1] as $id) {
+                    $fbids[$id] = true;
+                }
+
+                // mbasic uses /photo.php?fbid=NNN
+                preg_match_all('/photo\.php\?fbid=(\d{10,})/i', $html, $m3);
+                foreach ($m3[1] as $id) {
+                    $fbids[$id] = true;
+                }
+            } catch (RequestException $e) {
+                $status = $e->hasResponse() ? $e->getResponse()->getStatusCode() : 'N/A';
+                $this->warn("Could not fetch {$url} (HTTP {$status}) — skipping.");
+            }
+
+            usleep(500_000); // 0.5 s between requests
+        }
+
+        if (empty($fbids)) {
+            $this->warn('No photo IDs found on the profile page. The page may be private or require login.');
+            $this->line('Open your Facebook profile, click a photo, and copy the URL, then use:');
+            $this->line('  php artisan gallery:fetch-thumbnails --import="https://www.facebook.com/photo?fbid=NNN"');
+
+            return [];
+        }
+
+        $photoUrls = array_map(
+            fn ($id) => "https://www.facebook.com/photo?fbid={$id}",
+            array_keys($fbids)
+        );
+
+        $this->info('Discovered '.count($photoUrls).' photo URL(s) from the profile page.');
+
+        return $photoUrls;
     }
 
     private function importPosts(array $urls): void
