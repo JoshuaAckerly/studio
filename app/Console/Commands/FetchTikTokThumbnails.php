@@ -18,11 +18,11 @@ class FetchTikTokThumbnails extends Command
     public function handle(): int
     {
         $username = config('services.tiktok.username', 'graveyardjokes');
-        $client   = new Client([
-            'timeout'         => 15,
+        $client = new Client([
+            'timeout' => 15,
             'allow_redirects' => true,
-            'http_errors'     => false,
-            'headers'         => [
+            'http_errors' => false,
+            'headers' => [
                 'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
             ],
         ]);
@@ -42,13 +42,14 @@ class FetchTikTokThumbnails extends Command
 
         if ($videos->isEmpty()) {
             $this->info('No videos need thumbnails.');
+
             return self::SUCCESS;
         }
 
         $this->info("Fetching thumbnails for {$videos->count()} video(s)…");
-        $bar     = $this->output->createProgressBar($videos->count());
+        $bar = $this->output->createProgressBar($videos->count());
         $updated = 0;
-        $failed  = 0;
+        $failed = 0;
 
         $bar->start();
 
@@ -88,24 +89,26 @@ class FetchTikTokThumbnails extends Command
 
     private function importVideos(Client $client, array $urls, string $username): void
     {
-        $this->info('Importing ' . count($urls) . ' video(s)…');
+        $this->info('Importing '.count($urls).' video(s)…');
         $imported = 0;
-        $skipped  = 0;
+        $skipped = 0;
 
         foreach ($urls as $url) {
             // Accept both /video/ and /photo/ URLs
             if (! preg_match('#/(?:video|photo)/(\d+)#', $url, $m)) {
                 $this->warn("Could not extract video ID from: {$url}");
                 $skipped++;
+
                 continue;
             }
 
-            $videoId  = $m[1];
+            $videoId = $m[1];
             $postType = str_contains($url, '/photo/') ? 'photo' : 'video';
 
             if (TikTokVideo::where('tiktok_video_id', $videoId)->exists()) {
                 $this->line("  Skipped (already exists): {$videoId}");
                 $skipped++;
+
                 continue;
             }
 
@@ -113,12 +116,12 @@ class FetchTikTokThumbnails extends Command
 
             TikTokVideo::create([
                 'tiktok_video_id' => $videoId,
-                'post_type'       => $postType,
-                'title'           => $oembed['title'] ?? 'TikTok Video',
-                'description'     => null,
-                'thumbnail_url'   => $oembed['thumbnail_url'] ?? null,
-                'is_active'       => true,
-                'sort_order'      => 0,
+                'post_type' => $postType,
+                'title' => $oembed['title'] ?? 'TikTok Video',
+                'description' => null,
+                'thumbnail_url' => $oembed['thumbnail_url'] ?? null,
+                'is_active' => true,
+                'sort_order' => 0,
             ]);
 
             $this->line("  Imported: {$videoId}");
@@ -139,6 +142,7 @@ class FetchTikTokThumbnails extends Command
             if ($response->getStatusCode() !== 200) {
                 $this->newLine();
                 $this->warn("oEmbed returned HTTP {$response->getStatusCode()} for {$videoUrl}");
+
                 return null;
             }
 
@@ -146,14 +150,16 @@ class FetchTikTokThumbnails extends Command
 
             if (empty($data) || isset($data['status_code'])) {
                 $this->newLine();
-                $this->warn("oEmbed error for {$videoUrl}: " . json_encode($data));
+                $this->warn("oEmbed error for {$videoUrl}: ".json_encode($data));
+
                 return null;
             }
 
             return $data;
         } catch (RequestException $e) {
             $this->newLine();
-            $this->error("Request failed for {$videoUrl}: " . $e->getMessage());
+            $this->error("Request failed for {$videoUrl}: ".$e->getMessage());
+
             return null;
         }
     }

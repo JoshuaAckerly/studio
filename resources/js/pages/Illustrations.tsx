@@ -23,12 +23,7 @@ function FacebookCard({ item, onClick }: { item: Illustration; onClick: () => vo
         >
             <div className="relative flex h-56 w-full items-center justify-center overflow-hidden bg-[#1877F2]/10 md:h-64 lg:h-72">
                 {item.thumbnail_url ? (
-                    <img
-                        src={item.thumbnail_url}
-                        alt={item.title ?? item.filename}
-                        loading="lazy"
-                        className="h-full w-full object-cover"
-                    />
+                    <img src={item.thumbnail_url} alt={item.title ?? item.filename} loading="lazy" className="h-full w-full object-cover" />
                 ) : (
                     <svg viewBox="0 0 24 24" className="h-16 w-16 text-[#1877F2]" fill="currentColor" aria-hidden="true">
                         <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796V24C19.612 23.094 24 18.1 24 12.073z" />
@@ -39,12 +34,8 @@ function FacebookCard({ item, onClick }: { item: Illustration; onClick: () => vo
                 </div>
             </div>
             <div className="p-3">
-                {item.title && item.title !== 'Photo' && (
-                    <h3 className="truncate text-sm font-semibold text-foreground">{item.title}</h3>
-                )}
-                {item.description && (
-                    <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{item.description}</p>
-                )}
+                {item.title && item.title !== 'Photo' && <h3 className="truncate text-sm font-semibold text-foreground">{item.title}</h3>}
+                {item.description && <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{item.description}</p>}
                 {item.tags && item.tags.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-1">
                         {item.tags.map((tag) => (
@@ -176,12 +167,8 @@ function FacebookModal({ item, onClose }: { item: Illustration; onClose: () => v
                         scrolling="no"
                     />
                     <div className="bg-white px-4 py-3">
-                        {item.title && item.title !== 'Photo' && (
-                            <p className="mb-1 text-sm font-semibold text-gray-900">{item.title}</p>
-                        )}
-                        {item.description && (
-                            <p className="mb-2 text-sm text-gray-600">{item.description}</p>
-                        )}
+                        {item.title && item.title !== 'Photo' && <p className="mb-1 text-sm font-semibold text-gray-900">{item.title}</p>}
+                        {item.description && <p className="mb-2 text-sm text-gray-600">{item.description}</p>}
                         {item.tags && item.tags.length > 0 && (
                             <div className="mb-3 flex flex-wrap gap-1">
                                 {item.tags.map((tag) => (
@@ -238,9 +225,7 @@ function FadeInCard({ children, index }: { children: React.ReactNode; index: num
         <div
             ref={ref}
             style={{ transitionDelay: visible ? `${(index % 6) * 80}ms` : '0ms' }}
-            className={`transition-all duration-500 ease-out ${
-                visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-            }`}
+            className={`transition-all duration-500 ease-out ${visible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}
         >
             {children}
         </div>
@@ -280,7 +265,10 @@ export default function Illustrations() {
                     name="description"
                     content="Browse our gallery of original artwork, illustrations, and creative visual content from GraveYard Jokes Studio."
                 />
-                <meta name="keywords" content="illustrations, digital art, visual art, artwork gallery, digital illustrations, creative artwork, original art" />
+                <meta
+                    name="keywords"
+                    content="illustrations, digital art, visual art, artwork gallery, digital illustrations, creative artwork, original art"
+                />
                 <meta property="og:title" content="Gallery - GraveYard Jokes Studio" />
                 <meta property="og:description" content="Explore our collection of original digital illustrations and visual artwork." />
                 <meta property="og:type" content="website" />
@@ -328,8 +316,8 @@ export default function Illustrations() {
             </div>
 
             {/* Modal */}
-            {selected && (
-                selected.embed_url ? (
+            {selected &&
+                (selected.embed_url ? (
                     <FacebookModal item={selected} onClose={() => setSelected(null)} />
                 ) : (
                     <div
@@ -337,7 +325,10 @@ export default function Illustrations() {
                         onClick={() => setSelected(null)}
                     >
                         <div className="relative mx-4 max-h-[90vh] w-full max-w-4xl" onClick={(e) => e.stopPropagation()}>
-                            <button onClick={() => setSelected(null)} className="absolute -top-12 right-0 z-10 text-2xl font-bold text-white hover:text-gray-300">
+                            <button
+                                onClick={() => setSelected(null)}
+                                className="absolute -top-12 right-0 z-10 text-2xl font-bold text-white hover:text-gray-300"
+                            >
                                 ✕
                             </button>
                             <div className="overflow-hidden rounded-lg bg-gray-900">
@@ -353,8 +344,7 @@ export default function Illustrations() {
                             </div>
                         </div>
                     </div>
-                )
-            )}
+                ))}
         </>
     );
 }

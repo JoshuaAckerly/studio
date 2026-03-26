@@ -22,12 +22,7 @@ function TikTokCard({ item, onClick }: { item: VideoItem; onClick: () => void })
             <button onClick={onClick} className="w-full text-left">
                 <div className="relative flex h-40 w-full items-center justify-center overflow-hidden bg-black">
                     {item.thumbnail ? (
-                        <img
-                            src={item.thumbnail}
-                            alt={item.title}
-                            loading="lazy"
-                            className="h-full w-full object-cover opacity-80"
-                        />
+                        <img src={item.thumbnail} alt={item.title} loading="lazy" className="h-full w-full object-cover opacity-80" />
                     ) : (
                         <svg viewBox="0 0 24 24" className="h-12 w-12 text-white" fill="currentColor" aria-hidden="true">
                             <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.78a4.85 4.85 0 0 1-1.01-.09z" />
@@ -172,9 +167,7 @@ export default function VideoLog() {
                             <div className="flex items-start justify-between gap-4">
                                 <div className="flex-1">
                                     <Dialog.Title className="text-lg font-semibold text-foreground">{selected?.title}</Dialog.Title>
-                                    {selected?.description && (
-                                        <p className="text-sm text-muted-foreground">{selected.description}</p>
-                                    )}
+                                    {selected?.description && <p className="text-sm text-muted-foreground">{selected.description}</p>}
                                 </div>
                                 <div className="flex items-center gap-2">
                                     {selected?.url && (

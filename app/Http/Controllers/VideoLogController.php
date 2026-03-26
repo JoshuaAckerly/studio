@@ -34,14 +34,14 @@ class VideoLogController extends Controller
 
         if ($tikTokVideos->isNotEmpty()) {
             $items = $tikTokVideos->map(fn ($video) => [
-                'id'          => $video->id,
-                'title'       => $video->title,
-                'date'        => $video->posted_at
+                'id' => $video->id,
+                'title' => $video->title,
+                'date' => $video->posted_at
                     ? $video->posted_at->format('Y-m-d')
                     : $video->created_at->format('Y-m-d'),
-                'thumbnail'   => $video->thumbnail_url ?? '',
-                'url'         => $video->video_url,
-                'embed_url'   => $video->embed_url,
+                'thumbnail' => $video->thumbnail_url ?? '',
+                'url' => $video->video_url,
+                'embed_url' => $video->embed_url,
                 'description' => $video->description,
             ]);
 

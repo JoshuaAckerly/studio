@@ -22,12 +22,12 @@ class FacebookGalleryPost extends Model
     protected $casts = [
         'posted_at' => 'date',
         'is_active' => 'boolean',
-        'tags'      => 'array',
+        'tags' => 'array',
     ];
 
     public function getEmbedUrlAttribute(): string
     {
-        return 'https://www.facebook.com/plugins/post.php?href=' . urlencode($this->post_url) . '&width=500&show_text=false';
+        return 'https://www.facebook.com/plugins/post.php?href='.urlencode($this->post_url).'&width=500&show_text=false';
     }
 
     public function scopeActive($query)

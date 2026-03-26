@@ -19,7 +19,7 @@ class FetchGalleryThumbnails extends Command
     public function handle(): int
     {
         $useScrape = $this->option('scrape');
-        $rawToken  = $this->option('token') ?? config('services.facebook.app_access_token');
+        $rawToken = $this->option('token') ?? config('services.facebook.app_access_token');
 
         // If no token configured, automatically fall back to scraping
         if (! $rawToken) {
@@ -28,11 +28,11 @@ class FetchGalleryThumbnails extends Command
         }
 
         $client = new Client([
-            'timeout'         => 15,
+            'timeout' => 15,
             'allow_redirects' => true,
-            'headers'         => [
-                'User-Agent'      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-                'Accept'          => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'headers' => [
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
                 'Accept-Language' => 'en-US,en;q=0.9',
             ],
         ]);
@@ -48,12 +48,12 @@ class FetchGalleryThumbnails extends Command
                 try {
                     $resp = $client->get('https://graph.facebook.com/oauth/access_token', [
                         'query' => [
-                            'client_id'     => $appId,
+                            'client_id' => $appId,
                             'client_secret' => $appSecret,
-                            'grant_type'    => 'client_credentials',
+                            'grant_type' => 'client_credentials',
                         ],
                     ]);
-                    $data  = json_decode((string) $resp->getBody(), true);
+                    $data = json_decode((string) $resp->getBody(), true);
                     $token = $data['access_token'] ?? null;
                     if (! $token) {
                         $this->warn('Token exchange failed — falling back to page scraping.');
@@ -82,12 +82,13 @@ class FetchGalleryThumbnails extends Command
 
         if ($posts->isEmpty()) {
             $this->info('No posts need thumbnails.');
+
             return self::SUCCESS;
         }
 
-        $bar     = $this->output->createProgressBar($posts->count());
+        $bar = $this->output->createProgressBar($posts->count());
         $updated = 0;
-        $failed  = 0;
+        $failed = 0;
 
         $bar->start();
 
@@ -123,6 +124,7 @@ class FetchGalleryThumbnails extends Command
         if (! preg_match('/fbid=(\d+)/', $postUrl, $m)) {
             $this->newLine();
             $this->warn("Could not extract fbid from post #{$postId} URL");
+
             return null;
         }
 
@@ -131,16 +133,16 @@ class FetchGalleryThumbnails extends Command
         try {
             $response = $client->get("https://graph.facebook.com/v19.0/{$fbid}", [
                 'query' => [
-                    'fields'       => 'images',
+                    'fields' => 'images',
                     'access_token' => $token,
                 ],
             ]);
 
-            $data   = json_decode((string) $response->getBody(), true);
+            $data = json_decode((string) $response->getBody(), true);
             $images = $data['images'] ?? [];
 
             // Pick the smallest image ≤600px wide, fallback to smallest overall
-            usort($images, fn($a, $b) => $b['width'] <=> $a['width']); // largest→smallest
+            usort($images, fn ($a, $b) => $b['width'] <=> $a['width']); // largest→smallest
             foreach ($images as $img) {
                 if ($img['width'] <= 600) {
                     return $img['source'];
@@ -158,6 +160,7 @@ class FetchGalleryThumbnails extends Command
             $this->newLine();
             $errBody = $e->hasResponse() ? (string) $e->getResponse()->getBody() : $e->getMessage();
             $this->error("Failed post #{$postId} (fbid={$fbid}): {$errBody}");
+
             return null;
         }
     }
@@ -166,7 +169,7 @@ class FetchGalleryThumbnails extends Command
     {
         try {
             $response = $client->get($postUrl);
-            $html     = (string) $response->getBody();
+            $html = (string) $response->getBody();
 
             // Facebook embeds photo CDN URLs in inline JSON/HTML.
             // t39.30808-6 = post photo; t39.30808-1 = profile pic (skip those).
@@ -177,7 +180,7 @@ class FetchGalleryThumbnails extends Command
                 $matches
             );
 
-            $urls  = array_unique(array_map('html_entity_decode', $matches[0]));
+            $urls = array_unique(array_map('html_entity_decode', $matches[0]));
             $photo = null;
 
             // Prefer t39.30808-6 (standard post photo)
@@ -206,8 +209,9 @@ class FetchGalleryThumbnails extends Command
             return $photo;
         } catch (RequestException $e) {
             $this->newLine();
-            $status  = $e->hasResponse() ? $e->getResponse()->getStatusCode() : 'N/A';
-            $this->error("Failed post #{$postId} (HTTP {$status}): " . $e->getMessage());
+            $status = $e->hasResponse() ? $e->getResponse()->getStatusCode() : 'N/A';
+            $this->error("Failed post #{$postId} (HTTP {$status}): ".$e->getMessage());
+
             return null;
         }
     }

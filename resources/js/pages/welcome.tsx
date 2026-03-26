@@ -5,7 +5,7 @@ import { Bars3Icon, ChevronDownIcon, XMarkIcon } from '@heroicons/react/24/outli
 import { useState } from 'react';
 
 import { Head, Link } from '@inertiajs/react';
-import { getProjectUrl, getMainSiteUrl } from '../env';
+import { getMainSiteUrl, getProjectUrl } from '../env';
 
 const navigation = [
     { name: 'Gallery', href: '/illustrations' },
@@ -114,9 +114,7 @@ const footerNavigation = {
         { name: 'Video Log', href: '/video-log' },
         { name: 'Blog', href: '/blog' },
     ],
-    connect: [
-        { name: 'Graveyard Jokes Studios', href: getMainSiteUrl() },
-    ],
+    connect: [{ name: 'Graveyard Jokes Studios', href: getMainSiteUrl() }],
 };
 
 export default function Welcome() {
@@ -258,7 +256,10 @@ export default function Welcome() {
                                 >
                                     View Gallery
                                 </Link>
-                                <Link href="/video-log" className="rounded-full border border-gray-300 px-5 py-2.5 text-sm font-semibold text-gray-900 hover:bg-gray-50 dark:border-white/20 dark:text-white dark:hover:bg-white/10">
+                                <Link
+                                    href="/video-log"
+                                    className="rounded-full border border-gray-300 px-5 py-2.5 text-sm font-semibold text-gray-900 hover:bg-gray-50 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
+                                >
                                     Watch Video Log
                                 </Link>
                                 <Link href="/blog" className="text-sm/6 font-semibold text-gray-900 dark:text-white">
@@ -292,9 +293,7 @@ export default function Welcome() {
                 <div className="mx-auto max-w-7xl px-6 py-24 lg:px-8">
                     <div className="mx-auto max-w-2xl text-center">
                         <h2 className="text-base/7 font-semibold text-indigo-600 dark:text-indigo-400">What I Create</h2>
-                        <p className="mt-2 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl dark:text-white">
-                            Creative pillars
-                        </p>
+                        <p className="mt-2 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl dark:text-white">Creative pillars</p>
                         <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
                             Each area feeds the others — music inspires visuals, visuals inspire games, games inspire stories.
                         </p>
@@ -357,7 +356,10 @@ export default function Welcome() {
                             >
                                 Read the blog for updates
                             </Link>
-                            <Link href="/video-log" className="rounded-full border border-gray-300 px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-100 dark:border-white/20 dark:text-white dark:hover:bg-white/10">
+                            <Link
+                                href="/video-log"
+                                className="rounded-full border border-gray-300 px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-100 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
+                            >
                                 Watch Video Logs
                             </Link>
                         </div>
@@ -409,7 +411,10 @@ export default function Welcome() {
                             >
                                 Read the Blog
                             </Link>
-                            <Link href="/video-log" className="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10">
+                            <Link
+                                href="/video-log"
+                                className="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10"
+                            >
                                 Watch Video Log
                             </Link>
                         </div>
