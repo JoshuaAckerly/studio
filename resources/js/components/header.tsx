@@ -1,5 +1,5 @@
 import React from 'react';
-import { getLoginUrl } from '../env';
+import { getLoginUrl, getMainSiteUrl } from '../env';
 import ApplicationLogo from './ApplicationLogo';
 import NotificationBell from './NotificationBell';
 
@@ -27,11 +27,11 @@ const Header: React.FC<HeaderProps> = ({ minimalNav = false }) => {
         <header className="border-b border-border bg-card/60 backdrop-blur-sm">
             <div className="container mx-auto flex items-center justify-between px-4 py-3">
                 <div className="flex items-center gap-3">
-                    <a href="https://graveyardjokes.com">
+                    <a href={getMainSiteUrl()}>
                         <ApplicationLogo logoSize="h-10 w-10" />
                     </a>
                     <div>
-                        <a href="https://graveyardjokes.com" className="text-lg leading-none font-semibold text-foreground">
+                        <a href={getMainSiteUrl()} className="text-lg leading-none font-semibold text-foreground">
                             GraveYardJokes Studios
                         </a>
                         <p className="text-xs text-muted-foreground">Games & Experiments</p>
