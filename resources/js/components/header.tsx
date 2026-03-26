@@ -9,9 +9,12 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ minimalNav = false }) => {
     const navLinks = [
-        { name: 'Home', href: '/' },
+        { name: 'Studio', href: '/' },
         ...(minimalNav
-            ? []
+            ? [
+                  { name: 'Video Log', href: '/video-log' },
+                  { name: 'Illustrations', href: '/illustrations' },
+              ]
             : [
                   { name: 'Games', href: '/games' },
                   { name: 'About', href: '/about' },

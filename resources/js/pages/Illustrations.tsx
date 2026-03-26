@@ -259,7 +259,7 @@ export default function Illustrations() {
     const isFacebook = items.length > 0 && !!items[0].embed_url;
 
     return (
-        <MainLayout>
+        <MainLayout minimalNav>
             <Head>
                 <title>Gallery - GraveYard Jokes Studio</title>
                 <meta
