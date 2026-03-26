@@ -87,7 +87,7 @@ class FetchGalleryThumbnailsTest extends TestCase
         $this->artisan('gallery:fetch-thumbnails', ['--import' => [$url]])->run();
 
         $this->assertDatabaseHas('facebook_gallery_posts', [
-            'post_url'  => $url,
+            'post_url' => $url,
             'is_active' => true,
         ]);
     }
@@ -97,8 +97,8 @@ class FetchGalleryThumbnailsTest extends TestCase
         $url = 'https://www.facebook.com/photo?fbid=111111111';
 
         FacebookGalleryPost::create([
-            'post_url'   => $url,
-            'is_active'  => true,
+            'post_url' => $url,
+            'is_active' => true,
             'sort_order' => 0,
         ]);
 
