@@ -15,6 +15,14 @@ class StorageIntegrationTest extends TestCase
     {
         parent::setUp();
 
+        // Skip when MinIO (or any S3-compatible endpoint) isn't reachable
+        $endpoint = env('AWS_ENDPOINT', 'http://127.0.0.1:9000');
+        $host = parse_url($endpoint, PHP_URL_HOST);
+        $port = parse_url($endpoint, PHP_URL_PORT) ?: 80;
+        if (! @fsockopen($host, $port, $errno, $errstr, 1)) {
+            $this->markTestSkipped('MinIO not available at '.$endpoint.' — skipping integration tests.');
+        }
+
         // Ensure we use the s3 disk for integration
         config(['filesystems.default' => 's3']);
 
