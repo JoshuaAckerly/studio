@@ -34,8 +34,8 @@ class FacebookGalleryPostSeeder extends Seeder
             FacebookGalleryPost::firstOrCreate(
                 ['post_url' => $url],
                 [
-                    'title'      => null,
-                    'is_active'  => true,
+                    'title' => null,
+                    'is_active' => true,
                     'sort_order' => $index + 1,
                 ]
             );
