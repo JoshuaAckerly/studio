@@ -6,6 +6,7 @@ use App\Models\TikTokVideo;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Storage;
 
 class FetchTikTokThumbnails extends Command
 {
@@ -62,7 +63,8 @@ class FetchTikTokThumbnails extends Command
             if ($result) {
                 $data = [];
                 if (! empty($result['thumbnail_url'])) {
-                    $data['thumbnail_url'] = $result['thumbnail_url'];
+                    $cached = $this->cacheThumbnail($client, $result['thumbnail_url'], $video->tiktok_video_id);
+                    $data['thumbnail_url'] = $cached ?? $result['thumbnail_url'];
                 }
                 // Update title only if it's still the default placeholder
                 if (! empty($result['title']) && in_array($video->title, ['Video Log', 'Photo Post', ''])) {
@@ -114,12 +116,18 @@ class FetchTikTokThumbnails extends Command
 
             $oembed = $this->fetchOEmbed($client, $url);
 
+            $thumbnailUrl = null;
+            if (! empty($oembed['thumbnail_url'])) {
+                $thumbnailUrl = $this->cacheThumbnail($client, $oembed['thumbnail_url'], $videoId)
+                    ?? $oembed['thumbnail_url'];
+            }
+
             TikTokVideo::create([
                 'tiktok_video_id' => $videoId,
                 'post_type' => $postType,
                 'title' => $oembed['title'] ?? 'TikTok Video',
                 'description' => null,
-                'thumbnail_url' => $oembed['thumbnail_url'] ?? null,
+                'thumbnail_url' => $thumbnailUrl,
                 'is_active' => true,
                 'sort_order' => 0,
             ]);
@@ -130,6 +138,48 @@ class FetchTikTokThumbnails extends Command
         }
 
         $this->info("Import done. Imported: {$imported}, Skipped: {$skipped}");
+    }
+
+    private function cacheThumbnail(Client $client, string $thumbnailUrl, string $videoId): ?string
+    {
+        $s3Path = "tiktok-thumbnails/{$videoId}.jpg";
+
+        // Return existing cached URL if already uploaded
+        if (Storage::disk('s3')->exists($s3Path)) {
+            return $this->cdnUrl($s3Path);
+        }
+
+        try {
+            $response = $client->get($thumbnailUrl, ['http_errors' => false, 'timeout' => 15]);
+            if ($response->getStatusCode() !== 200) {
+                return null;
+            }
+
+            $contents = (string) $response->getBody();
+            $ok = Storage::disk('s3')->put($s3Path, $contents);
+
+            if (! $ok) {
+                $this->warn("S3 upload failed for {$videoId}");
+
+                return null;
+            }
+
+            return $this->cdnUrl($s3Path);
+        } catch (\Throwable $e) {
+            $this->warn("Could not cache thumbnail for {$videoId}: {$e->getMessage()}");
+
+            return null;
+        }
+    }
+
+    private function cdnUrl(string $s3Path): string
+    {
+        $cloudfront = config('media.cloudfront_domain');
+        if ($cloudfront) {
+            return 'https://'.rtrim($cloudfront, '/').'/'.ltrim($s3Path, '/');
+        }
+
+        return Storage::disk('s3')->url($s3Path);
     }
 
     private function fetchOEmbed(Client $client, string $videoUrl): ?array
