@@ -12,9 +12,9 @@ class StudioDevlogApril2026Seeder extends Seeder
         $slug = 'studio-devlog-spring-2026';
 
         $excerpt = 'Spring 2026 has been a busy season for Studio. '
-            . 'We shipped a blog platform, a live video gallery, an illustration showcase, '
-            . 'and finished a major refactor of the Noteleks game engine — all while keeping '
-            . 'everything compiling clean across seven projects.';
+            .'We shipped a blog platform, a live video gallery, an illustration showcase, '
+            .'and finished a major refactor of the Noteleks game engine — all while keeping '
+            .'everything compiling clean across seven projects.';
 
         $content = <<<'HTML'
 <p>Spring 2026 has been heads-down and productive. If you've been following along, you know Studio started as a blank canvas — a place to eventually centralize art, music, games, and writing. Over the past several weeks it's become a real, working site. Here's a look at what got built and why.</p>
@@ -89,11 +89,11 @@ HTML;
         BlogPost::updateOrCreate(
             ['slug' => $slug],
             [
-                'title'        => "What We've Been Building — Studio Devlog, Spring 2026",
-                'slug'         => $slug,
-                'content'      => $content,
-                'excerpt'      => $excerpt,
-                'author'       => 'Joshua',
+                'title' => "What We've Been Building — Studio Devlog, Spring 2026",
+                'slug' => $slug,
+                'content' => $content,
+                'excerpt' => $excerpt,
+                'author' => 'Joshua',
                 'published_at' => now(),
             ]
         );
