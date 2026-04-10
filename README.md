@@ -1,53 +1,234 @@
 # Studio
 
-A modern web application built with Laravel 12 and React 19, featuring game development tools and asset management with Inertia.js for seamless full-stack development.
+> A comprehensive portfolio and personal brand website showcasing art, graphic design, illustrations, video work, music, social media, and a personal blog.
 
-## 🚀 Tech Stack
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Laravel](https://img.shields.io/badge/Laravel-12.x-FF2D20?logo=laravel)](https://laravel.com)
+[![React](https://img.shields.io/badge/React-19.x-61DAFB?logo=react)](https://reactjs.org)
 
-- **Backend**: Laravel 12 (PHP 8.2+)
-- **Frontend**: React 19 with TypeScript
-- **Game Engine**: Phaser.js for HTML5 game development
-- **Styling**: Tailwind CSS 4.0
-- **Build Tool**: Vite 7
-- **Database**: MySQL 8.0
-- **Storage**: AWS S3 with MinIO local development
-- **Testing**: PHPUnit + Jest
+## 🎨 Overview
 
-## 📋 Prerequisites
+Studio is a modern portfolio platform designed to showcase creative work across multiple mediums. It serves as a centralized hub for an artist, designer, musician, and content creator to present their portfolio and connect with audiences.
+
+**Features**:
+
+- 🎨 **Art & Design Portfolio**: Gallery and showcase for artwork
+- 📹 **Video Showcase**: Display video work and demonstrations
+- 🎵 **Music Library**: Share music releases and samples
+- ✍️ **Blog**: Personal writing and insights
+- 📱 **Social Media Integration**: Display social feeds
+- 📧 **Contact Management**: Receive inquiries and messages
+- 🖼️ **Media Management**: S3/MinIO storage for assets
+- ⚡ **Fast & Responsive**: Optimized for all devices
+
+## 🛠 Tech Stack
+
+| Component | Technology | Purpose |
+|-----------|-----------|---------|
+| **Backend** | Laravel 12 | Portfolio management |
+| **Frontend** | React 19 | Interactive interface |
+| **Language** | TypeScript 5.7 | Type-safe code |
+| **Styling** | Tailwind CSS 4 | Responsive design |
+| **Database** | MySQL 8.0+ | Portfolio data |
+| **Storage** | AWS S3/MinIO | Media assets |
+| **Build Tool** | Vite 7 | Development & bundling |
+| **Testing** | PHPUnit + Jest | Quality assurance |
+
+## 🚀 Quick Start
+
+### Prerequisites
 
 - PHP 8.2 or higher
 - Node.js 18+ and npm
 - Composer
-- MySQL 8.0 (or your preferred database)
-- MinIO (for local S3-compatible storage testing)
+- MySQL 8.0 or higher
+- AWS S3 account or MinIO (for local development)
 
-## 🛠️ Installation
+### Installation
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd studio
-   ```
+```bash
+# Clone repository
+git clone https://github.com/YOUR-USERNAME/studio.git
+cd studio
 
-2. **Install PHP dependencies**
-   ```bash
-   composer install
-   ```
+# Install dependencies
+composer install
+npm install
 
-3. **Install Node dependencies**
-   ```bash
-   npm install
-   ```
+# Environment setup
+cp .env.example .env
+php artisan key:generate
 
-4. **Configure environment**
-   ```bash
-   cp .env.example .env
-   php artisan key:generate
-   ```
+# Database setup
+php artisan migrate
 
-5. **Database setup**
-   ```bash
-   # Configure your database in .env
+# Configure S3/MinIO storage
+# Edit .env with storage credentials
+
+# Start development servers
+# Terminal 1: Laravel
+php artisan serve --port=8000
+
+# Terminal 2: Vite
+npm run dev
+
+# Terminal 3: SSR (optional)
+php artisan inertia:start-ssr --port=13716
+```
+
+### Development URLs
+
+- **Main App**: http://localhost:8000
+- **Vite Dev Server**: http://localhost:8084
+- **SSR Server**: http://localhost:13716 (if enabled)
+
+## 📚 Documentation
+
+- [Development Guide](DEVELOPMENT.md) - Setup and portfolio management
+- [Deployment Guide](DEPLOYMENT.md) - Production deployment steps
+- [Contributing](CONTRIBUTING.md) - How to contribute
+
+## 📁 Portfolio Structure
+
+The application is organized into:
+
+- **Art Gallery**: Digital and traditional artwork
+- **Design Portfolio**: Graphic design and branding projects
+- **Illustration Portfolio**: Digital illustrations and character design
+- **Video Showcase**: Video work and demonstrations
+- **Music Library**: Audio tracks and albums
+- **Blog**: Articles and insights
+- **Social Integration**: Linked social media accounts
+- **Contact**: Inquiry and message management
+
+## ✨ Key Features
+
+### Content Management
+
+- Easy portfolio item creation
+- Gallery organization and categorization
+- Featured content highlighting
+- Media upload and management
+- Blog post creation with markdown support
+
+### Social Media Integration
+
+- Instagram feed display
+- Twitter/X integration
+- LinkedIn profile
+- YouTube channel showcase
+
+### User Engagement
+
+- Contact form submissions
+- Message handling
+- Email notifications
+- Portfolio inquiry tracking
+
+### Performance
+
+- Optimized image loading
+- Lazy loading for galleries
+- Server-side rendering for SEO
+- Asset optimization and caching
+
+## 🔧 Building & Deployment
+
+### Development Build
+
+```bash
+npm run dev
+```
+
+### Production Build
+
+```bash
+npm run build
+php artisan migrate --force
+php artisan cache:clear
+php artisan config:clear
+```
+
+## 🚀 Deployment
+
+Detailed deployment instructions are in [DEPLOYMENT.md](DEPLOYMENT.md).
+
+```bash
+# Quick deployment
+npm run build
+php artisan migrate --force
+systemctl restart studio
+```
+
+## 🧪 Testing
+
+```bash
+# PHP tests
+./vendor/bin/phpunit
+
+# JavaScript tests
+npm test
+
+# Coverage report
+./vendor/bin/phpunit --coverage-html coverage
+```
+
+## 📖 Portfolio Management
+
+### Adding Portfolio Items
+
+1. Navigate to admin panel
+2. Create new portfolio item
+3. Upload media (images, videos, audio)
+4. Add description and details
+5. Publish
+
+### Managing Gallery
+
+1. Create gallery collection
+2. Add items to gallery
+3. Set cover image
+4. Configure display settings
+
+### Blog Management
+
+1. Write blog post (supports markdown)
+2. Add categories and tags
+3. Set publication date
+4. Preview before publishing
+
+## 🤝 Contributing
+
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## 📝 License
+
+Licensed under the MIT License - see [LICENSE](LICENSE) file for details.
+
+## 🖼️ Customization
+
+The portfolio is highly customizable:
+
+- **Theme Colors**: Modify in `resources/js/config/theme.ts`
+- **Custom Pages**: Add new routes and components
+- **Social Links**: Update in `.env` configuration
+- **Branding**: Customize logo and colors
+- **Domain**: Deploy to your custom domain
+
+## 🔗 Resources
+
+- [Laravel Documentation](https://laravel.com/docs)
+- [React Documentation](https://react.dev)
+- [Tailwind CSS](https://tailwindcss.com)
+- [AWS S3](https://aws.amazon.com/s3/)
+
+## 📞 Support
+
+For issues, questions, or suggestions, please open an issue on GitHub.
+
+---
+
+**Showcase your creativity with Studio!** 🎨
    php artisan migrate
    ```
 
