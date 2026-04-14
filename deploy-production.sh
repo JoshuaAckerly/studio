@@ -29,7 +29,7 @@ fi
 
 # Pull latest code from Git
 echo "📦 Pulling latest code from Git..."
-git pull origin main
+git -c pull.rebase=false pull origin main
 
 # Install/Update PHP dependencies (production mode)
 echo "🐘 Installing PHP dependencies..."
