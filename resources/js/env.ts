@@ -14,7 +14,10 @@ const getBaseDomain = () => {
     return 'graveyardjokes.local';
 };
 
-const getProtocol = () => (getBaseDomain() === 'graveyardjokes.local' ? 'http' : 'https');
+const getProtocol = () => {
+    const domain = getBaseDomain();
+    return domain === 'graveyardjokes.local' || domain === 'graveyardjokes.test' ? 'http' : 'https';
+};
 
 export const getAuthSystemUrl = () => `${getProtocol()}://auth-system.${getBaseDomain()}`;
 export const getProjectUrl = (subdomain: string) => `${getProtocol()}://${subdomain}.${getBaseDomain()}`;
