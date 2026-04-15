@@ -6,6 +6,7 @@ use App\Models\FacebookGalleryPost;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Storage;
 
 class FetchGalleryThumbnails extends Command
 {
@@ -119,7 +120,8 @@ class FetchGalleryThumbnails extends Command
                 : $this->fetchViaGraphApi($client, $token, $post->post_url, $post->id);
 
             if ($thumbnail) {
-                $post->update(['thumbnail_url' => $thumbnail]);
+                $persisted = $this->persistToS3($client, $thumbnail, $post->id);
+                $post->update(['thumbnail_url' => $persisted]);
                 $updated++;
             } else {
                 $failed++;
@@ -307,6 +309,44 @@ class FetchGalleryThumbnails extends Command
         $this->info('Discovered '.count($photoUrls).' photo URL(s) from the profile page.');
 
         return $photoUrls;
+    }
+
+    /**
+     * Download image from fbcdn URL and persist to S3 so it survives URL expiry.
+     */
+    private function persistToS3(Client $client, string $fbcdnUrl, int $postId): string
+    {
+        try {
+            $response = $client->get($fbcdnUrl);
+            $imageContent = (string) $response->getBody();
+
+            $contentType = $response->getHeaderLine('Content-Type');
+            $ext = match (true) {
+                str_contains($contentType, 'png') => 'png',
+                str_contains($contentType, 'webp') => 'webp',
+                str_contains($contentType, 'gif') => 'gif',
+                default => 'jpg',
+            };
+
+            $s3Key = 'studio/images/gallery-thumbnails/post-'.$postId.'.'.$ext;
+
+            Storage::disk('s3')->put($s3Key, $imageContent, [
+                'visibility' => 'public',
+                'ContentType' => $contentType ?: 'image/jpeg',
+            ]);
+
+            $cloudfrontDomain = config('media.cloudfront_domain');
+            if ($cloudfrontDomain) {
+                return 'https://'.$cloudfrontDomain.'/'.$s3Key;
+            }
+
+            return Storage::disk('s3')->url($s3Key);
+        } catch (\Throwable $e) {
+            $this->warn("Could not persist thumbnail to S3 for post #{$postId}: ".$e->getMessage());
+
+            // Fall back to the original URL (will expire, but better than nothing)
+            return $fbcdnUrl;
+        }
     }
 
     private function importPosts(array $urls): void
