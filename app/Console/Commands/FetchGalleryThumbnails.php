@@ -13,7 +13,8 @@ class FetchGalleryThumbnails extends Command
     protected $signature = 'gallery:fetch-thumbnails
                             {--force : Re-fetch thumbnails even if already set}
                             {--token= : Facebook App Access Token (overrides FACEBOOK_APP_ACCESS_TOKEN env)}
-                            {--scrape : Use page scraping instead of Graph API (no credentials needed)}
+                            {--scrape : Use page scraping instead of Graph API}
+                            {--cookie= : Facebook session cookie string for authenticated scraping (e.g. "c_user=XXX; xs=YYY")}
                             {--import=* : Facebook post URLs to import (e.g. https://www.facebook.com/photo?fbid=123)}
                             {--page= : Facebook profile/page URL — discover and import all photos from its Photos tab}';
 
@@ -49,7 +50,11 @@ class FetchGalleryThumbnails extends Command
         }
 
         $useScrape = $this->option('scrape');
-        $rawToken = $this->option('token') ?? config('services.facebook.app_access_token');
+        // Prefer a user access token (works for personal profile photos) over app token
+        $rawToken = $this->option('token')
+            ?? config('services.facebook.user_access_token')
+            ?? config('services.facebook.app_access_token');
+        $cookieString = $this->option('cookie');
 
         // If no token configured, automatically fall back to scraping
         if (! $rawToken) {
@@ -94,6 +99,11 @@ class FetchGalleryThumbnails extends Command
 
         if ($useScrape) {
             $this->info('Using page scraping mode (public posts only).');
+            if (! $cookieString) {
+                $this->warn('No --cookie provided. Private/login-walled photos will fail.');
+                $this->line('  To authenticate: extract c_user and xs cookies from your browser and pass');
+                $this->line('  --cookie="c_user=YOUR_USER_ID; xs=YOUR_XS_VALUE"');
+            }
         }
 
         $query = FacebookGalleryPost::query();
@@ -116,7 +126,7 @@ class FetchGalleryThumbnails extends Command
 
         foreach ($posts as $post) {
             $thumbnail = $useScrape
-                ? $this->fetchViaScraping($client, $post->post_url, $post->id)
+                ? $this->fetchViaScraping($client, $post->post_url, $post->id, $cookieString)
                 : $this->fetchViaGraphApi($client, $token, $post->post_url, $post->id);
 
             if ($thumbnail) {
@@ -153,6 +163,7 @@ class FetchGalleryThumbnails extends Command
 
         $fbid = $m[1];
 
+        // Try the direct Graph API first (works for Page photos)
         try {
             $response = $client->get("https://graph.facebook.com/v19.0/{$fbid}", [
                 'query' => [
@@ -173,26 +184,108 @@ class FetchGalleryThumbnails extends Command
             }
             $thumbnail = $images[count($images) - 1]['source'] ?? null;
 
-            if (! $thumbnail) {
+            if ($thumbnail) {
+                return $thumbnail;
+            }
+        } catch (RequestException $e) {
+            $errBody = $e->hasResponse() ? (string) $e->getResponse()->getBody() : $e->getMessage();
+            $errData = json_decode($errBody, true);
+            $errCode = $errData['error']['code'] ?? 0;
+
+            // Code 200 = Missing Permissions (personal profile photo) — fall through to oEmbed
+            if ($errCode !== 200) {
                 $this->newLine();
-                $this->warn("No images returned for post #{$postId} (fbid={$fbid})");
+                $this->error("Failed post #{$postId} (fbid={$fbid}): {$errBody}");
+
+                return null;
+            }
+        }
+
+        // Fallback: oEmbed API — works for public posts on personal profiles too
+        return $this->fetchViaOEmbed($client, $token, $postUrl, $postId);
+    }
+
+    private function fetchViaOEmbed(Client $client, string $token, string $postUrl, int $postId): ?string
+    {
+        try {
+            $response = $client->get('https://graph.facebook.com/v19.0/oembed_photo', [
+                'query' => [
+                    'url' => $postUrl,
+                    'access_token' => $token,
+                    'fields' => 'thumbnail_url,thumbnail_width,thumbnail_height',
+                ],
+                'http_errors' => false,
+            ]);
+
+            $data = json_decode((string) $response->getBody(), true);
+            $thumbnail = $data['thumbnail_url'] ?? null;
+
+            if ($thumbnail) {
+                return $thumbnail;
             }
 
-            return $thumbnail;
+            // oEmbed succeeded but no thumbnail — try getting the full photo_url
+            $thumbnail = $data['photo_url'] ?? null;
+            if ($thumbnail) {
+                return $thumbnail;
+            }
+
+            $this->newLine();
+            $this->warn("oEmbed returned no thumbnail for post #{$postId}");
         } catch (RequestException $e) {
             $this->newLine();
             $errBody = $e->hasResponse() ? (string) $e->getResponse()->getBody() : $e->getMessage();
-            $this->error("Failed post #{$postId} (fbid={$fbid}): {$errBody}");
-
-            return null;
+            $this->error("oEmbed failed for post #{$postId}: {$errBody}");
         }
+
+        return null;
     }
 
-    private function fetchViaScraping(Client $client, string $postUrl, int $postId): ?string
+    private function fetchViaScraping(Client $client, string $postUrl, int $postId, ?string $cookieString = null): ?string
     {
+        // www.facebook.com photo pages return 400 without a login session.
+        // mbasic.facebook.com is the lightweight mobile version which serves
+        // public photo pages without requiring cookies/authentication.
+        $url = str_replace(
+            ['https://www.facebook.com', 'http://www.facebook.com', 'https://facebook.com'],
+            'https://mbasic.facebook.com',
+            $postUrl
+        );
+        // mbasic uses photo.php rather than the SPA-style /photo/ path
+        $url = str_replace('/photo/', '/photo.php', $url);
+        // Strip &set= parameter — mbasic ignores it but it can confuse the route
+        $url = preg_replace('/[?&]set=[^&]+/', '', $url);
+        // Re-add leading ? if we stripped it along with the first param
+        if (! str_contains($url, '?') && str_contains($url, 'fbid=')) {
+            $url = preg_replace('/fbid=/', '?fbid=', $url, 1);
+        }
+
+        $headers = [
+            'User-Agent' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1',
+            'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language' => 'en-US,en;q=0.9',
+        ];
+
+        if ($cookieString) {
+            $headers['Cookie'] = $cookieString;
+        }
+
         try {
-            $response = $client->get($postUrl);
+            $response = $client->get($url, [
+                'headers' => $headers,
+                'allow_redirects' => ['max' => 5, 'track_redirects' => true],
+            ]);
             $html = (string) $response->getBody();
+
+            // Detect login wall — Facebook redirected us to a login page
+            $redirectHistory = $response->getHeader('X-Guzzle-Redirect-History');
+            $landedOnLogin = array_filter($redirectHistory, fn ($r) => str_contains($r, '/login.php'));
+            if ($landedOnLogin || str_contains($html, 'id="login_form"') || str_contains($html, 'name="login"')) {
+                $this->newLine();
+                $this->warn("Post #{$postId}: Facebook requires login. Pass your session cookie with --cookie=\"c_user=XXX; xs=YYY\"");
+
+                return null;
+            }
 
             // Facebook embeds photo CDN URLs in inline JSON/HTML.
             // t39.30808-6 = post photo; t39.30808-1 = profile pic (skip those).
