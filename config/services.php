@@ -58,6 +58,7 @@ return [
 
     'facebook' => [
         'app_access_token' => env('FACEBOOK_APP_ACCESS_TOKEN'),
+        'user_access_token' => env('FACEBOOK_USER_ACCESS_TOKEN'),
     ],
 
 ];
