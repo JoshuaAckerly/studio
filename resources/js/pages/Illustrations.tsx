@@ -17,14 +17,22 @@ type Illustration = {
 // ── Facebook card ─────────────────────────────────────────────────────────────
 
 function FacebookCard({ item, onClick }: { item: Illustration; onClick: () => void }) {
+    const [thumbError, setThumbError] = useState(false);
+
     return (
         <article
             className="group cursor-pointer overflow-hidden rounded-lg border border-border bg-card shadow-sm transition-transform hover:scale-[1.02]"
             onClick={onClick}
         >
             <div className="relative flex h-56 w-full items-center justify-center overflow-hidden bg-[#1877F2]/10 md:h-64 lg:h-72">
-                {item.thumbnail_url ? (
-                    <img src={item.thumbnail_url} alt={item.title ?? item.filename} loading="lazy" className="h-full w-full object-cover" />
+                {item.thumbnail_url && !thumbError ? (
+                    <img
+                        src={item.thumbnail_url}
+                        alt={item.title ?? item.filename}
+                        loading="lazy"
+                        className="h-full w-full object-cover"
+                        onError={() => setThumbError(true)}
+                    />
                 ) : (
                     <svg viewBox="0 0 24 24" className="h-16 w-16 text-[#1877F2]" fill="currentColor" aria-hidden="true">
                         <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796V24C19.612 23.094 24 18.1 24 12.073z" />
