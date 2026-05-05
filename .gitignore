@@ -35,3 +35,6 @@ tmp/
 # Ignore Laravel logs and compiled views
 /storage/logs/*
 /storage/framework/views/*
+
+# Ignore server-side seeder files not intended for version control
+database/seeders/StillHereMay2026Seeder.php
