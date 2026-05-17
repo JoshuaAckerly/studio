@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\VideoLogResource;
 use App\Models\TikTokVideo;
 use App\Services\VideoLogService;
 use Illuminate\Http\Request;
