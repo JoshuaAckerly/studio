@@ -6,6 +6,7 @@ use App\Models\TikTokVideo;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 class FetchTikTokThumbnails extends Command
@@ -85,6 +86,8 @@ class FetchTikTokThumbnails extends Command
         $bar->finish();
         $this->newLine();
         $this->info("Done. Updated: {$updated}, Failed: {$failed}");
+
+        Cache::forget('video-log.api');
 
         return $failed === 0 ? self::SUCCESS : self::FAILURE;
     }

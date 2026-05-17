@@ -6,6 +6,7 @@ use App\Http\Resources\VideoLogResource;
 use App\Models\TikTokVideo;
 use App\Services\VideoLogService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -26,31 +27,40 @@ class VideoLogController extends Controller
 
     public function api(Request $request)
     {
-        $tikTokVideos = TikTokVideo::active()
-            ->orderBy('sort_order')
-            ->orderByDesc('posted_at')
-            ->orderByDesc('created_at')
-            ->get();
+        $data = Cache::remember('video-log.api', now()->addHours(6), function () {
+            $tikTokVideos = TikTokVideo::active()
+                ->orderBy('sort_order')
+                ->orderByDesc('posted_at')
+                ->orderByDesc('created_at')
+                ->get();
 
-        if ($tikTokVideos->isNotEmpty()) {
-            $items = $tikTokVideos->map(fn ($video) => [
-                'id' => $video->id,
-                'title' => $video->title,
-                'date' => $video->posted_at
-                    ? $video->posted_at->format('Y-m-d')
-                    : $video->created_at->format('Y-m-d'),
-                'thumbnail' => $video->thumbnail_url ?? '',
-                'url' => $video->video_url,
-                'embed_url' => $video->embed_url,
-                'description' => $video->description,
-            ]);
+            if ($tikTokVideos->isNotEmpty()) {
+                return $tikTokVideos->map(fn ($video) => [
+                    'id' => $video->id,
+                    'title' => $video->title,
+                    'date' => $video->posted_at
+                        ? $video->posted_at->format('Y-m-d')
+                        : $video->created_at->format('Y-m-d'),
+                    'thumbnail' => $video->thumbnail_url ?? '',
+                    'url' => $video->video_url,
+                    'embed_url' => $video->embed_url,
+                    'description' => $video->description,
+                ])->values()->all();
+            }
 
-            return response()->json(['data' => $items]);
-        }
+            $items = $this->videoLogService->list();
 
-        $items = $this->videoLogService->list();
+            return collect($items)->map(fn ($v) => [
+                'id' => $v->id,
+                'title' => $v->title,
+                'date' => $v->date,
+                'thumbnail' => $v->thumbnail,
+                'url' => $v->url,
+                'description' => $v->description,
+            ])->values()->all();
+        });
 
-        return VideoLogResource::collection($items);
+        return response()->json(['data' => $data]);
     }
 
     /**

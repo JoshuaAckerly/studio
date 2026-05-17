@@ -5,37 +5,40 @@ namespace App\Http\Controllers;
 use App\Models\FacebookGalleryPost;
 use App\Services\StorageUrlGenerator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 class IllustrationController extends Controller
 {
     public function api(Request $request)
     {
-        $fbPosts = FacebookGalleryPost::active()
-            ->orderBy('sort_order')
-            ->orderByDesc('posted_at')
-            ->orderByDesc('created_at')
-            ->get();
+        $data = Cache::remember('illustrations.api', now()->addHours(6), function () {
+            $fbPosts = FacebookGalleryPost::active()
+                ->orderBy('sort_order')
+                ->orderByDesc('posted_at')
+                ->orderByDesc('created_at')
+                ->get();
 
-        if ($fbPosts->isNotEmpty()) {
-            $items = $fbPosts->map(fn ($post) => [
-                'id' => $post->id,
-                'title' => $post->title ?? '',
-                'description' => $post->description ?? null,
-                'tags' => $post->tags ?? [],
-                'filename' => $post->title ?? 'Facebook Post',
-                'url' => $post->post_url,
-                'embed_url' => $post->embed_url,
-                'thumbnail_url' => $post->thumbnail_url ?? null,
-                'date' => $post->posted_at
-                    ? $post->posted_at->format('Y-m-d')
-                    : $post->created_at->format('Y-m-d'),
-            ]);
+            if ($fbPosts->isNotEmpty()) {
+                return $fbPosts->map(fn ($post) => [
+                    'id' => $post->id,
+                    'title' => $post->title ?? '',
+                    'description' => $post->description ?? null,
+                    'tags' => $post->tags ?? [],
+                    'filename' => $post->title ?? 'Facebook Post',
+                    'url' => $post->post_url,
+                    'embed_url' => $post->embed_url,
+                    'thumbnail_url' => $post->thumbnail_url ?? null,
+                    'date' => $post->posted_at
+                        ? $post->posted_at->format('Y-m-d')
+                        : $post->created_at->format('Y-m-d'),
+                ])->values()->all();
+            }
 
-            return response()->json(['data' => $items]);
-        }
+            return $this->s3Illustrations();
+        });
 
-        return response()->json(['data' => $this->s3Illustrations()]);
+        return response()->json(['data' => $data]);
     }
 
     /**

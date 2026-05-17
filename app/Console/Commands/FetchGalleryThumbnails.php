@@ -6,6 +6,7 @@ use App\Models\FacebookGalleryPost;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 class FetchGalleryThumbnails extends Command
@@ -148,6 +149,8 @@ class FetchGalleryThumbnails extends Command
         $bar->finish();
         $this->newLine();
         $this->info("Done. Updated: {$updated}, Failed: {$failed}");
+
+        Cache::forget('illustrations.api');
 
         return $failed === 0 ? self::SUCCESS : self::FAILURE;
     }
