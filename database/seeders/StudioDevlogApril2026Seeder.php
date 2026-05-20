@@ -94,7 +94,7 @@ HTML;
                 'content' => $content,
                 'excerpt' => $excerpt,
                 'author' => 'Joshua',
-                'published_at' => now(),
+                'published_at' => '2026-04-15 12:00:00',
             ]
         );
     }
