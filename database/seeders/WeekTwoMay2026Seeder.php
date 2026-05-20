@@ -56,11 +56,11 @@ HTML;
         BlogPost::updateOrCreate(
             ['slug' => $slug],
             [
-                'title'        => 'Velvet Radio Is Live',
-                'slug'         => $slug,
-                'content'      => $content,
-                'excerpt'      => $excerpt,
-                'author'       => 'Joshua',
+                'title' => 'Velvet Radio Is Live',
+                'slug' => $slug,
+                'content' => $content,
+                'excerpt' => $excerpt,
+                'author' => 'Joshua',
                 'published_at' => '2026-05-20 12:00:00',
             ]
         );
