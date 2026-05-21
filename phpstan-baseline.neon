@@ -39,6 +39,36 @@ parameters:
 		-
 			message: '#^Cannot call method getBody\(\) on Psr\\Http\\Message\\ResponseInterface\|null\.$#'
 			identifier: method.nonObject
+			count: 3
+			path: app/Console/Commands/FetchGalleryThumbnails.php
+
+		-
+			message: '#^Cannot access offset ''code'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: app/Console/Commands/FetchGalleryThumbnails.php
+
+		-
+			message: '#^Cannot access offset ''error'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: app/Console/Commands/FetchGalleryThumbnails.php
+
+		-
+			message: '#^Cannot access offset ''thumbnail_url'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: app/Console/Commands/FetchGalleryThumbnails.php
+
+		-
+			message: '#^Cannot access offset ''photo_url'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: app/Console/Commands/FetchGalleryThumbnails.php
+
+		-
+			message: '#^Method App\\Console\\Commands\\FetchGalleryThumbnails\:\:fetchViaOEmbed\(\) should return string\|null but returns mixed\.$#'
+			identifier: return.type
 			count: 2
 			path: app/Console/Commands/FetchGalleryThumbnails.php
 

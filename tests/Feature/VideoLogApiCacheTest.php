@@ -37,7 +37,7 @@ class VideoLogApiCacheTest extends TestCase
         // First call populates the cache
         $first = $this->getJson('/api/video-logs');
         $first->assertStatus(200);
-        $this->assertCount(1, $first->json('data'));
+        $this->assertCount(1, (array) $first->json('data'));
 
         // Insert a new active video after the cache is warm
         TikTokVideo::create([
@@ -52,7 +52,7 @@ class VideoLogApiCacheTest extends TestCase
         // Second call should still return the cached result (1 item, not 2)
         $second = $this->getJson('/api/video-logs');
         $second->assertStatus(200);
-        $this->assertCount(1, $second->json('data'));
+        $this->assertCount(1, (array) $second->json('data'));
     }
 
     public function test_cache_is_stored_under_video_log_api_key(): void
@@ -90,7 +90,9 @@ class VideoLogApiCacheTest extends TestCase
         ]);
 
         // --force processes the video (network will fail, but cache is still cleared)
-        $this->artisan('tiktok:fetch-thumbnails', ['--force' => true])->run();
+        $command = $this->artisan('tiktok:fetch-thumbnails', ['--force' => true]);
+        assert($command instanceof \Illuminate\Testing\PendingCommand);
+        $command->run();
 
         $this->assertFalse(Cache::has('video-log.api'));
     }
@@ -108,7 +110,7 @@ class VideoLogApiCacheTest extends TestCase
 
         // Warm the cache
         $this->getJson('/api/video-logs')->assertStatus(200);
-        $this->assertCount(1, $this->getJson('/api/video-logs')->json('data'));
+        $this->assertCount(1, (array) $this->getJson('/api/video-logs')->json('data'));
 
         // Manually clear cache and add a new record
         Cache::forget('video-log.api');
@@ -124,6 +126,6 @@ class VideoLogApiCacheTest extends TestCase
         // Next call should return fresh data with 2 items
         $response = $this->getJson('/api/video-logs');
         $response->assertStatus(200);
-        $this->assertCount(2, $response->json('data'));
+        $this->assertCount(2, (array) $response->json('data'));
     }
 }

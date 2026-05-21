@@ -35,7 +35,7 @@ class IllustrationApiCacheTest extends TestCase
         // First call populates the cache
         $first = $this->getJson('/api/illustrations');
         $first->assertStatus(200);
-        $this->assertCount(1, $first->json('data'));
+        $this->assertCount(1, (array) $first->json('data'));
 
         // Insert a new active post after the cache is warm
         FacebookGalleryPost::create([
@@ -48,7 +48,7 @@ class IllustrationApiCacheTest extends TestCase
         // Second call should still return the cached result (1 item, not 2)
         $second = $this->getJson('/api/illustrations');
         $second->assertStatus(200);
-        $this->assertCount(1, $second->json('data'));
+        $this->assertCount(1, (array) $second->json('data'));
     }
 
     public function test_cache_is_stored_under_illustrations_api_key(): void
@@ -84,7 +84,9 @@ class IllustrationApiCacheTest extends TestCase
         ]);
 
         // --force processes the post (network will fail, but cache is still cleared)
-        $this->artisan('gallery:fetch-thumbnails', ['--force' => true])->run();
+        $command = $this->artisan('gallery:fetch-thumbnails', ['--force' => true]);
+        assert($command instanceof \Illuminate\Testing\PendingCommand);
+        $command->run();
 
         $this->assertFalse(Cache::has('illustrations.api'));
     }
@@ -100,7 +102,7 @@ class IllustrationApiCacheTest extends TestCase
 
         // Warm the cache
         $this->getJson('/api/illustrations')->assertStatus(200);
-        $this->assertCount(1, $this->getJson('/api/illustrations')->json('data'));
+        $this->assertCount(1, (array) $this->getJson('/api/illustrations')->json('data'));
 
         // Manually clear cache and add a new record
         Cache::forget('illustrations.api');
@@ -114,6 +116,6 @@ class IllustrationApiCacheTest extends TestCase
         // Next call should return fresh data with 2 items
         $response = $this->getJson('/api/illustrations');
         $response->assertStatus(200);
-        $this->assertCount(2, $response->json('data'));
+        $this->assertCount(2, (array) $response->json('data'));
     }
 }

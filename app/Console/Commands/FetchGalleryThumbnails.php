@@ -257,10 +257,10 @@ class FetchGalleryThumbnails extends Command
         // mbasic uses photo.php rather than the SPA-style /photo/ path
         $url = str_replace('/photo/', '/photo.php', $url);
         // Strip &set= parameter — mbasic ignores it but it can confuse the route
-        $url = preg_replace('/[?&]set=[^&]+/', '', $url);
+        $url = (string) preg_replace('/[?&]set=[^&]+/', '', $url);
         // Re-add leading ? if we stripped it along with the first param
         if (! str_contains($url, '?') && str_contains($url, 'fbid=')) {
-            $url = preg_replace('/fbid=/', '?fbid=', $url, 1);
+            $url = (string) preg_replace('/fbid=/', '?fbid=', $url, 1);
         }
 
         $headers = [
@@ -432,7 +432,7 @@ class FetchGalleryThumbnails extends Command
             ]);
 
             $cloudfrontDomain = config('media.cloudfront_domain');
-            if ($cloudfrontDomain) {
+            if (is_string($cloudfrontDomain) && $cloudfrontDomain !== '') {
                 return 'https://'.$cloudfrontDomain.'/'.$s3Key;
             }
 
