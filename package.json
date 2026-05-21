@@ -33,7 +33,8 @@
         "prettier-plugin-tailwindcss": "^0.6.11",
         "puppeteer": "^24.26.0",
         "ts-jest": "^29.4.6",
-        "typescript-eslint": "^8.23.0"
+        "typescript-eslint": "^8.23.0",
+        "ziggy-js": "^2.6.0"
     },
     "dependencies": {
         "@headlessui/react": "^2.2.0",
