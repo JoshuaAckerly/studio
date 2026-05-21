@@ -86,11 +86,11 @@ HTML;
         BlogPost::updateOrCreate(
             ['slug' => $slug],
             [
-                'title'        => 'Noteleks: Getting the Skeleton Visible',
-                'slug'         => $slug,
-                'content'      => $content,
-                'excerpt'      => $excerpt,
-                'author'       => 'Joshua',
+                'title' => 'Noteleks: Getting the Skeleton Visible',
+                'slug' => $slug,
+                'content' => $content,
+                'excerpt' => $excerpt,
+                'author' => 'Joshua',
                 'published_at' => '2026-05-21 12:00:00',
             ]
         );
