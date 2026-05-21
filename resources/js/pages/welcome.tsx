@@ -48,7 +48,7 @@ const creativeAreas = [
         statusColor: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
         headline: 'Indie Game Development',
         description: 'Building 2D action games with Phaser 3 — learning game design, physics, enemy AI, and interactive storytelling from scratch.',
-        cta: null,
+        cta: { label: 'Play Noteleks →', href: getProjectUrl('noteleks') },
         bg: 'from-amber-500/10 to-orange-500/10 dark:from-amber-900/20 dark:to-orange-900/20',
         border: 'border-amber-200 dark:border-amber-800',
     },
@@ -326,6 +326,72 @@ export default function Welcome() {
                                 </div>
                             </div>
                         ))}
+                    </div>
+                </div>
+
+                {/* Noteleks featured game */}
+                <div className="bg-gray-950 dark:bg-black">
+                    <div className="mx-auto max-w-7xl px-6 py-24 lg:px-8">
+                        <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-amber-900/60 via-gray-900 to-indigo-900/60 ring-1 ring-white/10">
+                            <div className="grid grid-cols-1 lg:grid-cols-2">
+                                {/* Text side */}
+                                <div className="flex flex-col justify-center px-8 py-14 lg:px-14">
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-4xl">💀</span>
+                                        <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/20 px-3 py-1 text-xs font-semibold text-amber-300 ring-1 ring-amber-500/30">
+                                            <span className="relative flex h-2 w-2">
+                                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75"></span>
+                                                <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-400"></span>
+                                            </span>
+                                            Live in browser
+                                        </span>
+                                    </div>
+                                    <h2 className="mt-6 text-4xl font-bold tracking-tight text-white sm:text-5xl">
+                                        Noteleks
+                                    </h2>
+                                    <p className="mt-2 text-lg font-medium text-amber-400">Heroes Beyond Light</p>
+                                    <p className="mt-5 text-base text-gray-300 leading-relaxed">
+                                        A 2D action platformer built with Phaser 3 and Laravel. Control a skeleton warrior,
+                                        fight waves of enemies, and survive as long as you can. Runs entirely in the browser
+                                        — no download, no install.
+                                    </p>
+                                    <ul className="mt-6 space-y-2 text-sm text-gray-400">
+                                        <li className="flex items-center gap-2"><span className="text-amber-400">✦</span> Spine 2D skeletal animation</li>
+                                        <li className="flex items-center gap-2"><span className="text-amber-400">✦</span> Physics-based combat with projectile weapons</li>
+                                        <li className="flex items-center gap-2"><span className="text-amber-400">✦</span> Mobile touch controls</li>
+                                        <li className="flex items-center gap-2"><span className="text-amber-400">✦</span> Enemy AI with round-based spawning</li>
+                                    </ul>
+                                    <div className="mt-10 flex flex-wrap gap-4">
+                                        <a
+                                            href={getProjectUrl('noteleks')}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-6 py-3 text-sm font-semibold text-gray-900 shadow-lg hover:bg-amber-400 transition-colors"
+                                        >
+                                            🎮 Play Now
+                                        </a>
+                                        <a
+                                            href="/blog/noteleks-spine-live-may-2026"
+                                            className="inline-flex items-center gap-2 rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10 transition-colors"
+                                        >
+                                            Read dev log →
+                                        </a>
+                                    </div>
+                                </div>
+                                {/* Visual side */}
+                                <div className="relative flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-950 p-12 lg:rounded-r-3xl">
+                                    <div className="text-center">
+                                        <div className="text-[9rem] leading-none select-none">💀</div>
+                                        <p className="mt-4 text-xs tracking-[0.3em] text-gray-500 uppercase">Noteleks Heroes</p>
+                                        <div className="mt-6 flex justify-center gap-2">
+                                            {['⚔️','🏹','🗡️','🔥'].map((icon, i) => (
+                                                <span key={i} className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 text-lg ring-1 ring-white/10">{icon}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
