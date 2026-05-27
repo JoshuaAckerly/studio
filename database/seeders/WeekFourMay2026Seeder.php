@@ -66,11 +66,11 @@ HTML;
         BlogPost::updateOrCreate(
             ['slug' => $slug],
             [
-                'title'        => 'Week Four: Spear, RSS, and a Triple-Post',
-                'slug'         => $slug,
-                'content'      => $content,
-                'excerpt'      => $excerpt,
-                'author'       => 'Joshua',
+                'title' => 'Week Four: Spear, RSS, and a Triple-Post',
+                'slug' => $slug,
+                'content' => $content,
+                'excerpt' => $excerpt,
+                'author' => 'Joshua',
                 'published_at' => '2026-05-26 12:00:00',
             ]
         );
