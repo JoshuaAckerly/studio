@@ -58,7 +58,7 @@ class VideoLogServiceTest extends TestCase
             return 'https://graveyardjokes-cdn.s3.us-east-2.amazonaws.com/'.$path;
         });
 
-        \Illuminate\Support\Facades\Storage::shouldReceive('disk')->with('s3')->andReturn($mock);
+        Storage::shouldReceive('disk')->with('s3')->andReturn($mock);
 
         $svc = new VideoLogService;
 

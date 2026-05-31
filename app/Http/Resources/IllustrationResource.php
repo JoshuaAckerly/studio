@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 class IllustrationResource extends JsonResource
 {
@@ -22,7 +23,7 @@ class IllustrationResource extends JsonResource
             $thumbnailPath = str_replace($filename, $thumbnailFilename, $this->getS3Path($url));
 
             // Only include thumbnail_url if the file actually exists
-            if (\Illuminate\Support\Facades\Storage::disk('s3')->exists($thumbnailPath)) {
+            if (Storage::disk('s3')->exists($thumbnailPath)) {
                 $thumbnailUrl = str_replace($filename, $thumbnailFilename, $url);
                 $result['thumbnail_url'] = $thumbnailUrl;
             }
