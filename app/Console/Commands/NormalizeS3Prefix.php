@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use Aws\S3\Exception\S3Exception;
 use Aws\S3\S3Client;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
@@ -169,7 +170,7 @@ class NormalizeS3Prefix extends Command
                 try {
                     $client->headObject(['Bucket' => $bucket, 'Key' => $targetKey]);
                     $targetExists = true;
-                } catch (\Aws\S3\Exception\S3Exception $e) {
+                } catch (S3Exception $e) {
                     $targetExists = false;
                 }
 
