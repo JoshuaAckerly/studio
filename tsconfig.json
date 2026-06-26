@@ -118,5 +118,6 @@
         "resources/js/**/*.d.ts",
         "resources/js/**/*.tsx",
         "src", "vite-env.d.ts",
+        "../packages/types.d.ts"
     ]
 }

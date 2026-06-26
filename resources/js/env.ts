@@ -1,30 +1,5 @@
-// env.ts
-// Utility to get environment-based URLs for login/auth system
+// env.ts — re-exports from the shared @gj/env package.
+import { createEnvResolver } from '@gj/env';
 
-// Use VITE_SERVER_ENV from .env, fallback to import.meta.env.MODE
-const getBaseDomain = () => {
-    const env = import.meta.env.VITE_SERVER_ENV || import.meta.env.MODE;
-    if (env === 'production') {
-        return 'graveyardjokes.com';
-    }
-    if (env === 'test' || env === 'testing') {
-        return 'graveyardjokes.test';
-    }
-    // Default to development
-    return 'graveyardjokes.local';
-};
-
-const getProtocol = () => {
-    const domain = getBaseDomain();
-    return domain === 'graveyardjokes.local' || domain === 'graveyardjokes.test' ? 'http' : 'https';
-};
-
-export const getAuthSystemUrl = () => `${getProtocol()}://auth-system.${getBaseDomain()}`;
-export const getProjectUrl = (subdomain: string) => `${getProtocol()}://${subdomain}.${getBaseDomain()}`;
-export const getMainSiteUrl = () => `${getProtocol()}://${getBaseDomain()}`;
-
-export const getLoginUrl = (subdomain: string) => {
-    const authUrl = getAuthSystemUrl();
-    const returnUrl = getProjectUrl(subdomain);
-    return `${authUrl}/login?return_url=${returnUrl}`;
-};
+export const { getAuthSystemUrl, getProjectUrl, getMainSiteUrl, getLoginUrl } =
+    createEnvResolver('graveyardjokes.com');

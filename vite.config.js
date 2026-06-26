@@ -35,9 +35,13 @@ export default defineConfig({
     },
     resolve: {
         alias: {
+            '@': path.resolve(__dirname, 'resources/js'),
             'ziggy-js': path.resolve(__dirname, 'vendor/tightenco/ziggy'),
             'react': path.resolve(__dirname, 'node_modules/react'),
             'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
+            '@gj/env': path.resolve(__dirname, '../packages/env/src/index.ts'),
+            '@gj/utils': path.resolve(__dirname, '../packages/utils/src/index.ts'),
+            '@gj/hooks': path.resolve(__dirname, '../packages/hooks/src/index.ts'),
         },
         dedupe: ['react', 'react-dom'],
     },
