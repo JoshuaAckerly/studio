@@ -30,7 +30,7 @@
         "prettier-plugin-organize-imports": "^4.1.0",
         "prettier-plugin-tailwindcss": "^0.6.11",
         "puppeteer": "^24.26.0",
-        "typescript": "^6.0.3",
+        "typescript": "^5.7.2",
         "typescript-eslint": "^8.23.0",
         "vitest": "^4.1.9",
         "ziggy-js": "^2.6.0"
