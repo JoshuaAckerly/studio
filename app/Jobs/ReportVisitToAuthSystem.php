@@ -25,7 +25,7 @@ class ReportVisitToAuthSystem implements ShouldQueue
         $url = config('services.authsystem.track_url');
         $token = config('services.authsystem.track_token');
 
-        if (! $url || ! $token) {
+        if (! is_string($url) || $url === '' || ! is_string($token) || $token === '') {
             return;
         }
 
