@@ -46,7 +46,7 @@ export default defineConfig({
         dedupe: ['react', 'react-dom'],
     },
     ssr: {
-        noExternal: ['react', 'react-dom', '@inertiajs/react', '@inertiajs/core', '@headlessui/react'],
+        noExternal: ['react', 'react-dom', '@inertiajs/react', '@inertiajs/core', '@headlessui/react', '@react-aria/focus', '@react-aria/interactions', '@react-aria/utils', '@react-aria/ssr', '@react-stately/utils', '@react-stately/flags'],
     },
     build: {
         // Raise warning limit slightly and add manual chunking to avoid huge vendor bundles
