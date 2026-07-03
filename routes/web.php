@@ -1,14 +1,15 @@
 <?php
 
+use App\Http\Controllers\Admin\SubscriberController as AdminSubscriberController;
+use App\Http\Controllers\BlogPostController;
+use App\Http\Controllers\NewsletterController;
+use App\Http\Controllers\VideoLogController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('welcome');
-
-use App\Http\Controllers\BlogPostController;
-use App\Http\Controllers\VideoLogController;
 
 Route::get('/video-log', [VideoLogController::class, 'index'])->name('video-log');
 
@@ -19,15 +20,14 @@ Route::get('/illustrations', function () {
     return Inertia::render('Illustrations');
 })->name('illustrations');
 
-Route::redirect('/contact', '/', 301);
-Route::redirect('/privacy', '/', 301);
-Route::redirect('/terms', '/', 301);
+// Newsletter
+Route::post('/newsletter/subscribe', [NewsletterController::class, 'store'])->name('newsletter.subscribe');
+Route::get('/newsletter/unsubscribe/{token}', [NewsletterController::class, 'unsubscribe'])->name('newsletter.unsubscribe');
 
-Route::redirect('/login', '/', 301);
-Route::redirect('/register', '/', 301);
-Route::redirect('/reset-password', '/', 301);
-Route::redirect('/forgot-password', '/', 301);
-Route::redirect('/reset-password/{token}', '/', 301);
+// Admin
+Route::middleware(['auth'])->prefix('admin')->group(function () {
+    Route::get('/subscribers', [AdminSubscriberController::class, 'index'])->name('admin.subscribers');
+});
 Route::redirect('/verify-email', '/', 301);
 Route::redirect('/confirm-password', '/', 301);
 

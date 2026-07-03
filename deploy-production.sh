@@ -52,6 +52,10 @@ npm run build:ssr
 echo "🗄️ Running database migrations..."
 php artisan migrate --force
 
+# Regenerate sitemap with production URLs
+echo "🗺️ Generating sitemap..."
+php artisan app:generate-sitemap
+
 # Clear and cache config
 echo "⚡ Optimizing Laravel..."
 php artisan config:cache

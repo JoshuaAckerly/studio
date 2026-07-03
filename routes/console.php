@@ -11,3 +11,6 @@ Artisan::command('inspire', function () {
 // Re-fetch any thumbnails not yet cached to S3 (catches new videos or failed uploads)
 Schedule::command('tiktok:fetch-thumbnails')->weekly();
 Schedule::command('gallery:fetch-thumbnails')->weekly();
+
+// Regenerate sitemap weekly so new blog posts are picked up automatically
+Schedule::command('app:generate-sitemap')->weekly();

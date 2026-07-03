@@ -1,3 +1,4 @@
+import NewsletterSignup from '@/components/NewsletterSignup';
 import MainLayout from '@/layouts/main';
 import { Head, Link } from '@inertiajs/react';
 import { getProjectUrl } from '../../env';
@@ -18,23 +19,55 @@ interface Props {
 }
 
 export default function BlogShow({ post }: Props) {
-    const canonicalUrl = getProjectUrl('studio') + '/blog/' + post.slug;
+    const baseUrl = getProjectUrl('studio');
+    const canonicalUrl = baseUrl + '/blog/' + post.slug;
+
+    const blogPostingSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'BlogPosting',
+        headline: post.title,
+        description: post.excerpt ?? post.title,
+        url: canonicalUrl,
+        datePublished: post.published_at,
+        ...(post.featured_image ? { image: post.featured_image } : {}),
+        ...(post.author
+            ? { author: { '@type': 'Person', name: post.author } }
+            : { author: { '@type': 'Organization', name: 'Graveyard Jokes Studios', url: baseUrl } }),
+        publisher: {
+            '@type': 'Organization',
+            name: 'Graveyard Jokes Studios',
+            url: baseUrl,
+        },
+    };
 
     return (
         <MainLayout minimalNav>
             <Head>
                 <title>{`${post.title} - GraveYardJokes Studios Blog`}</title>
                 <meta name="description" content={post.excerpt ?? post.title} />
-                <meta property="og:title" content={post.title} />
-                <meta property="og:description" content={post.excerpt ?? post.title} />
+                <link rel="canonical" href={canonicalUrl} />
+
+                {/* Open Graph */}
+                <meta property="og:site_name" content="Graveyard Jokes Studios" />
+                <meta property="og:locale" content="en_US" />
                 <meta property="og:type" content="article" />
                 <meta property="og:url" content={canonicalUrl} />
+                <meta property="og:title" content={post.title} />
+                <meta property="og:description" content={post.excerpt ?? post.title} />
                 {post.featured_image && <meta property="og:image" content={post.featured_image} />}
+
+                {/* Article-specific */}
+                <meta property="article:published_time" content={post.published_at} />
+                {post.author && <meta property="article:author" content={post.author} />}
+
+                {/* Twitter Card */}
                 <meta name="twitter:card" content="summary_large_image" />
                 <meta name="twitter:title" content={post.title} />
                 <meta name="twitter:description" content={post.excerpt ?? post.title} />
                 {post.featured_image && <meta name="twitter:image" content={post.featured_image} />}
-                <link rel="canonical" href={canonicalUrl} />
+
+                {/* JSON-LD */}
+                <script type="application/ld+json">{JSON.stringify(blogPostingSchema)}</script>
             </Head>
 
             <div className="mx-auto max-w-3xl">
@@ -62,6 +95,10 @@ export default function BlogShow({ post }: Props) {
 
                     <div className="prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: post.content }} />
                 </article>
+
+                <div className="mt-12">
+                    <NewsletterSignup />
+                </div>
             </div>
         </MainLayout>
     );

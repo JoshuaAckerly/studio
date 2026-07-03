@@ -1,3 +1,4 @@
+import NewsletterSignup from '@/components/NewsletterSignup';
 import MainLayout from '@/layouts/main';
 import { Head, Link } from '@inertiajs/react';
 import { getProjectUrl } from '../../env';
@@ -26,6 +27,8 @@ export default function BlogIndex({ posts }: Props) {
                     content="Thoughts, updates, and stories from the GraveYardJokes Studios team. Covering game dev, music, creative process, and studio life."
                 />
                 <meta name="keywords" content="game development blog, music blog, creative process, studio updates, indie dev, GraveYardJokes" />
+                <meta property="og:site_name" content="Graveyard Jokes Studios" />
+                <meta property="og:locale" content="en_US" />
                 <meta property="og:title" content="Blog - GraveYardJokes Studios" />
                 <meta property="og:description" content="Thoughts, updates, and stories from the GraveYardJokes Studios team." />
                 <meta property="og:type" content="website" />
@@ -77,6 +80,10 @@ export default function BlogIndex({ posts }: Props) {
                         ))}
                     </div>
                 )}
+            </div>
+
+            <div className="mt-12">
+                <NewsletterSignup />
             </div>
         </MainLayout>
     );
