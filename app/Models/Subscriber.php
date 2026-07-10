@@ -18,7 +18,7 @@ class Subscriber extends Model
     ];
 
     /**
-     * @param Builder<Subscriber> $query
+     * @param  Builder<Subscriber>  $query
      * @return Builder<Subscriber>
      */
     public function scopeConfirmed(Builder $query): Builder
