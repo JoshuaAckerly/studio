@@ -41,9 +41,7 @@ export default function NewsletterSignup() {
     return (
         <div className="rounded-lg border border-border bg-card p-6">
             <h3 className="mb-1 text-lg font-semibold">Stay in the loop</h3>
-            <p className="mb-4 text-sm text-muted-foreground">
-                Get an email when a new post goes up. No spam — just new posts.
-            </p>
+            <p className="mb-4 text-sm text-muted-foreground">Get an email when a new post goes up. No spam — just new posts.</p>
 
             {status === 'success' ? (
                 <p className="text-sm font-medium text-green-600 dark:text-green-400">{message}</p>
@@ -56,7 +54,7 @@ export default function NewsletterSignup() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         disabled={status === 'loading'}
-                        className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+                        className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:outline-none disabled:opacity-50"
                     />
                     <button
                         type="submit"
@@ -68,9 +66,7 @@ export default function NewsletterSignup() {
                 </form>
             )}
 
-            {status === 'error' && (
-                <p className="mt-2 text-sm text-destructive">{message}</p>
-            )}
+            {status === 'error' && <p className="mt-2 text-sm text-destructive">{message}</p>}
         </div>
     );
 }

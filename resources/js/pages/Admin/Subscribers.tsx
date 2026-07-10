@@ -33,7 +33,9 @@ export default function AdminSubscribers({ subscribers, total }: Props) {
                 <div className="mb-6 flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold">Newsletter Subscribers</h1>
-                        <p className="mt-1 text-sm text-muted-foreground">{total} total subscriber{total !== 1 ? 's' : ''}</p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            {total} total subscriber{total !== 1 ? 's' : ''}
+                        </p>
                     </div>
                 </div>
 
@@ -51,7 +53,7 @@ export default function AdminSubscribers({ subscribers, total }: Props) {
                             </thead>
                             <tbody className="divide-y divide-border">
                                 {subscribers.data.map((sub) => (
-                                    <tr key={sub.id} className="bg-card hover:bg-muted/30 transition-colors">
+                                    <tr key={sub.id} className="bg-card transition-colors hover:bg-muted/30">
                                         <td className="px-4 py-3 font-mono text-xs">{sub.email}</td>
                                         <td className="px-4 py-3 text-muted-foreground">
                                             {new Date(sub.created_at).toLocaleDateString('en-US', {
@@ -84,7 +86,9 @@ export default function AdminSubscribers({ subscribers, total }: Props) {
                             <Link href={subscribers.prev_page_url} className="text-sm text-primary hover:underline">
                                 ← Previous
                             </Link>
-                        ) : <span />}
+                        ) : (
+                            <span />
+                        )}
                         {subscribers.next_page_url && (
                             <Link href={subscribers.next_page_url} className="text-sm text-primary hover:underline">
                                 Next →
