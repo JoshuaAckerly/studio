@@ -14,6 +14,7 @@ class NewsletterController extends Controller
 {
     public function store(Request $request): JsonResponse
     {
+        /** @var array{email: string} $validated */
         $validated = $request->validate([
             'email' => ['required', 'email', 'max:255'],
         ]);

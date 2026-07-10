@@ -15,7 +15,11 @@ class GenerateSitemap extends Command
     {
         $this->info('Generating sitemap.xml…');
 
-        $base = rtrim((string) config('app.url', ''), '/');
+        $base = config('app.url', '');
+        if (! is_string($base)) {
+            $base = '';
+        }
+        $base = rtrim($base, '/');
 
         $staticEntries = [
             [$base.'/', '1.0', 'weekly'],
@@ -46,9 +50,7 @@ class GenerateSitemap extends Command
 
         foreach ($posts as $post) {
             $loc = $base.'/blog/'.htmlspecialchars($post->slug, ENT_XML1);
-            $lastmod = $post->published_at instanceof \DateTimeInterface
-                ? $post->published_at->format('Y-m-d')
-                : substr((string) $post->published_at, 0, 10);
+            $lastmod = $post->published_at?->format('Y-m-d') ?? '';
 
             $lines[] = '  <url>';
             $lines[] = '    <loc>'.$loc.'</loc>';

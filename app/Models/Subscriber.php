@@ -17,6 +17,10 @@ class Subscriber extends Model
         'confirmed_at' => 'datetime',
     ];
 
+    /**
+     * @param Builder<Subscriber> $query
+     * @return Builder<Subscriber>
+     */
     public function scopeConfirmed(Builder $query): Builder
     {
         return $query->whereNotNull('confirmed_at');

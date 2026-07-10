@@ -28,10 +28,16 @@ class BlogPostNewsletterMail extends Mailable
 
     public function content(): Content
     {
+        $appUrl = config('app.url', '');
+        if (! is_string($appUrl)) {
+            $appUrl = '';
+        }
+        $base = rtrim($appUrl, '/');
+
         return new Content(
             view: 'emails.blog_post_newsletter',
             with: [
-                'postUrl' => rtrim((string) config('app.url', ''), '/').'/blog/'.$this->post->slug,
+                'postUrl' => $base.'/blog/'.$this->post->slug,
                 'unsubscribeUrl' => url('/newsletter/unsubscribe/'.$this->subscriber->unsubscribe_token),
             ],
         );
