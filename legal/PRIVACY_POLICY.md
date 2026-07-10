@@ -1,159 +1,64 @@
 # Privacy Policy
 
-**Last Updated:** March 25, 2026
+**Effective Date:** July 6, 2026
 
-## 1. Introduction
+This Privacy Policy explains how Graveyard Jokes Studios ("we," "our," or "us") collects, uses, and protects information when you visit Graveyard Jokes Studios (studio.graveyardjokes.com).
 
-[Your Company Name] ("we," "our," or "us") operates Studio (the "Service"). This page informs you of our policies regarding the collection, use, and disclosure of personal data when you use our Service.
+## 1. Information We Collect
 
-## 2. Information We Collect
+When you visit this site, we automatically collect:
 
-### 2.1 Personal Information
+- IP address and approximate geographic location
+- Browser type and version
+- Visit timestamps and page views
 
-While using our Service, we may ask you to provide us with certain personally identifiable information that can be used to contact or identify you, including but not limited to:
+When you subscribe to our newsletter, we collect:
 
 - Email address
-- Name
-- Phone number
-- Address, State, Province, ZIP/Postal code, City
 
-### 2.2 Usage Data
+When you use authentication features (via our central auth service), we may collect:
 
-We may also collect information about how the Service is accessed and used ("Usage Data"). This Usage Data may include:
+- Email address and account profile information
 
-- Your computer's Internet Protocol address (IP address)
-- Browser type and version
-- Pages of our Service that you visit
-- Time and date of your visit
-- Time spent on those pages
-- Unique device identifiers
+## 2. How We Use Your Information
 
-### 2.3 Tracking & Cookies Data
+We use the information we collect to:
 
-We use cookies and similar tracking technologies to track activity on our Service and hold certain information.
+- Understand site usage and improve performance
+- Send newsletter updates (to subscribers who opt in)
+- Manage authenticated access via our centralized auth service
+- Ensure site security
 
-Cookies are files with small amounts of data which may include an anonymous unique identifier.
+## 3. Third-Party Services
 
-You can instruct your browser to refuse all cookies or to indicate when a cookie is being sent. However, if you do not accept cookies, you may not be able to use some portions of our Service.
+- **AWS S3** — for image and asset storage
+- **Facebook / TikTok** — social media gallery content is sourced from public posts
+- **Zoho Mail** — for sending newsletter emails
 
-### 2.4 Messaging and Notification Data
+We do not sell your personal information.
 
-When you use messaging or contact features of the Service, we may collect:
+## 4. Newsletter
 
-- Messages and notifications delivered to your account inbox
-- Message read/unread status and timestamps
-- Contact form submissions, including your name, email address, and message content
+By subscribing to our newsletter, you consent to receiving occasional updates from us. Each email includes an unsubscribe link. You may also unsubscribe at any time by visiting the unsubscribe link in any email.
 
-## 3. How We Use Your Information
+## 5. Cookies
 
-[Your Company Name] uses the collected data for various purposes:
+We use essential session cookies for basic site functionality. See our [Cookie Policy](/cookies) for details.
 
-- To provide and maintain the Service
-- To notify you about changes to our Service
-- To allow you to participate in interactive features when you choose to do so
-- To provide customer care and support
-- To provide analysis or valuable information so that we can improve the Service
-- To monitor the usage of the Service
-- To detect, prevent and address technical issues
-- To provide you with news, special offers and general information about other goods, services and events
-- To deliver in-app notifications and messages to your account
-- To store and respond to contact form submissions and inquiries
+## 6. Data Retention
 
-## 4. Legal Basis for Processing (GDPR)
+Newsletter subscriber emails are retained until you unsubscribe. Visit data is used for aggregate analytics and not retained indefinitely.
 
-If you are from the European Economic Area (EEA), [Your Company Name]'s legal basis for collecting and using personal information depends on the data we collect and the context in which we collect it.
+## 7. Your Rights
 
-We may process your personal data because:
+To unsubscribe from our newsletter or request deletion of your data, contact us at [admin@graveyardjokes.com](mailto:admin@graveyardjokes.com).
 
-- We need to perform a contract with you
-- You have given us permission to do so
-- The processing is in our legitimate interests
-- We need to comply with the law
+## 8. Changes to This Policy
 
-## 5. Data Retention
+We may update this Privacy Policy at any time. Changes will be posted with an updated effective date.
 
-We will retain your Personal Data only for as long as is necessary for the purposes set out in this Privacy Policy. We will retain and use your Personal Data to the extent necessary to comply with our legal obligations.
+## 9. Contact
 
-## 6. Data Transfer
-
-Your information may be transferred to — and maintained on — computers located outside of your state, province, country or other governmental jurisdiction where the data protection laws may differ.
-
-We will take all steps reasonably necessary to ensure that your data is treated securely and in accordance with this Privacy Policy.
-
-## 7. Data Security
-
-The security of your data is important to us, but remember that no method of transmission over the Internet or electronic storage is 100% secure. While we strive to use commercially acceptable means to protect your Personal Data, we cannot guarantee its absolute security.
-
-## 8. Your Data Protection Rights (GDPR)
-
-If you are a resident of the EEA, you have certain data protection rights:
-
-### 8.1 Right to Access
-
-You have the right to request copies of your personal data.
-
-### 8.2 Right to Rectification
-
-You have the right to request that we correct any information you believe is inaccurate or complete information you believe is incomplete.
-
-### 8.3 Right to Erasure
-
-You have the right to request that we erase your personal data, under certain conditions.
-
-### 8.4 Right to Restrict Processing
-
-You have the right to request that we restrict the processing of your personal data, under certain conditions.
-
-### 8.5 Right to Object to Processing
-
-You have the right to object to our processing of your personal data, under certain conditions.
-
-### 8.6 Right to Data Portability
-
-You have the right to request that we transfer the data that we have collected to another organization, or directly to you, under certain conditions.
-
-## 9. California Privacy Rights (CCPA)
-
-If you are a California resident, you have specific rights regarding your personal information:
-
-- The right to know what personal information is being collected
-- The right to know whether personal information is sold or disclosed
-- The right to say no to the sale of personal information
-- The right to access personal information
-- The right to equal service and price
-
-## 10. Children's Privacy
-
-Our Service does not address anyone under the age of 18 ("Children"). We do not knowingly collect personally identifiable information from anyone under the age of 18.
-
-If you are a parent or guardian and you are aware that your child has provided us with Personal Data, please contact us.
-
-## 11. Third-Party Services
-
-We may employ third-party companies and individuals to facilitate our Service ("Service Providers"), to provide the Service on our behalf, or to assist us in analyzing how our Service is used.
-
-These third parties have access to your Personal Data only to perform these tasks on our behalf and are obligated not to disclose or use it for any other purpose.
-
-## 12. Analytics
-
-We may use third-party Service Providers to monitor and analyze the use of our Service.
-
-## 13. Links to Other Sites
-
-Our Service may contain links to other sites that are not operated by us. We have no control over and assume no responsibility for the content, privacy policies, or practices of any third-party sites or services.
-
-## 14. Changes to This Privacy Policy
-
-We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Last Updated" date.
-
-## 15. Contact Us
-
-If you have any questions about this Privacy Policy, please contact us:
-
-**[Your Company Name]**  
-Email: [your-email@example.com]  
-Address: [Your Company Address]
-
----
-
-*By using Studio, you acknowledge that you have read and understood this Privacy Policy.*
+Graveyard Jokes Studios  
+26 Wells Ave, Cheektowaga, New York 14227  
+[admin@graveyardjokes.com](mailto:admin@graveyardjokes.com)

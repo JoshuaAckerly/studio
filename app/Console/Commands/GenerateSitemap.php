@@ -22,6 +22,9 @@ class GenerateSitemap extends Command
             [$base.'/blog', '0.9', 'weekly'],
             [$base.'/video-log', '0.8', 'weekly'],
             [$base.'/illustrations', '0.7', 'monthly'],
+            [$base.'/privacy', '0.3', 'yearly'],
+            [$base.'/terms', '0.3', 'yearly'],
+            [$base.'/cookies', '0.3', 'yearly'],
         ];
 
         $posts = BlogPost::published()
