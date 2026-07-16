@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\FacebookGalleryPost;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Testing\PendingCommand;
 use Tests\TestCase;
 
 class IllustrationApiCacheTest extends TestCase
@@ -85,7 +86,7 @@ class IllustrationApiCacheTest extends TestCase
 
         // --force processes the post (network will fail, but cache is still cleared)
         $command = $this->artisan('gallery:fetch-thumbnails', ['--force' => true]);
-        assert($command instanceof \Illuminate\Testing\PendingCommand);
+        assert($command instanceof PendingCommand);
         $command->run();
 
         $this->assertFalse(Cache::has('illustrations.api'));

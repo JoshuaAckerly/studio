@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\TikTokVideo;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Testing\PendingCommand;
 use Tests\TestCase;
 
 class VideoLogApiCacheTest extends TestCase
@@ -91,7 +92,7 @@ class VideoLogApiCacheTest extends TestCase
 
         // --force processes the video (network will fail, but cache is still cleared)
         $command = $this->artisan('tiktok:fetch-thumbnails', ['--force' => true]);
-        assert($command instanceof \Illuminate\Testing\PendingCommand);
+        assert($command instanceof PendingCommand);
         $command->run();
 
         $this->assertFalse(Cache::has('video-log.api'));

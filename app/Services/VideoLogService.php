@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Contracts\StorageUrlGeneratorInterface;
 use App\Models\VideoLog;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -30,7 +31,7 @@ class VideoLogService
      * @param  mixed|null  $s3OrGenerator
      * @param  StorageUrlGenerator|null  $maybeGenerator
      */
-    public function __construct($s3OrGenerator = null, ?\App\Contracts\StorageUrlGeneratorInterface $maybeGenerator = null)
+    public function __construct($s3OrGenerator = null, ?StorageUrlGeneratorInterface $maybeGenerator = null)
     {
         if ($s3OrGenerator instanceof StorageUrlGenerator) {
             $this->urlGenerator = $s3OrGenerator;

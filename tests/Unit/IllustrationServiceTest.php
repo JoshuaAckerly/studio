@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use App\Contracts\StorageUrlGeneratorInterface;
 use App\Services\IllustrationService;
 use Tests\TestCase;
 
@@ -25,7 +26,7 @@ class IllustrationServiceTest extends TestCase
         };
 
         // Create a fake URL generator which returns a predictable URL
-        $fakeGenerator = new class implements \App\Contracts\StorageUrlGeneratorInterface
+        $fakeGenerator = new class implements StorageUrlGeneratorInterface
         {
             public function url(string $path, ?int $expiresMinutes = null): string
             {

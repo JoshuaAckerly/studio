@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\BlogPost;
+
 $content = '<p>The last few weeks have been heads-down in the best possible way. No single big launch — just a lot of small, deliberate improvements across the whole portfolio, plus some new client-facing work that is starting to take real shape. Here is a full snapshot of what I have been working on.</p>
 
 <h2>Built a Blog (You Are Reading It)</h2>
@@ -46,7 +48,7 @@ $content = '<p>The last few weeks have been heads-down in the best possible way.
 
 <p>If any of this is relevant to something you are working on, you know where to find me.</p>';
 
-$post = \App\Models\BlogPost::where('slug', 'what-i-have-been-building-lately')->first();
+$post = BlogPost::where('slug', 'what-i-have-been-building-lately')->first();
 
 if ($post) {
     $post->update([
@@ -56,7 +58,7 @@ if ($post) {
     ]);
     echo "Blog post updated.\n";
 } else {
-    \App\Models\BlogPost::create([
+    BlogPost::create([
         'title' => 'What I Have Been Building Lately',
         'slug' => 'what-i-have-been-building-lately',
         'content' => $content,

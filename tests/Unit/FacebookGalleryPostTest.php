@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Models\FacebookGalleryPost;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 class FacebookGalleryPostTest extends TestCase
@@ -60,7 +61,7 @@ class FacebookGalleryPostTest extends TestCase
     {
         $post = new FacebookGalleryPost(['posted_at' => '2026-01-15']);
 
-        $this->assertInstanceOf(\Illuminate\Support\Carbon::class, $post->posted_at);
+        $this->assertInstanceOf(Carbon::class, $post->posted_at);
         $this->assertSame('2026-01-15', $post->posted_at->format('Y-m-d'));
     }
 
