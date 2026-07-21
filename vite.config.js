@@ -13,7 +13,11 @@ export default defineConfig({
             host: 'studio.graveyardjokes.local'
         },
         cors: {
-            origin: ['http://studio.graveyardjokes.local'],
+            origin: [
+                'http://studio.graveyardjokes.local',
+                'http://studio.graveyardjokes.local:8003',
+                'http://localhost:8003',
+            ],
             credentials: true
         },
         allowedHosts: ['studio.graveyardjokes.local']
