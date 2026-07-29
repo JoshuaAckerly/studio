@@ -26,6 +26,7 @@ class SyncFacebookPosts extends Command
 
         if (empty($token)) {
             $this->error('FACEBOOK_PAGE_ACCESS_TOKEN or FACEBOOK_USER_ACCESS_TOKEN is not set.');
+
             return self::FAILURE;
         }
 
@@ -34,6 +35,7 @@ class SyncFacebookPosts extends Command
             $pageId = $this->discoverPageId($token);
             if (! $pageId) {
                 $this->error('FACEBOOK_PAGE_ID is not set and could not be auto-discovered.');
+
                 return self::FAILURE;
             }
             $this->line("Auto-discovered page ID: {$pageId}");
@@ -64,6 +66,7 @@ class SyncFacebookPosts extends Command
 
             if (! $dryRun && FacebookGalleryPost::where('post_url', $url)->exists()) {
                 $skipped++;
+
                 continue;
             }
 
@@ -77,6 +80,7 @@ class SyncFacebookPosts extends Command
             if ($dryRun) {
                 $this->line("  [dry-run] photo {$photo['id']}: ".($description ? substr($description, 0, 60) : '(no caption)'));
                 $imported++;
+
                 continue;
             }
 
@@ -107,6 +111,7 @@ class SyncFacebookPosts extends Command
             // Skip posts without an image — they don't fit the gallery format
             if (empty($post['full_picture'])) {
                 $feedSkipped++;
+
                 continue;
             }
 
@@ -114,6 +119,7 @@ class SyncFacebookPosts extends Command
 
             if (! $dryRun && FacebookGalleryPost::where('post_url', $url)->exists()) {
                 $feedSkipped++;
+
                 continue;
             }
 
@@ -122,6 +128,7 @@ class SyncFacebookPosts extends Command
             if ($dryRun) {
                 $this->line("  [dry-run] post {$post['id']}: ".($message ? substr($message, 0, 60) : '(no message)'));
                 $feedImported++;
+
                 continue;
             }
 
@@ -167,7 +174,7 @@ class SyncFacebookPosts extends Command
                 $url = $body['paging']['next'] ?? null;
                 $params = []; // next page URL already has all params
             } catch (RequestException $e) {
-                $this->error("Request failed: ".$e->getMessage());
+                $this->error('Request failed: '.$e->getMessage());
                 break;
             }
         }
@@ -183,6 +190,7 @@ class SyncFacebookPosts extends Command
                 'query' => ['access_token' => $userToken, 'fields' => 'id,name'],
             ]);
             $body = json_decode((string) $response->getBody(), true);
+
             return $body['data'][0]['id'] ?? null;
         } catch (\Throwable) {
             return null;
@@ -204,6 +212,7 @@ class SyncFacebookPosts extends Command
             }
         } catch (\Throwable) {
         }
+
         return null;
     }
 }

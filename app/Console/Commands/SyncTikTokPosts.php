@@ -34,6 +34,7 @@ class SyncTikTokPosts extends Command
             $this->line('');
             $this->line('Alternatively, import individual videos by URL:');
             $this->line('  php artisan tiktok:fetch-thumbnails --import=https://www.tiktok.com/@graveyardjokes/video/ID');
+
             return self::FAILURE;
         }
 
@@ -56,6 +57,7 @@ class SyncTikTokPosts extends Command
             ]);
         } catch (RequestException $e) {
             $this->error('TikTok API request failed: '.$e->getMessage());
+
             return self::FAILURE;
         }
 
@@ -63,6 +65,7 @@ class SyncTikTokPosts extends Command
 
         if (! empty($body['error']['code']) && $body['error']['code'] !== 'ok') {
             $this->error("TikTok API error: {$body['error']['message']}");
+
             return self::FAILURE;
         }
 
@@ -70,6 +73,7 @@ class SyncTikTokPosts extends Command
 
         if (empty($videos)) {
             $this->info('No videos returned.');
+
             return self::SUCCESS;
         }
 
@@ -82,12 +86,14 @@ class SyncTikTokPosts extends Command
 
             if (! $dryRun && TikTokVideo::where('tiktok_video_id', $videoId)->exists()) {
                 $skipped++;
+
                 continue;
             }
 
             if ($dryRun) {
                 $this->line("  [dry-run] {$videoId}: ".substr($video['title'] ?? '', 0, 80));
                 $imported++;
+
                 continue;
             }
 
@@ -117,7 +123,9 @@ class SyncTikTokPosts extends Command
 
     private function cacheThumbnail(?string $url, string $videoId): ?string
     {
-        if (! $url) return null;
+        if (! $url) {
+            return null;
+        }
 
         $s3Path = "tiktok-thumbnails/{$videoId}.jpg";
 
@@ -133,6 +141,7 @@ class SyncTikTokPosts extends Command
             $response = $client->get($url);
             if ($response->getStatusCode() === 200) {
                 Storage::disk('s3')->put($s3Path, (string) $response->getBody());
+
                 return $this->cdnUrl($s3Path);
             }
         } catch (\Throwable $e) {
@@ -145,6 +154,7 @@ class SyncTikTokPosts extends Command
     private function cdnUrl(string $path): string
     {
         $cloudfront = config('media.cloudfront_domain');
+
         return $cloudfront
             ? 'https://'.rtrim($cloudfront, '/').'/'.ltrim($path, '/')
             : Storage::disk('s3')->url($path);

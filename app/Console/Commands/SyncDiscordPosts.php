@@ -29,6 +29,7 @@ class SyncDiscordPosts extends Command
             $this->line('  1. Go to https://discord.com/developers/applications and create a bot.');
             $this->line('  2. Add the bot to your server with the Read Messages / View Channels permission.');
             $this->line('  3. Set DISCORD_BOT_TOKEN and DISCORD_CHANNEL_ID in your .env.');
+
             return self::FAILURE;
         }
 
@@ -49,6 +50,7 @@ class SyncDiscordPosts extends Command
             ]);
         } catch (RequestException $e) {
             $this->error('Discord API request failed: '.$e->getMessage());
+
             return self::FAILURE;
         }
 
@@ -56,6 +58,7 @@ class SyncDiscordPosts extends Command
 
         if (isset($body['code'])) {
             $this->error("Discord API error {$body['code']}: ".($body['message'] ?? 'unknown'));
+
             return self::FAILURE;
         }
 
@@ -66,6 +69,7 @@ class SyncDiscordPosts extends Command
             // Skip bot messages and empty content
             if (($msg['author']['bot'] ?? false) || empty($msg['content'])) {
                 $skipped++;
+
                 continue;
             }
 
@@ -73,6 +77,7 @@ class SyncDiscordPosts extends Command
 
             if (! $dryRun && DiscordPost::where('jump_url', $jumpUrl)->exists()) {
                 $skipped++;
+
                 continue;
             }
 
@@ -87,7 +92,9 @@ class SyncDiscordPosts extends Command
             if (! $imageUrl) {
                 foreach ($msg['embeds'] ?? [] as $embed) {
                     $imageUrl = $embed['image']['url'] ?? $embed['thumbnail']['url'] ?? null;
-                    if ($imageUrl) break;
+                    if ($imageUrl) {
+                        break;
+                    }
                 }
             }
 
@@ -97,6 +104,7 @@ class SyncDiscordPosts extends Command
             if ($dryRun) {
                 $this->line("  [dry-run] {$msg['id']}: ".substr($firstLine, 0, 80));
                 $imported++;
+
                 continue;
             }
 
@@ -114,6 +122,7 @@ class SyncDiscordPosts extends Command
         }
 
         $this->info("Done. Imported: {$imported}, Skipped: {$skipped}");
+
         return self::SUCCESS;
     }
 }
