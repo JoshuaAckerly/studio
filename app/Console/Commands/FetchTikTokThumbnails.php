@@ -147,9 +147,15 @@ class FetchTikTokThumbnails extends Command
     {
         $s3Path = "tiktok-thumbnails/{$videoId}.jpg";
 
-        // Return existing cached URL if already uploaded
-        if (Storage::disk('s3')->exists($s3Path)) {
-            return $this->cdnUrl($s3Path);
+        // Return existing cached URL if already uploaded.
+        // Wrapped in try/catch: HeadObject may be denied (403) if the IAM policy only
+        // grants PutObject. In that case we fall through and re-upload rather than crash.
+        try {
+            if (Storage::disk('s3')->exists($s3Path)) {
+                return $this->cdnUrl($s3Path);
+            }
+        } catch (\Throwable $e) {
+            // Cannot check existence — proceed to (re-)upload
         }
 
         try {
