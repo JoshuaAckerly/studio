@@ -7,19 +7,12 @@ interface HeaderProps {
     minimalNav?: boolean;
 }
 
-const Header: React.FC<HeaderProps> = ({ minimalNav = false }) => {
+const Header: React.FC<HeaderProps> = () => {
     const navLinks = [
         { name: 'Studio', href: '/' },
-        ...(minimalNav
-            ? [
-                  { name: 'Video Log', href: '/video-log' },
-                  { name: 'Illustrations', href: '/illustrations' },
-              ]
-            : [
-                  { name: 'Games', href: '/games' },
-                  { name: 'About', href: '/about' },
-              ]),
         { name: 'Blog', href: '/blog' },
+        { name: 'TikTok', href: '/video-log' },
+        { name: 'Discord', href: '/discord' },
         { name: 'Login', href: getLoginUrl('studio') },
     ];
 
@@ -34,7 +27,7 @@ const Header: React.FC<HeaderProps> = ({ minimalNav = false }) => {
                         <a href={getMainSiteUrl()} className="text-lg leading-none font-semibold text-foreground">
                             GraveYardJokes Studios
                         </a>
-                        <p className="text-xs text-muted-foreground">Games & Experiments</p>
+                        <p className="text-xs text-muted-foreground">Blog &middot; TikTok &middot; Discord</p>
                     </div>
                 </div>
 
@@ -45,14 +38,6 @@ const Header: React.FC<HeaderProps> = ({ minimalNav = false }) => {
                         </a>
                     ))}
 
-                    {!minimalNav && (
-                        <a
-                            href="/play"
-                            className="ml-4 inline-flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground shadow-sm hover:opacity-95"
-                        >
-                            Play Now
-                        </a>
-                    )}
                     <NotificationBell />
                 </nav>
 

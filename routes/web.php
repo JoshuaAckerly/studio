@@ -2,20 +2,58 @@
 
 use App\Http\Controllers\Admin\SubscriberController as AdminSubscriberController;
 use App\Http\Controllers\BlogPostController;
+use App\Http\Controllers\DiscordPostController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\VideoLogController;
+use App\Models\BlogPost;
+use App\Models\DiscordPost;
+use App\Models\TikTokVideo;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use League\CommonMark\CommonMarkConverter;
 
 Route::get('/', function () {
-    return Inertia::render('welcome');
+    $recentPosts = BlogPost::published()
+        ->orderByDesc('published_at')
+        ->select(['id', 'title', 'slug', 'excerpt', 'featured_image', 'author', 'published_at'])
+        ->limit(3)
+        ->get();
+
+    $recentVideos = TikTokVideo::active()
+        ->orderBy('sort_order')
+        ->orderByDesc('posted_at')
+        ->orderByDesc('created_at')
+        ->limit(3)
+        ->get()
+        ->map(fn ($v) => [
+            'id' => $v->id,
+            'title' => $v->title,
+            'date' => $v->posted_at ? $v->posted_at->format('Y-m-d') : $v->created_at->format('Y-m-d'),
+            'thumbnail' => $v->thumbnail_url ?? '',
+            'url' => $v->video_url,
+            'embed_url' => $v->embed_url,
+            'description' => $v->description,
+        ]);
+
+    $recentDiscord = DiscordPost::published()
+        ->orderByDesc('posted_at')
+        ->orderByDesc('created_at')
+        ->limit(3)
+        ->get();
+
+    return Inertia::render('welcome', [
+        'recentPosts' => $recentPosts,
+        'recentVideos' => $recentVideos,
+        'recentDiscord' => $recentDiscord,
+    ]);
 })->name('welcome');
 
 Route::get('/video-log', [VideoLogController::class, 'index'])->name('video-log');
 
 Route::get('/blog', [BlogPostController::class, 'index'])->name('blog.index');
 Route::get('/blog/{slug}', [BlogPostController::class, 'show'])->name('blog.show');
+
+Route::get('/discord', [DiscordPostController::class, 'index'])->name('discord');
 
 Route::get('/illustrations', function () {
     return Inertia::render('Illustrations');
