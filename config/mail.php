@@ -109,7 +109,7 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'dev@graveyardjokes.com'),
+        'address' => env('MAIL_FROM_ADDRESS', 'admin@graveyardjokes.com'),
         'name' => env('MAIL_FROM_NAME', 'GraveYardJokes Studios'),
     ],
 
@@ -122,6 +122,6 @@ return [
     |
     */
 
-    'admin_email' => env('ADMIN_EMAIL', 'dev@graveyardjokes.com'),
+    'admin_email' => env('ADMIN_EMAIL', 'admin@graveyardjokes.com'),
 
 ];
