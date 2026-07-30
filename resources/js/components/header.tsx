@@ -15,6 +15,8 @@ const Header: React.FC<HeaderProps> = () => {
         { name: 'Blog', href: '/blog' },
         { name: 'TikTok', href: '/video-log' },
         { name: 'Discord', href: '/discord' },
+        { name: 'Facebook', href: '/facebook' },
+        { name: 'Instagram', href: '/instagram' },
         { name: 'Login', href: getLoginUrl('studio') },
     ];
 
@@ -29,7 +31,7 @@ const Header: React.FC<HeaderProps> = () => {
                         <a href={getMainSiteUrl()} className="text-lg leading-none font-semibold text-foreground">
                             GraveYardJokes Studios
                         </a>
-                        <p className="text-xs text-muted-foreground">Blog &middot; TikTok &middot; Discord</p>
+                        <p className="text-xs text-muted-foreground">Blog &middot; TikTok &middot; Discord &middot; Facebook &middot; Instagram</p>
                     </div>
                 </div>
 
