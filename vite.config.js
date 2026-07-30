@@ -4,7 +4,7 @@ import laravel from 'laravel-vite-plugin';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
-export default defineConfig({
+export default defineConfig(({ isSsrBuild }) => ({
     server: {
         port: 8084,
         host: '0.0.0.0',
@@ -57,7 +57,8 @@ export default defineConfig({
         chunkSizeWarningLimit: 1000, // kB
         rollupOptions: {
             output: {
-                manualChunks(id) {
+                // SSR builds must not split chunks — headlessui/react-aria need React in the same scope
+                manualChunks: isSsrBuild ? undefined : function(id) {
                     if (!id) return;
                     // Keep special explicit chunks
                     if (id.includes('@esotericsoftware/spine-phaser-v3')) return 'spine-plugin';
@@ -89,4 +90,4 @@ export default defineConfig({
             external: ['phaser'],
         },
     },
-});
+}));
