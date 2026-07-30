@@ -44,6 +44,15 @@ class SyncDiscordPosts extends Command
 
         $this->info("Fetching up to {$limit} messages from channel {$channelId}…");
 
+        // Fetch guild_id from the channel — it's not included in message objects
+        $guildId = null;
+        try {
+            $chanResponse = $client->get(self::API."/channels/{$channelId}");
+            $chanData = json_decode((string) $chanResponse->getBody(), true);
+            $guildId = $chanData['guild_id'] ?? null;
+        } catch (\Throwable) {
+        }
+
         try {
             $response = $client->get(self::API."/channels/{$channelId}/messages", [
                 'query' => ['limit' => $limit],
@@ -75,7 +84,7 @@ class SyncDiscordPosts extends Command
                 continue;
             }
 
-            $jumpUrl = "https://discord.com/channels/{$msg['guild_id']}/{$channelId}/{$msg['id']}";
+            $jumpUrl = "https://discord.com/channels/{$guildId}/{$channelId}/{$msg['id']}";
 
             if (! $dryRun && DiscordPost::where('jump_url', $jumpUrl)->exists()) {
                 $skipped++;
