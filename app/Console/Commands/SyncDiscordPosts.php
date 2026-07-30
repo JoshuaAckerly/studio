@@ -66,8 +66,10 @@ class SyncDiscordPosts extends Command
         $skipped = 0;
 
         foreach ($body as $msg) {
-            // Skip bot messages and empty content
-            if (($msg['author']['bot'] ?? false) || empty($msg['content'])) {
+            // Skip bot messages and posts with neither text nor attachments
+            $hasContent = ! empty($msg['content']);
+            $hasAttachment = ! empty($msg['attachments']) || ! empty($msg['embeds']);
+            if (($msg['author']['bot'] ?? false) || (! $hasContent && ! $hasAttachment)) {
                 $skipped++;
 
                 continue;
