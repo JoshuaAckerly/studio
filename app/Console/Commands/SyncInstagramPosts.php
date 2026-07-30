@@ -24,6 +24,7 @@ class SyncInstagramPosts extends Command
 
         if (empty($token) || empty($userId)) {
             $this->error('INSTAGRAM_ACCESS_TOKEN and INSTAGRAM_USER_ID must be set.');
+
             return self::FAILURE;
         }
 
@@ -48,6 +49,7 @@ class SyncInstagramPosts extends Command
 
                 if (isset($body['error'])) {
                     $this->error("Instagram API error: {$body['error']['message']}");
+
                     return self::FAILURE;
                 }
 
@@ -56,6 +58,7 @@ class SyncInstagramPosts extends Command
                 $params = [];
             } catch (RequestException $e) {
                 $this->error('Request failed: '.$e->getMessage());
+
                 return self::FAILURE;
             }
         }
@@ -67,6 +70,7 @@ class SyncInstagramPosts extends Command
         foreach ($results as $post) {
             if (! $dryRun && InstagramPost::where('instagram_id', $post['id'])->exists()) {
                 $skipped++;
+
                 continue;
             }
 
@@ -76,6 +80,7 @@ class SyncInstagramPosts extends Command
             if ($dryRun) {
                 $this->line("  [dry-run] {$post['id']} ({$post['media_type']}): ".substr($post['caption'] ?? '', 0, 60));
                 $imported++;
+
                 continue;
             }
 
@@ -93,6 +98,7 @@ class SyncInstagramPosts extends Command
         }
 
         $this->info("Done. Imported: {$imported}, Skipped: {$skipped}");
+
         return self::SUCCESS;
     }
 }
