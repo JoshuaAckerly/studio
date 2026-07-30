@@ -69,4 +69,9 @@ return [
         'channel_id' => env('DISCORD_CHANNEL_ID'),
     ],
 
+    'instagram' => [
+        'user_id' => env('INSTAGRAM_USER_ID'),
+        'access_token' => env('INSTAGRAM_ACCESS_TOKEN'),
+    ],
+
 ];

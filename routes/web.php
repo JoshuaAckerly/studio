@@ -4,11 +4,13 @@ use App\Http\Controllers\Admin\SubscriberController as AdminSubscriberController
 use App\Http\Controllers\BlogPostController;
 use App\Http\Controllers\DiscordPostController;
 use App\Http\Controllers\FacebookPostController;
+use App\Http\Controllers\InstagramPostController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\VideoLogController;
 use App\Models\BlogPost;
 use App\Models\DiscordPost;
 use App\Models\FacebookGalleryPost;
+use App\Models\InstagramPost;
 use App\Models\TikTokVideo;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -58,11 +60,26 @@ Route::get('/', function () {
             'posted_at' => $p->posted_at?->format('Y-m-d'),
         ]);
 
+    $recentInstagram = InstagramPost::active()
+        ->whereNotNull('thumbnail_url')
+        ->orderByDesc('posted_at')
+        ->orderByDesc('created_at')
+        ->limit(3)
+        ->get()
+        ->map(fn ($p) => [
+            'id' => $p->id,
+            'thumbnail_url' => $p->thumbnail_url,
+            'caption' => $p->caption,
+            'permalink' => $p->permalink,
+            'posted_at' => $p->posted_at?->format('Y-m-d'),
+        ]);
+
     return Inertia::render('welcome', [
         'recentPosts' => $recentPosts,
         'recentVideos' => $recentVideos,
         'recentDiscord' => $recentDiscord,
         'recentFacebook' => $recentFacebook,
+        'recentInstagram' => $recentInstagram,
     ]);
 })->name('welcome');
 
@@ -74,6 +91,8 @@ Route::get('/blog/{slug}', [BlogPostController::class, 'show'])->name('blog.show
 Route::get('/discord', [DiscordPostController::class, 'index'])->name('discord');
 
 Route::get('/facebook', [FacebookPostController::class, 'index'])->name('facebook');
+
+Route::get('/instagram', [InstagramPostController::class, 'index'])->name('instagram');
 
 Route::get('/illustrations', function () {
     return Inertia::render('Illustrations');
