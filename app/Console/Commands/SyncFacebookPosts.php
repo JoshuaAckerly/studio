@@ -116,14 +116,18 @@ class SyncFacebookPosts extends Command
             }
 
             $url = $post['permalink_url'] ?? "https://www.facebook.com/{$post['id']}";
+            $message = $post['message'] ?? null;
+            $title = $message ? \Str::limit($message, 100) : 'Facebook Post';
 
-            if (! $dryRun && FacebookGalleryPost::where('post_url', $url)->exists()) {
+            if (! $dryRun && (
+                FacebookGalleryPost::where('post_url', $url)->exists() ||
+                // Skip if the same caption was already imported as a photo upload
+                ($title !== 'Facebook Post' && FacebookGalleryPost::where('title', $title)->where('post_url', 'not like', '%/posts/%')->exists())
+            )) {
                 $feedSkipped++;
 
                 continue;
             }
-
-            $message = $post['message'] ?? null;
 
             if ($dryRun) {
                 $this->line("  [dry-run] post {$post['id']}: ".($message ? substr($message, 0, 60) : '(no message)'));
@@ -134,7 +138,7 @@ class SyncFacebookPosts extends Command
 
             FacebookGalleryPost::create([
                 'post_url' => $url,
-                'title' => $message ? \Str::limit($message, 100) : 'Facebook Post',
+                'title' => $title,
                 'description' => $message,
                 'thumbnail_url' => $post['full_picture'],
                 'posted_at' => isset($post['created_time']) ? date('Y-m-d', strtotime($post['created_time'])) : null,
