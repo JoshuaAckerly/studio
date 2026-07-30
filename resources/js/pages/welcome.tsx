@@ -261,7 +261,7 @@ function DiscordCard({ post }: { post: DiscordPost }) {
     );
 }
 
-export default function Welcome({ recentPosts, recentVideos, recentDiscord, recentFacebook, recentInstagram }: Props) {
+export default function Welcome({ recentPosts, recentVideos, recentDiscord, recentFacebook = [], recentInstagram = [] }: Props) {
     const studioUrl = getProjectUrl('studio');
     const discordInvite = import.meta.env.VITE_DISCORD_INVITE_URL as string | undefined;
 
