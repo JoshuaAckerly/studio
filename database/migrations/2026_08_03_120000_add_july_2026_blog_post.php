@@ -109,14 +109,14 @@ HTML;
         DB::table('blog_posts')->updateOrInsert(
             ['slug' => $slug],
             [
-                'title'        => 'July 2026 — GSAP, Redesigns, and a Studio Built for Content',
-                'slug'         => $slug,
-                'content'      => $content,
-                'excerpt'      => $excerpt,
-                'author'       => 'Joshua',
+                'title' => 'July 2026 — GSAP, Redesigns, and a Studio Built for Content',
+                'slug' => $slug,
+                'content' => $content,
+                'excerpt' => $excerpt,
+                'author' => 'Joshua',
                 'published_at' => '2026-08-03 12:00:00',
-                'created_at'   => now(),
-                'updated_at'   => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
             ]
         );
     }
