@@ -114,7 +114,7 @@ HTML;
                 'content' => $content,
                 'excerpt' => $excerpt,
                 'author' => 'Joshua',
-                'published_at' => '2026-08-03 12:00:00',
+                'published_at' => '2026-08-03 06:00:00',
                 'created_at' => now(),
                 'updated_at' => now(),
             ]
