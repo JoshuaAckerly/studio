@@ -145,7 +145,7 @@ class FetchTikTokThumbnails extends Command
 
     private function cacheThumbnail(Client $client, string $thumbnailUrl, string $videoId): ?string
     {
-        $s3Path = "tiktok-thumbnails/{$videoId}.jpg";
+        $s3Path = "studio/video-logs/thumbnails/{$videoId}.jpg";
 
         // Return existing cached URL if already uploaded.
         // Wrapped in try/catch: HeadObject may be denied (403) if the IAM policy only
