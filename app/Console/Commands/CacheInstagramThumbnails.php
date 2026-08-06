@@ -154,7 +154,7 @@ class CacheInstagramThumbnails extends Command
                 str_contains($contentType, 'png') => 'png',
                 str_contains($contentType, 'webp') => 'webp',
                 default => 'jpg',
-            ];
+            };
 
             $s3Key = "studio/images/instagram/post-{$postId}-{$type}.{$ext}";
 
