@@ -158,8 +158,20 @@ class FetchGalleryThumbnails extends Command
     private function fetchViaGraphApi(Client $client, string $token, string $postUrl, int $postId): ?string
     {
         if (! preg_match('/fbid=(\d+)/', $postUrl, $m)) {
-            // No photo ID in URL — try oEmbed directly (handles /posts/ and /videos/ formats)
-            return $this->fetchViaOEmbed($client, $token, $postUrl, $postId);
+            // Handle /{page_id}/videos/{video_id} — fetch thumbnail from video node
+            if (preg_match('#/videos/(\d+)#', $postUrl, $vm)) {
+                return $this->fetchVideoThumbnail($client, $token, $vm[1], $postId);
+            }
+
+            // Handle /{page_id}/posts/{post_id} — fetch image from post attachments
+            if (preg_match('#/(\d+)/posts/(\d+)#', $postUrl, $pm)) {
+                return $this->fetchPostAttachmentImage($client, $token, "{$pm[1]}_{$pm[2]}", $postId);
+            }
+
+            $this->newLine();
+            $this->warn("Could not extract ID from post #{$postId} URL");
+
+            return null;
         }
 
         $fbid = $m[1];
@@ -204,6 +216,52 @@ class FetchGalleryThumbnails extends Command
 
         // Fallback: oEmbed API — works for public posts on personal profiles too
         return $this->fetchViaOEmbed($client, $token, $postUrl, $postId);
+    }
+
+    private function fetchVideoThumbnail(Client $client, string $token, string $videoId, int $postId): ?string
+    {
+        try {
+            $response = $client->get("https://graph.facebook.com/v19.0/{$videoId}", [
+                'query' => ['fields' => 'picture', 'access_token' => $token],
+                'http_errors' => false,
+            ]);
+            $data = json_decode((string) $response->getBody(), true);
+            $thumbnail = $data['picture'] ?? null;
+            if (! $thumbnail) {
+                $this->newLine();
+                $this->warn("No picture field for video post #{$postId} (video_id={$videoId})");
+            }
+
+            return $thumbnail;
+        } catch (RequestException $e) {
+            $this->newLine();
+            $this->error("Video thumbnail failed for post #{$postId}: ".$e->getMessage());
+
+            return null;
+        }
+    }
+
+    private function fetchPostAttachmentImage(Client $client, string $token, string $graphPostId, int $postId): ?string
+    {
+        try {
+            $response = $client->get("https://graph.facebook.com/v19.0/{$graphPostId}", [
+                'query' => ['fields' => 'attachments{media{image{src}}}', 'access_token' => $token],
+                'http_errors' => false,
+            ]);
+            $data = json_decode((string) $response->getBody(), true);
+            $thumbnail = $data['attachments']['data'][0]['media']['image']['src'] ?? null;
+            if (! $thumbnail) {
+                $this->newLine();
+                $this->warn("No attachment image for post #{$postId} (graph_id={$graphPostId})");
+            }
+
+            return $thumbnail;
+        } catch (RequestException $e) {
+            $this->newLine();
+            $this->error("Attachment fetch failed for post #{$postId}: ".$e->getMessage());
+
+            return null;
+        }
     }
 
     private function fetchViaOEmbed(Client $client, string $token, string $postUrl, int $postId): ?string
