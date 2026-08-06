@@ -485,10 +485,14 @@ class FetchGalleryThumbnails extends Command
 
             $s3Key = 'studio/images/gallery-thumbnails/post-'.$postId.'.'.$ext;
 
-            Storage::disk('s3')->put($s3Key, $imageContent, [
+            $ok = Storage::disk('s3')->put($s3Key, $imageContent, [
                 'visibility' => 'public',
                 'ContentType' => $contentType ?: 'image/jpeg',
             ]);
+
+            if (! $ok) {
+                throw new \RuntimeException('Storage::put returned false — check AWS credentials and bucket permissions.');
+            }
 
             $cloudfrontDomain = config('media.cloudfront_domain');
             if (is_string($cloudfrontDomain) && $cloudfrontDomain !== '') {
