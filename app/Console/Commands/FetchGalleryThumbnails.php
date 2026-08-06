@@ -486,7 +486,6 @@ class FetchGalleryThumbnails extends Command
             $s3Key = 'studio/images/gallery-thumbnails/post-'.$postId.'.'.$ext;
 
             $ok = Storage::disk('s3')->put($s3Key, $imageContent, [
-                'visibility' => 'public',
                 'ContentType' => $contentType ?: 'image/jpeg',
             ]);
 

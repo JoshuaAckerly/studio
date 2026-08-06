@@ -159,7 +159,6 @@ class CacheInstagramThumbnails extends Command
             $s3Key = "studio/images/instagram/post-{$postId}-{$type}.{$ext}";
 
             $ok = Storage::disk('s3')->put($s3Key, $contents, [
-                'visibility' => 'public',
                 'ContentType' => $contentType ?: 'image/jpeg',
             ]);
 
