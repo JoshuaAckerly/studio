@@ -158,10 +158,8 @@ class FetchGalleryThumbnails extends Command
     private function fetchViaGraphApi(Client $client, string $token, string $postUrl, int $postId): ?string
     {
         if (! preg_match('/fbid=(\d+)/', $postUrl, $m)) {
-            $this->newLine();
-            $this->warn("Could not extract fbid from post #{$postId} URL");
-
-            return null;
+            // No photo ID in URL — try oEmbed directly (handles /posts/ and /videos/ formats)
+            return $this->fetchViaOEmbed($client, $token, $postUrl, $postId);
         }
 
         $fbid = $m[1];
@@ -210,8 +208,11 @@ class FetchGalleryThumbnails extends Command
 
     private function fetchViaOEmbed(Client $client, string $token, string $postUrl, int $postId): ?string
     {
+        // Videos use a different oEmbed endpoint
+        $endpoint = str_contains($postUrl, '/videos/') ? 'oembed_video' : 'oembed_photo';
+
         try {
-            $response = $client->get('https://graph.facebook.com/v19.0/oembed_photo', [
+            $response = $client->get("https://graph.facebook.com/v19.0/{$endpoint}", [
                 'query' => [
                     'url' => $postUrl,
                     'access_token' => $token,
