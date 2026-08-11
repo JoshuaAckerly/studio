@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Models\TikTokVideo;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 class TikTokVideoTest extends TestCase
@@ -72,7 +73,7 @@ class TikTokVideoTest extends TestCase
     {
         $video = new TikTokVideo(['posted_at' => '2026-03-25']);
 
-        $this->assertInstanceOf(\Illuminate\Support\Carbon::class, $video->posted_at);
+        $this->assertInstanceOf(Carbon::class, $video->posted_at);
         $this->assertSame('2026-03-25', $video->posted_at->format('Y-m-d'));
     }
 

@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\BlogPost;
+
 $content = '<p>If March was about shipping features, April has been about making everything stronger underneath. I spent the first half of this month on UX polish, a full documentation overhaul, codebase health, and operational reliability across the entire portfolio. Here is what got done.</p>
 
 <h2>Lunar Blood — UX That Communicates</h2>
@@ -45,7 +47,7 @@ $content = '<p>If March was about shipping features, April has been about making
 
 $slug = 'april-update-reliability-documentation-and-zero-error-builds';
 
-$post = \App\Models\BlogPost::where('slug', $slug)->first();
+$post = BlogPost::where('slug', $slug)->first();
 
 if ($post) {
     $post->update([
@@ -55,7 +57,7 @@ if ($post) {
     ]);
     echo "Blog post updated.\n";
 } else {
-    \App\Models\BlogPost::create([
+    BlogPost::create([
         'title' => 'April Update: Reliability, Documentation, and Zero-Error Builds',
         'slug' => $slug,
         'content' => $content,

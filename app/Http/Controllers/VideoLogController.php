@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ServeFileRequest;
 use App\Models\TikTokVideo;
 use App\Services\VideoLogService;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -68,13 +70,13 @@ class VideoLogController extends Controller
      *
      * Query param: path (required)
      */
-    public function serve(\App\Http\Requests\ServeFileRequest $request)
+    public function serve(ServeFileRequest $request)
     {
         // The FormRequest handles authorize() (environment) and presence of 'path'
         $path = $request->query('path');
 
         try {
-            /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
+            /** @var FilesystemAdapter $disk */
             $disk = Storage::disk('s3');
             if (! $disk->exists($path)) {
                 return response('Not found', 404);
