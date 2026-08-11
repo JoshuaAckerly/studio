@@ -73,6 +73,7 @@ class CacheInstagramThumbnails extends Command
                 $this->warn("No thumbnail source for post #{$post->id} ({$post->instagram_id})");
                 $failed++;
                 $bar->advance();
+
                 continue;
             }
 
