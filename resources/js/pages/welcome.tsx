@@ -263,6 +263,7 @@ function DiscordCard({ post }: { post: DiscordPost }) {
 
 export default function Welcome({ recentPosts, recentVideos, recentDiscord, recentFacebook = [], recentInstagram = [] }: Props) {
     const studioUrl = getProjectUrl('studio');
+    const noteleksUrl = getProjectUrl('noteleks');
     const discordInvite = import.meta.env.VITE_DISCORD_INVITE_URL as string | undefined;
 
     return (
@@ -346,6 +347,14 @@ export default function Welcome({ recentPosts, recentVideos, recentDiscord, rece
                             </svg>
                             Instagram
                         </Link>
+                        <a
+                            href={noteleksUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-md border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted"
+                        >
+                            🎮 Play Noteleks
+                        </a>
                     </div>
                 </div>
 
@@ -434,6 +443,26 @@ export default function Welcome({ recentPosts, recentVideos, recentDiscord, rece
                         </div>
                     </section>
                 )}
+
+                {/* Noteleks */}
+                <section>
+                    <div className="flex flex-col items-start gap-4 rounded-lg border border-border bg-card p-6 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <p className="font-medium">Noteleks — The Game</p>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                                A browser-based action game from GraveYardJokes Studios. No download needed.
+                            </p>
+                        </div>
+                        <a
+                            href={noteleksUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex shrink-0 items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-90"
+                        >
+                            Play Now &rarr;
+                        </a>
+                    </div>
+                </section>
 
                 {/* Newsletter */}
                 <section className="rounded-lg border border-border bg-card p-8">
