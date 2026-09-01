@@ -16,11 +16,9 @@ NC='\033[0m'
 DEPLOY_HOST="ubuntu@3.19.68.125"
 DEPLOY_PATH="/var/www/studio"
 
-# Optional: set DEPLOY_SSH_KEY env var to use a specific identity file
-SSH_OPTS="-o StrictHostKeyChecking=no"
-if [ -n "$DEPLOY_SSH_KEY" ]; then
-    SSH_OPTS="$SSH_OPTS -i $DEPLOY_SSH_KEY"
-fi
+# Optional: override key via DEPLOY_SSH_KEY env var
+DEFAULT_SSH_KEY="$HOME/.ssh/the-nexus-key.pem"
+SSH_OPTS="-o StrictHostKeyChecking=no -i ${DEPLOY_SSH_KEY:-$DEFAULT_SSH_KEY}"
 
 echo -e "${CYAN}Commit, Push & Deploy — studio${NC}"
 echo "================================"

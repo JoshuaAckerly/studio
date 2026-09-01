@@ -444,23 +444,42 @@ export default function Welcome({ recentPosts, recentVideos, recentDiscord, rece
                     </section>
                 )}
 
-                {/* Noteleks */}
+                {/* Games */}
                 <section>
-                    <div className="flex flex-col items-start gap-4 rounded-lg border border-border bg-card p-6 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                            <p className="font-medium">Noteleks — The Game</p>
-                            <p className="mt-1 text-sm text-muted-foreground">
-                                A browser-based action game from GraveYardJokes Studios. No download needed.
-                            </p>
+                    <h2 className="mb-4 text-xl font-semibold tracking-tight">Games</h2>
+                    <div className="flex flex-col gap-3">
+                        <div className="flex flex-col items-start gap-4 rounded-lg border border-border bg-card p-6 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <p className="font-medium">Noteleks — The Game</p>
+                                <p className="mt-1 text-sm text-muted-foreground">
+                                    A browser-based action game from GraveYardJokes Studios. No download needed.
+                                </p>
+                            </div>
+                            <a
+                                href={noteleksUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex shrink-0 items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-90"
+                            >
+                                Play Now &rarr;
+                            </a>
                         </div>
-                        <a
-                            href={noteleksUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex shrink-0 items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-90"
-                        >
-                            Play Now &rarr;
-                        </a>
+                        <div className="flex flex-col items-start gap-4 rounded-lg border border-border bg-card p-6 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <p className="font-medium">CryptEscape</p>
+                                <p className="mt-1 text-sm text-muted-foreground">
+                                    A browser-based escape puzzle game from GraveYardJokes Studios. No download needed.
+                                </p>
+                            </div>
+                            <a
+                                href="https://d3fjkusrpksks7.cloudfront.net/cryptescape/games/CyrptEscape/CyrptEscape/index.html"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex shrink-0 items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-90"
+                            >
+                                Play Now &rarr;
+                            </a>
+                        </div>
                     </div>
                 </section>
 
