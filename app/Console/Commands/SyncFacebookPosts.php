@@ -170,7 +170,13 @@ class SyncFacebookPosts extends Command
             return null;
         }
 
-        return preg_replace('#^(https://www\.facebook\.com/)\d+(/(?:posts|videos)/)#', "$1{$pageId}$2", $permalinkUrl);
+        // preg_replace_callback avoids the classic "$1" + literal-digits backreference
+        // ambiguity you'd get building "$1{$pageId}$2" as a plain replacement string.
+        return preg_replace_callback(
+            '#^(https://www\.facebook\.com/)\d+(/(?:posts|videos)/)#',
+            fn (array $m) => $m[1].$pageId.$m[2],
+            $permalinkUrl
+        );
     }
 
     /**
