@@ -1,10 +1,14 @@
 <?php
 
+use Illuminate\Contracts\Console\Kernel;
+use Symfony\Component\Console\Input\ArrayInput;
+use Symfony\Component\Console\Output\ConsoleOutput;
+
 require __DIR__.'/vendor/autoload.php';
 
 // Bootstrap Laravel
 $app = require_once __DIR__.'/bootstrap/app.php';
-$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+$kernel = $app->make(Kernel::class);
 $kernel->bootstrap();
 
 // Get the package discovery command
@@ -18,8 +22,8 @@ if (isset($commands['package:discover'])) {
     $command->setLaravel($app);
 
     // Run the command
-    $input = new Symfony\Component\Console\Input\ArrayInput(['command' => 'package:discover']);
-    $output = new Symfony\Component\Console\Output\ConsoleOutput;
+    $input = new ArrayInput(['command' => 'package:discover']);
+    $output = new ConsoleOutput;
 
     echo "Running package discovery...\n";
     $result = $command->run($input, $output);

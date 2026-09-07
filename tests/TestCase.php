@@ -2,6 +2,7 @@
 
 namespace Tests;
 
+use Illuminate\Foundation\Bootstrap\HandleExceptions;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 
 abstract class TestCase extends BaseTestCase
@@ -47,7 +48,7 @@ abstract class TestCase extends BaseTestCase
         if (method_exists($this, 'beforeApplicationDestroyed')) {
             $this->beforeApplicationDestroyed(function () {
                 try {
-                    \Illuminate\Foundation\Bootstrap\HandleExceptions::forgetApp();
+                    HandleExceptions::forgetApp();
                 } catch (\Throwable $e) {
                     // ignore
                 }
