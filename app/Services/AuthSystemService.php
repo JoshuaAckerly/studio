@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 
 class AuthSystemService
@@ -20,7 +21,7 @@ class AuthSystemService
     public function getMessages(string $token): ?array
     {
         $response = Http::withToken($token)->get($this->baseUrl.'/messages');
-        if ($response instanceof \Illuminate\Http\Client\Response && $response->successful()) {
+        if ($response instanceof Response && $response->successful()) {
             $data = $response->json();
             if (is_array($data)) {
                 return $data;
@@ -34,13 +35,13 @@ class AuthSystemService
     {
         $response = Http::withToken($token)->patch($this->baseUrl.'/messages/'.$id.'/read');
 
-        return $response instanceof \Illuminate\Http\Client\Response && $response->successful();
+        return $response instanceof Response && $response->successful();
     }
 
     public function markAllMessagesRead(string $token): bool
     {
         $response = Http::withToken($token)->patch($this->baseUrl.'/messages/read-all');
 
-        return $response instanceof \Illuminate\Http\Client\Response && $response->successful();
+        return $response instanceof Response && $response->successful();
     }
 }

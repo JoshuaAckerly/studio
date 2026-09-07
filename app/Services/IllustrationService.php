@@ -21,7 +21,7 @@ class IllustrationService
      * @param  mixed|null  $s3OrGenerator
      * @param  StorageUrlGenerator|null  $maybeGenerator
      */
-    public function __construct($s3OrGenerator = null, ?\App\Contracts\StorageUrlGeneratorInterface $maybeGenerator = null)
+    public function __construct($s3OrGenerator = null, ?StorageUrlGeneratorInterface $maybeGenerator = null)
     {
         if ($s3OrGenerator instanceof StorageUrlGeneratorInterface) {
             $this->urlGenerator = $s3OrGenerator;
