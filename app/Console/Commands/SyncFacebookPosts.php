@@ -62,7 +62,7 @@ class SyncFacebookPosts extends Command
         ], $token, $limit);
 
         foreach ($photos as $photo) {
-            $url = $photo['link'] ?? "https://www.facebook.com/photo?fbid={$photo['id']}";
+            $url = $this->canonicalPhotoUrl($photo['id'], $photo['link'] ?? null);
 
             if (! $dryRun && FacebookGalleryPost::where('post_url', $url)->exists()) {
                 $skipped++;
@@ -98,7 +98,7 @@ class SyncFacebookPosts extends Command
 
         $this->info("Photos: imported {$imported}, skipped {$skipped}");
 
-        // ── Feed posts with images ───────────────────────────────────────────
+        // ── Feed posts (images and text-only) ────────────────────────────────
         $this->info('Fetching page feed posts…');
         $feedImported = 0;
         $feedSkipped = 0;
@@ -108,15 +108,17 @@ class SyncFacebookPosts extends Command
         ], $token, $limit);
 
         foreach ($posts as $post) {
-            // Skip posts without an image — they don't fit the gallery format
-            if (empty($post['full_picture'])) {
+            $message = $post['message'] ?? null;
+            $picture = $post['full_picture'] ?? null;
+
+            // Nothing to show — no caption and no image
+            if (empty($message) && empty($picture)) {
                 $feedSkipped++;
 
                 continue;
             }
 
             $url = $this->normalizePermalink($post['permalink_url'] ?? null, $pageId) ?? "https://www.facebook.com/{$post['id']}";
-            $message = $post['message'] ?? null;
             $title = $message ? \Str::limit($message, 100) : 'Facebook Post';
 
             if (! $dryRun && (
@@ -140,7 +142,7 @@ class SyncFacebookPosts extends Command
                 'post_url' => $url,
                 'title' => $title,
                 'description' => $message,
-                'thumbnail_url' => $post['full_picture'],
+                'thumbnail_url' => $picture,
                 'posted_at' => isset($post['created_time']) ? date('Y-m-d', strtotime($post['created_time'])) : null,
                 'is_active' => true,
                 'sort_order' => 0,
@@ -169,6 +171,23 @@ class SyncFacebookPosts extends Command
         }
 
         return preg_replace('#^(https://www\.facebook\.com/)\d+(/(?:posts|videos)/)#', "$1{$pageId}$2", $permalinkUrl);
+    }
+
+    /**
+     * The Graph API `link` field returns the legacy `photo.php?fbid=..&set=..&type=3` format,
+     * which the Facebook mobile app doesn't reliably deep-link to. Build the modern
+     * `/photo/?fbid=..&set=..` share URL instead (fbid alone resolves the photo regardless of page).
+     */
+    private function canonicalPhotoUrl(string $fbid, ?string $legacyLink): string
+    {
+        $set = null;
+        if ($legacyLink && preg_match('/set=([^&]+)/', $legacyLink, $m)) {
+            $set = $m[1];
+        }
+
+        return $set
+            ? "https://www.facebook.com/photo/?fbid={$fbid}&set={$set}"
+            : "https://www.facebook.com/photo/?fbid={$fbid}";
     }
 
     private function fetchPaged(Client $client, string $endpoint, array $params, string $token, int $limit): array
