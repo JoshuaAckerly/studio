@@ -115,7 +115,7 @@ class SyncFacebookPosts extends Command
                 continue;
             }
 
-            $url = $post['permalink_url'] ?? "https://www.facebook.com/{$post['id']}";
+            $url = $this->normalizePermalink($post['permalink_url'] ?? null, $pageId) ?? "https://www.facebook.com/{$post['id']}";
             $message = $post['message'] ?? null;
             $title = $message ? \Str::limit($message, 100) : 'Facebook Post';
 
@@ -155,6 +155,20 @@ class SyncFacebookPosts extends Command
         }
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Facebook's `permalink_url` can carry a stale leading page/actor ID left over from before
+     * a Page merge/ID change (the trailing post or video ID stays valid, but the old actor ID
+     * segment 404s — "content isn't available"). Force it to the page ID we actually queried with.
+     */
+    private function normalizePermalink(?string $permalinkUrl, string $pageId): ?string
+    {
+        if (empty($permalinkUrl)) {
+            return null;
+        }
+
+        return preg_replace('#^(https://www\.facebook\.com/)\d+(/(?:posts|videos)/)#', "$1{$pageId}$2", $permalinkUrl);
     }
 
     private function fetchPaged(Client $client, string $endpoint, array $params, string $token, int $limit): array
