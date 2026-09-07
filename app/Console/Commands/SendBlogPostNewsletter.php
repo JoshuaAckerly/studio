@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Mail;
 
 class SendBlogPostNewsletter extends Command
 {
-    protected $signature = 'app:send-newsletter {slug : The slug of the blog post to send}';
+    protected $signature = 'app:send-newsletter {slug : The slug of the blog post to send} {--force : Resend even if already marked as sent}';
 
     protected $description = 'Send a blog post to all confirmed newsletter subscribers';
 
@@ -22,6 +22,12 @@ class SendBlogPostNewsletter extends Command
 
         if (! $post) {
             $this->error("No published blog post found with slug \"{$slug}\".");
+
+            return 1;
+        }
+
+        if ($post->newsletter_sent_at && ! $this->option('force')) {
+            $this->warn("\"{$post->title}\" was already emailed to subscribers on {$post->newsletter_sent_at}. Pass --force to resend.");
 
             return 1;
         }
@@ -58,6 +64,8 @@ class SendBlogPostNewsletter extends Command
         $bar->finish();
         $this->newLine();
         $this->info("✅ Sent: {$sent}  |  Failed: {$failed}");
+
+        $post->update(['newsletter_sent_at' => now()]);
 
         return 0;
     }

@@ -19,12 +19,14 @@ class BlogPost extends Model
         'featured_image',
         'author',
         'published_at',
+        'newsletter_sent_at',
     ];
 
     protected function casts(): array
     {
         return [
             'published_at' => 'datetime',
+            'newsletter_sent_at' => 'datetime',
         ];
     }
 
