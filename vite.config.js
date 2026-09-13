@@ -8,19 +8,20 @@ export default defineConfig(({ isSsrBuild }) => ({
     server: {
         port: 8084,
         host: '0.0.0.0',
-        origin: 'http://studio.graveyardjokes.local:8084',
+        origin: 'http://10.0.1.20:8084',
         hmr: {
-            host: 'studio.graveyardjokes.local'
+            host: '10.0.1.20'
         },
         cors: {
             origin: [
-                'http://studio.graveyardjokes.local',
-                'http://studio.graveyardjokes.local:8003',
+                'http://studio.graveyardjokes.test',
+                'http://studio.graveyardjokes.test:8003',
                 'http://localhost:8003',
+                'http://10.0.1.20:8003',
             ],
             credentials: true
         },
-        allowedHosts: ['studio.graveyardjokes.local']
+        allowedHosts: ['studio.graveyardjokes.test', '10.0.1.20']
     },
     plugins: [
         laravel({
