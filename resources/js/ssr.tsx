@@ -34,5 +34,5 @@ createServer(
                 return <App {...props} />;
             },
         }),
-    13716, // studio SSR port
+    { port: 13716, host: '127.0.0.1' }, // studio SSR port
 );
